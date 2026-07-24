@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Assistente Pessoal</title>
     <style>
-        /* Estilos e Cores Limpas */
         :root {
             --bg: #f8fafc;
             --card-bg: #ffffff;
@@ -13,6 +12,8 @@
             --text-muted: #64748b;
             --border: #e2e8f0;
             --accent: #475569;
+            --accent-active: #1e293b;
+            --highlight: #e2e8f0;
         }
 
         body {
@@ -20,7 +21,7 @@
             background-color: var(--bg);
             color: var(--text);
             margin: 0;
-            padding: 20px;
+            padding: 16px;
             display: flex;
             justify-content: center;
         }
@@ -30,22 +31,70 @@
             max-width: 500px;
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 16px;
         }
 
-        /* 1. Nível de Energia */
-        .energy-section {
+        /* Menu de Abas (Navegação) */
+        .nav-tabs {
+            display: flex;
+            background: var(--card-bg);
+            padding: 4px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            gap: 4px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 10px 4px;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn.active {
+            background: var(--accent);
+            color: white;
+        }
+
+        /* Conteúdo das Abas */
+        .tab-content {
+            display: none;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .tab-content.active {
+            display: flex;
+        }
+
+        /* Estilos dos Cards e Seções */
+        .section-title {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .card {
             background: var(--card-bg);
             padding: 16px;
             border-radius: 12px;
             border: 1px solid var(--border);
-            text-align: center;
         }
 
+        /* Botões de Energia */
         .energy-buttons {
             display: flex;
-            gap: 10px;
-            margin-top: 10px;
+            gap: 8px;
+            margin-top: 8px;
         }
 
         .btn-energy {
@@ -55,69 +104,23 @@
             background: var(--bg);
             border-radius: 8px;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 13px;
+            color: var(--text);
             transition: 0.2s;
         }
 
-        .btn-energy:hover {
-            background: var(--border);
+        .btn-energy.selected {
+            background: var(--highlight);
+            border-color: var(--accent);
+            font-weight: bold;
         }
 
-        /* 2. Painel Essencial */
-        .section-title {
-            font-size: 14px;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 8px;
-        }
-
-        .card {
-            background: var(--card-bg);
-            padding: 16px;
-            border-radius: 12px;
-            border: 1px solid var(--border);
-            margin-bottom: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .card-info h3 {
-            margin: 0;
-            font-size: 16px;
-            font-weight: 600;
-        }
-
-        .card-info p {
-            margin: 4px 0 0 0;
-            font-size: 13px;
-            color: var(--text-muted);
-        }
-
-        .btn-action {
-            background: var(--accent);
-            color: white;
-            border: none;
-            padding: 8px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 12px;
-        }
-
-        /* 3. Autocuidado Rápido */
-        .checklist {
-            background: var(--card-bg);
-            padding: 16px;
-            border-radius: 12px;
-            border: 1px solid var(--border);
-        }
-
+        /* Checklist Autocuidado */
         .check-item {
             display: flex;
             align-items: center;
-            gap: 10px;
-            padding: 8px 0;
+            gap: 12px;
+            padding: 10px 0;
             border-bottom: 1px solid var(--bg);
         }
 
@@ -125,7 +128,9 @@
             border-bottom: none;
         }
 
-        .check-item input {
+        .check-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
             cursor: pointer;
         }
 
@@ -133,69 +138,139 @@
             font-size: 14px;
             cursor: pointer;
         }
+
+        .placeholder-text {
+            color: var(--text-muted);
+            font-size: 14px;
+            line-height: 1.5;
+        }
     </style>
 </head>
 <body>
 
     <div class="container">
         
-        <!-- Ritmo do Dia -->
-        <div class="energy-section">
-            <div class="section-title">Ritmo de Hoje</div>
-            <div class="energy-buttons">
-                <button class="btn-energy">🟢 Alta</button>
-                <button class="btn-energy">🟡 Média</button>
-                <button class="btn-energy">🔴 Baixa</button>
-            </div>
-        </div>
+        <!-- Navegação por Abas -->
+        <nav class="nav-tabs">
+            <button class="tab-btn active" onclick="switchTab('home')">Home</button>
+            <button class="tab-btn" onclick="switchTab('pesquisa')">Pesquisa</button>
+            <button class="tab-btn" onclick="switchTab('aulas')">Aulas</button>
+            <button class="tab-btn" onclick="switchTab('financas')">Finanças</button>
+        </nav>
 
-        <!-- Painel de Foco -->
-        <div>
-            <div class="section-title">Foco Atual</div>
+        <!-- ABA 1: HOME (Painel Principal) -->
+        <div id="tab-home" class="tab-content active">
             
+            <!-- Ritmo do Dia -->
             <div class="card">
-                <div class="card-info">
-                    <h3>📚 Pesquisa</h3>
-                    <p>Fichamento de artigo</p>
+                <div class="section-title">Ritmo de Hoje</div>
+                <div class="energy-buttons">
+                    <button class="btn-energy" onclick="setEnergy('alta')">🟢 Alta</button>
+                    <button class="btn-energy" onclick="setEnergy('media')">🟡 Média</button>
+                    <button class="btn-energy" onclick="setEnergy('baixa')">🔴 Baixa</button>
                 </div>
-                <button class="btn-action">Iniciar (25m)</button>
             </div>
 
-            <div class="card">
-                <div class="card-info">
-                    <h3>👩‍🏫 Aulas</h3>
-                    <p>Plano da Turma B</p>
+            <!-- Autocuidado Rápido (com Auto-save) -->
+            <div>
+                <div class="section-title">Autocuidado Rápido</div>
+                <div class="card">
+                    <div class="check-item">
+                        <input type="checkbox" id="agua" onchange="saveCheck('agua')">
+                        <label for="agua">💧 Água / Voz</label>
+                    </div>
+                    <div class="check-item">
+                        <input type="checkbox" id="olhos" onchange="saveCheck('olhos')">
+                        <label for="olhos">👁️ Pausa Ocular (20s)</label>
+                    </div>
+                    <div class="check-item">
+                        <input type="checkbox" id="maxilar" onchange="saveCheck('maxilar')">
+                        <label for="maxilar">🧘 Postura / Alongamento Maxilar</label>
+                    </div>
                 </div>
-                <button class="btn-action">Ver Plano</button>
             </div>
 
+        </div>
+
+        <!-- ABA 2: PESQUISA -->
+        <div id="tab-pesquisa" class="tab-content">
+            <div class="section-title">Central de Pesquisa Literária</div>
             <div class="card">
-                <div class="card-info">
-                    <h3>💰 Finanças</h3>
-                    <p>Saldo da semana</p>
-                </div>
-                <button class="btn-action">+ Lançar</button>
+                <p class="placeholder-text">📚 Em breve: Gerenciador de leituras, artigos e fichamentos de pesquisa.</p>
             </div>
         </div>
 
-        <!-- Autocuidado Rápido -->
-        <div>
-            <div class="section-title">Autocuidado Rápido</div>
-            <div class="checklist">
-                <div class="check-item">
-                    <input type="checkbox" id="agua">
-                    <label for="agua">💧 Água / Voz</label>
-                </div>
-                <div class="check-item">
-                    <input type="checkbox" id="olhos">
-                    <label for="olhos">👁️ Pausa para os Olhos (20s)</label>
-                </div>
-                <div class="check-item">
-                    <input type="checkbox" id="maxilar">
-                    <label for="maxilar">🧘 Postura / Alongamento Maxilar</label>
-                </div>
+        <!-- ABA 3: AULAS -->
+        <div id="tab-aulas" class="tab-content">
+            <div class="section-title">Gestão de Aulas & Turmas</div>
+            <div class="card">
+                <p class="placeholder-text">👩‍🏫 Em breve: Planos de aula, turmas de idiomas e fila de correções.</p>
             </div>
         </div>
+
+        <!-- ABA 4: FINANÇAS -->
+        <div id="tab-financas" class="tab-content">
+            <div class="section-title">Controle Financeiro</div>
+            <div class="card">
+                <p class="placeholder-text">💰 Em breve: Lançamento rápido de gastos e orçamento mensal.</p>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- LÓGICA EM JAVASCRIPT (Navegação + Salvamento) -->
+    <script>
+        // 1. Troca de Abas
+        function switchTab(tabName) {
+            // Esconde todas as abas
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            // Remove estado ativo dos botões
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Ativa a aba e o botão selecionado
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // 2. Definir e Salvar Energia
+        function setEnergy(level) {
+            document.querySelectorAll('.btn-energy').forEach(btn => btn.classList.remove('selected'));
+            event.target.classList.add('selected');
+            localStorage.setItem('app_energy', level);
+        }
+
+        // 3. Salvar Checkboxes do Autocuidado
+        function saveCheck(id) {
+            const isChecked = document.getElementById(id).checked;
+            localStorage.setItem(`app_check_${id}`, isChecked);
+        }
+
+        // 4. Carregar Dados Salvos ao Abrir o App
+        window.onload = function() {
+            // Carregar Autocuidado
+            ['agua', 'olhos', 'maxilar'].forEach(id => {
+                const saved = localStorage.getItem(`app_check_${id}`);
+                if (saved !== null) {
+                    document.getElementById(id).checked = (saved === 'true');
+                }
+            });
+
+            // Carregar Energia Salva
+            const savedEnergy = localStorage.getItem('app_energy');
+            if (savedEnergy) {
+                const buttons = document.querySelectorAll('.btn-energy');
+                if (savedEnergy === 'alta') buttons[0].classList.add('selected');
+                if (savedEnergy === 'media') buttons[1].classList.add('selected');
+                if (savedEnergy === 'baixa') buttons[2].classList.add('selected');
+            }
+        };
+    </script>
+</body>
+</html>
 
     </div>
 
