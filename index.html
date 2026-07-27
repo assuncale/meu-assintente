@@ -13,7 +13,7 @@
             --border: #e2e8f0;
             --accent: #475569;
             --accent-active: #1e293b;
-            --highlight: #e2e8f0;
+            --highlight: #f1f5f9;
         }
 
         body {
@@ -28,13 +28,13 @@
 
         .container {
             width: 100%;
-            max-width: 500px;
+            max-width: 550px;
             display: flex;
             flex-direction: column;
             gap: 16px;
         }
 
-        /* Menu de Abas (Navegação) */
+        /* Menu de Abas */
         .nav-tabs {
             display: flex;
             background: var(--card-bg);
@@ -73,7 +73,7 @@
             display: flex;
         }
 
-        /* Estilos dos Cards e Seções */
+        /* Títulos e Cards */
         .section-title {
             font-size: 12px;
             color: var(--text-muted);
@@ -90,7 +90,31 @@
             border: 1px solid var(--border);
         }
 
-        /* Botões de Energia */
+        /* Inputs e Botões */
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 14px;
+            margin-top: 6px;
+            font-family: inherit;
+        }
+
+        button.btn-main {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 10px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            margin-top: 8px;
+            width: 100%;
+        }
+
+        /* Ritmo do Dia */
         .energy-buttons {
             display: flex;
             gap: 8px;
@@ -99,14 +123,12 @@
 
         .btn-energy {
             flex: 1;
-            padding: 10px;
+            padding: 8px;
             border: 1px solid var(--border);
             background: var(--bg);
             border-radius: 8px;
             cursor: pointer;
             font-size: 13px;
-            color: var(--text);
-            transition: 0.2s;
         }
 
         .btn-energy.selected {
@@ -115,18 +137,16 @@
             font-weight: bold;
         }
 
-        /* Checklist Autocuidado */
+        /* Checklists */
         .check-item {
             display: flex;
             align-items: center;
-            gap: 12px;
-            padding: 10px 0;
+            gap: 10px;
+            padding: 8px 0;
             border-bottom: 1px solid var(--bg);
         }
 
-        .check-item:last-child {
-            border-bottom: none;
-        }
+        .check-item:last-child { border-bottom: none; }
 
         .check-item input[type="checkbox"] {
             width: 18px;
@@ -139,10 +159,12 @@
             cursor: pointer;
         }
 
-        .placeholder-text {
-            color: var(--text-muted);
-            font-size: 14px;
-            line-height: 1.5;
+        .agenda-link {
+            display: inline-block;
+            margin-top: 8px;
+            font-size: 13px;
+            color: #2563eb;
+            text-decoration: none;
         }
     </style>
 </head>
@@ -158,12 +180,12 @@
             <button class="tab-btn" onclick="switchTab('financas')">Finanças</button>
         </nav>
 
-        <!-- ABA 1: HOME (Painel Principal) -->
+        <!-- ==================== ABA HOME ==================== -->
         <div id="tab-home" class="tab-content active">
             
-            <!-- Ritmo do Dia -->
+            <!-- 1. Ritmo de Hoje -->
             <div class="card">
-                <div class="section-title">Ritmo de Hoje</div>
+                <div class="section-title">1. Ritmo de Hoje (Sem sobrecarga)</div>
                 <div class="energy-buttons">
                     <button class="btn-energy" onclick="setEnergy('alta')">🟢 Alta</button>
                     <button class="btn-energy" onclick="setEnergy('media')">🟡 Média</button>
@@ -171,95 +193,142 @@
                 </div>
             </div>
 
-            <!-- Autocuidado Rápido (com Auto-save) -->
-            <div>
-                <div class="section-title">Autocuidado Rápido</div>
-                <div class="card">
-                    <div class="check-item">
-                        <input type="checkbox" id="agua" onchange="saveCheck('agua')">
-                        <label for="agua">💧 Água / Voz</label>
-                    </div>
-                    <div class="check-item">
-                        <input type="checkbox" id="olhos" onchange="saveCheck('olhos')">
-                        <label for="olhos">👁️ Pausa Ocular (20s)</label>
-                    </div>
-                    <div class="check-item">
-                        <input type="checkbox" id="maxilar" onchange="saveCheck('maxilar')">
-                        <label for="maxilar">🧘 Postura / Alongamento Maxilar</label>
-                    </div>
+            <!-- 2. Braindump -->
+            <div class="card">
+                <div class="section-title">2. Braindump & Foco com Propósito</div>
+                <label style="font-size: 13px; color: var(--text-muted);">Tire da cabeça. O que precisa ser feito?</label>
+                <input type="text" id="task-input" placeholder="Ex: Escrever introdução do artigo">
+                
+                <label style="font-size: 13px; color: var(--text-muted); margin-top: 8px; display: block;">Por que isso é importante? (Sua Motivação)</label>
+                <input type="text" id="why-input" placeholder="Ex: Para enviar ao orientador e ter o fim de semana livre">
+                
+                <button class="btn-main" onclick="addFocusTask()">Definir como Foco do Dia 🎯</button>
+                <a href="https://calendar.google.com" target="_blank" class="agenda-link">📅 Abrir Google Agenda para Bloquear Horário</a>
+            </div>
+
+            <!-- Exibição do Foco Atual -->
+            <div id="focus-card" class="card" style="display: none; border-left: 4px solid var(--accent);">
+                <div class="section-title">🎯 Foco Prioritário do Dia</div>
+                <h3 id="display-task" style="margin: 4px 0; font-size: 16px;"></h3>
+                <p id="display-why" style="margin: 4px 0; font-size: 13px; color: var(--text-muted); font-style: italic;"></p>
+                <button class="btn-main" onclick="clearFocusTask()" style="background: #10b981; margin-top: 10px;">Concluído! 🎉</button>
+            </div>
+
+            <!-- 3. Ritual de Início de Trabalho -->
+            <div class="card">
+                <div class="section-title">3. Ritual de Início de Trabalho (Warm-up)</div>
+                <div class="check-item">
+                    <input type="checkbox" id="warm1" onchange="saveCheck('warm1')">
+                    <label for="warm1">☕ Água/Chá na mesa & postura ajustada</label>
+                </div>
+                <div class="check-item">
+                    <input type="checkbox" id="warm2" onchange="saveCheck('warm2')">
+                    <label for="warm2">🧹 Fechar abas desnecessárias da tela</label>
+                </div>
+                <div class="check-item">
+                    <input type="checkbox" id="warm3" onchange="saveCheck('warm3')">
+                    <label for="warm3">⏱️ Timer de 25min pronto para arrancar</label>
                 </div>
             </div>
 
+            <!-- 4. Autocuidado Integrado -->
+            <div class="card">
+                <div class="section-title">4. Autocuidado Vocal & Físico</div>
+                <div class="check-item">
+                    <input type="checkbox" id="agua" onchange="saveCheck('agua')">
+                    <label for="agua">💧 Hidratação Vocal / Exercício "MMMM"[cite: 1]</label>
+                </div>
+                <div class="check-item">
+                    <input type="checkbox" id="olhos" onchange="saveCheck('olhos')">
+                    <label for="olhos">👁️ Pausa Ocular 20-20-20[cite: 1]</label>
+                </div>
+                <div class="check-item">
+                    <input type="checkbox" id="maxilar" onchange="saveCheck('maxilar')">
+                    <label for="maxilar">🧘 Alongamento do Maxilar / Pescoço[cite: 1]</label>
+                </div>
+            </div>
+
+            <!-- 5. Reflexão do Dia -->
+            <div class="card">
+                <div class="section-title">5. Reflexão do Dia (Check-out)</div>
+                <label style="font-size: 13px; color: var(--text-muted);">O que deu certo hoje e o que pode ajustar amanhã?</label>
+                <textarea id="reflection-input" rows="3" placeholder="Sua reflexão sem julgamentos..." onchange="saveReflection()"></textarea>
+            </div>
+
         </div>
 
-        <!-- ABA 2: PESQUISA -->
-        <div id="tab-pesquisa" class="tab-content">
-            <div class="section-title">Central de Pesquisa Literária</div>
-            <div class="card">
-                <p class="placeholder-text">📚 Em breve: Gerenciador de leituras, artigos e fichamentos de pesquisa.</p>
-            </div>
-        </div>
-
-        <!-- ABA 3: AULAS -->
-        <div id="tab-aulas" class="tab-content">
-            <div class="section-title">Gestão de Aulas & Turmas</div>
-            <div class="card">
-                <p class="placeholder-text">👩‍🏫 Em breve: Planos de aula, turmas de idiomas e fila de correções.</p>
-            </div>
-        </div>
-
-        <!-- ABA 4: FINANÇAS -->
-        <div id="tab-financas" class="tab-content">
-            <div class="section-title">Controle Financeiro</div>
-            <div class="card">
-                <p class="placeholder-text">💰 Em breve: Lançamento rápido de gastos e orçamento mensal.</p>
-            </div>
-        </div>
+        <!-- OUTRAS ABAS (Placeholder) -->
+        <div id="tab-pesquisa" class="tab-content"><div class="card">📚 Central de Pesquisa Literária</div></div>
+        <div id="tab-aulas" class="tab-content"><div class="card">👩‍🏫 Gestão de Aulas & Turmas</div></div>
+        <div id="tab-financas" class="tab-content"><div class="card">💰 Controle Financeiro</div></div>
 
     </div>
 
-    <!-- LÓGICA EM JAVASCRIPT (Navegação + Salvamento) -->
+    <!-- LÓGICA E AUTO-SAVE -->
     <script>
-        // 1. Troca de Abas
         function switchTab(tabName) {
-            // Esconde todas as abas
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            // Remove estado ativo dos botões
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-
-            // Ativa a aba e o botão selecionado
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             document.getElementById(`tab-${tabName}`).classList.add('active');
             event.target.classList.add('active');
         }
 
-        // 2. Definir e Salvar Energia
         function setEnergy(level) {
             document.querySelectorAll('.btn-energy').forEach(btn => btn.classList.remove('selected'));
             event.target.classList.add('selected');
             localStorage.setItem('app_energy', level);
         }
 
-        // 3. Salvar Checkboxes do Autocuidado
         function saveCheck(id) {
             const isChecked = document.getElementById(id).checked;
             localStorage.setItem(`app_check_${id}`, isChecked);
         }
 
-        // 4. Carregar Dados Salvos ao Abrir o App
+        function addFocusTask() {
+            const task = document.getElementById('task-input').value;
+            const why = document.getElementById('why-input').value;
+            if(!task) return;
+
+            localStorage.setItem('app_focus_task', task);
+            localStorage.setItem('app_focus_why', why);
+            renderFocusTask();
+        }
+
+        function renderFocusTask() {
+            const task = localStorage.getItem('app_focus_task');
+            const why = localStorage.getItem('app_focus_why');
+            const card = document.getElementById('focus-card');
+
+            if(task) {
+                document.getElementById('display-task').innerText = task;
+                document.getElementById('display-why').innerText = why ? `Por quê: ${why}` : '';
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        }
+
+        function clearFocusTask() {
+            localStorage.removeItem('app_focus_task');
+            localStorage.removeItem('app_focus_why');
+            document.getElementById('task-input').value = '';
+            document.getElementById('why-input').value = '';
+            renderFocusTask();
+        }
+
+        function saveReflection() {
+            const text = document.getElementById('reflection-input').value;
+            localStorage.setItem('app_reflection', text);
+        }
+
         window.onload = function() {
-            // Carregar Autocuidado
-            ['agua', 'olhos', 'maxilar'].forEach(id => {
+            // Restaurar Checkboxes
+            ['agua', 'olhos', 'maxilar', 'warm1', 'warm2', 'warm3'].forEach(id => {
                 const saved = localStorage.getItem(`app_check_${id}`);
-                if (saved !== null) {
-                    document.getElementById(id).checked = (saved === 'true');
-                }
+                if (saved !== null) document.getElementById(id).checked = (saved === 'true');
             });
 
-            // Carregar Energia Salva
+            // Restaurar Energia
             const savedEnergy = localStorage.getItem('app_energy');
             if (savedEnergy) {
                 const buttons = document.querySelectorAll('.btn-energy');
@@ -267,12 +336,13 @@
                 if (savedEnergy === 'media') buttons[1].classList.add('selected');
                 if (savedEnergy === 'baixa') buttons[2].classList.add('selected');
             }
+
+            // Restaurar Reflexão e Foco
+            const savedReflection = localStorage.getItem('app_reflection');
+            if(savedReflection) document.getElementById('reflection-input').value = savedReflection;
+            
+            renderFocusTask();
         };
     </script>
-</body>
-</html>
-
-    </div>
-
 </body>
 </html>
