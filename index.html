@@ -13,6 +13,7 @@
             --border: #e2e8f0;
             --accent: #334155;
             --highlight: #f1f5f9;
+            --theme-color: #334155;
         }
 
         body {
@@ -23,6 +24,20 @@
             padding: 32px 48px;
             display: flex;
             justify-content: center;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        /* Camada para o Plano de Fundo Personalizado */
+        #bg-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            z-index: -1;
+            pointer-events: none;
+            opacity: 0.3;
         }
 
         .container {
@@ -32,9 +47,10 @@
             flex-direction: column;
             gap: 28px;
             position: relative;
+            z-index: 1;
         }
 
-        /* Menu de Navegação Superior */
+        /* Menu de Navegação */
         .nav-tabs {
             display: flex;
             gap: 12px;
@@ -55,24 +71,22 @@
         }
 
         .tab-btn.active {
-            background: var(--accent);
+            background: var(--theme-color);
             color: white;
         }
 
-        .tab-content {
-            display: none;
-        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
 
-        .tab-content.active {
-            display: block;
-        }
-
-        /* Cards */
+        /* Cards com opacidade leve para o fundo aparecer */
         .card {
-            background: var(--card-bg);
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(4px);
             padding: 24px;
             border-radius: 12px;
             border: 1px solid var(--border);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+            transition: border-color 0.3s;
         }
 
         .section-title {
@@ -84,10 +98,18 @@
             font-weight: 600;
         }
 
-        /* Passo 1: Ritmo */
+        /* Passo 1: Ritmo com Data */
         .welcome-card {
             text-align: center;
             padding: 32px 24px;
+        }
+
+        .date-display {
+            font-size: 13px;
+            text-transform: capitalize;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            font-weight: 500;
         }
 
         .welcome-card h2 {
@@ -99,6 +121,7 @@
         .energy-buttons {
             display: inline-flex;
             gap: 12px;
+            margin-bottom: 16px;
         }
 
         .btn-energy {
@@ -113,9 +136,9 @@
         }
 
         .btn-energy.selected {
-            background: var(--accent);
-            color: white;
-            border-color: var(--accent);
+            border-color: var(--theme-color);
+            background: var(--highlight);
+            font-weight: bold;
         }
 
         /* Layout Paisagem */
@@ -126,8 +149,7 @@
             margin-top: 8px;
         }
 
-        /* Inputs e Botões */
-        input[type="text"], textarea {
+        input[type="text"], textarea, input[type="file"] {
             width: 100%;
             padding: 12px;
             border: 1px solid var(--border);
@@ -136,17 +158,11 @@
             font-size: 14px;
             margin-bottom: 12px;
             font-family: inherit;
-            background: var(--bg);
-        }
-
-        input[type="text"]:focus, textarea:focus {
-            outline: none;
-            border-color: var(--accent);
-            background: #fff;
+            background: rgba(255, 255, 255, 0.8);
         }
 
         button.btn-main {
-            background: var(--accent);
+            background: var(--theme-color);
             color: white;
             border: none;
             padding: 12px;
@@ -154,6 +170,7 @@
             cursor: pointer;
             font-size: 14px;
             width: 100%;
+            transition: background-color 0.3s;
         }
 
         .check-item {
@@ -170,27 +187,22 @@
             width: 18px;
             height: 18px;
             cursor: pointer;
-        }
-
-        .check-item label {
-            font-size: 14px;
-            cursor: pointer;
+            accent-color: var(--theme-color);
         }
 
         .agenda-link {
             display: inline-block;
             margin-top: 8px;
             font-size: 13px;
-            color: var(--accent);
+            color: var(--theme-color);
             text-decoration: underline;
         }
 
-        /* Botão Flutuante de Reflexão */
         .float-reflection-btn {
             position: fixed;
             bottom: 32px;
             right: 48px;
-            background: var(--accent);
+            background: var(--theme-color);
             color: white;
             border: none;
             padding: 12px 20px;
@@ -199,13 +211,9 @@
             font-size: 14px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
             transition: all 0.2s;
+            z-index: 10;
         }
 
-        .float-reflection-btn:hover {
-            transform: translateY(-2px);
-        }
-
-        /* Modal / Painel de Reflexão */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -232,11 +240,33 @@
             text-align: center;
             padding: 24px;
             font-size: 18px;
-            color: var(--accent);
+            color: var(--theme-color);
+        }
+
+        /* TEMAS DINÂMICOS */
+        body.theme-alta {
+            --theme-color: #d97706; /* Amarelo/Dourado animado */
+            --highlight: #fef3c7;
+            --border: #fde68a;
+        }
+
+        body.theme-media {
+            --theme-color: #7c3aed; /* Lavanda */
+            --highlight: #f3e8ff;
+            --border: #ddd6fe;
+        }
+
+        body.theme-baixa {
+            --theme-color: #0284c7; /* Azul Sereno */
+            --highlight: #e0f2fe;
+            --border: #bae6fd;
         }
     </style>
 </head>
 <body>
+
+    <!-- Overlay do Fundo Personalizado -->
+    <div id="bg-overlay"></div>
 
     <div class="container">
         
@@ -252,14 +282,16 @@
         <!-- ABA HOME -->
         <div id="tab-home" class="tab-content active">
             
-            <!-- Check-in de Energia -->
+            <!-- Check-in de Ritmo + Data -->
             <div class="card welcome-card">
+                <div id="current-date" class="date-display"></div>
                 <h2>Como está seu ritmo hoje?</h2>
                 <div class="energy-buttons">
-                    <button class="btn-energy" onclick="setEnergy('alta')">Alta</button>
-                    <button class="btn-energy" onclick="setEnergy('media')">Média</button>
-                    <button class="btn-energy" onclick="setEnergy('baixa')">Baixa</button>
+                    <button class="btn-energy" onclick="selectEnergy('alta')">Alta</button>
+                    <button class="btn-energy" onclick="selectEnergy('media')">Média</button>
+                    <button class="btn-energy" onclick="selectEnergy('baixa')">Baixa</button>
                 </div>
+                <button class="btn-main" style="max-width: 200px; margin: 0 auto;" onclick="submitEnergy()">Confirmar Ritmo</button>
             </div>
 
             <div class="landscape-grid">
@@ -274,7 +306,7 @@
                         <a href="https://calendar.google.com" target="_blank" class="agenda-link">Google Agenda</a>
                     </div>
 
-                    <div id="focus-card" class="card" style="display: none; border-left: 4px solid var(--accent);">
+                    <div id="focus-card" class="card" style="display: none; border-left: 4px solid var(--theme-color);">
                         <div class="section-title">Foco Atual</div>
                         <h3 id="display-task" style="margin: 0 0 8px 0; font-size: 16px; font-weight: 500;"></h3>
                         <p id="display-why" style="margin: 0 0 16px 0; font-size: 13px; color: var(--text-muted); font-style: italic;"></p>
@@ -282,20 +314,16 @@
                     </div>
                 </div>
 
-                <!-- Coluna Direita: Ritual & Autocuidado (Dinâmicos) -->
+                <!-- Coluna Direita: Ritual & Autocuidado -->
                 <div style="display: flex; flex-direction: column; gap: 24px;">
                     <div class="card">
                         <div class="section-title">Ritual Matinal</div>
-                        <div id="ritual-list">
-                            <!-- Gerado dinamicamente das configurações -->
-                        </div>
+                        <div id="ritual-list"></div>
                     </div>
 
                     <div class="card">
                         <div class="section-title">Autocuidado</div>
-                        <div id="care-list">
-                            <!-- Gerado dinamicamente das configurações -->
-                        </div>
+                        <div id="care-list"></div>
                     </div>
                 </div>
 
@@ -306,15 +334,27 @@
         <!-- ABA CONFIGURAÇÕES -->
         <div id="tab-config" class="tab-content">
             <div class="card">
-                <div class="section-title">Personalizar Itens</div>
+                <div class="section-title">Aparência & Plano de Fundo</div>
                 
-                <label style="font-size: 13px; color: var(--text-muted); display: block; margin-top: 12px;">Itens do Ritual Matinal (um por linha):</label>
-                <textarea id="config-ritual" rows="5" placeholder="Água/Chá na mesa&#10;Ambiente de tela limpo"></textarea>
+                <label style="font-size: 13px; color: var(--text-muted); display: block;">Escolher imagem de fundo do computador:</label>
+                <input type="file" id="bg-file-input" accept="image/*" onchange="handleBgUpload(event)">
 
-                <label style="font-size: 13px; color: var(--text-muted); display: block; margin-top: 12px;">Itens de Autocuidado (um por linha):</label>
-                <textarea id="config-care" rows="5" placeholder="Hidratação vocal&#10;Pausa para os olhos&#10;Alongamento de maxilar/pescoço"></textarea>
+                <label style="font-size: 13px; color: var(--text-muted); display: block; margin-top: 8px;">Opacidade do Plano de Fundo:</label>
+                <input type="range" id="bg-opacity" min="0" max="1" step="0.05" value="0.3" oninput="updateOpacity(this.value)" style="width: 100%;">
 
-                <button class="btn-main" onclick="saveSettings()" style="margin-top: 12px;">Salvar Configurações</button>
+                <button class="btn-main" style="background: var(--border); color: var(--text); margin-top: 8px;" onclick="removeBg()">Remover Imagem de Fundo</button>
+            </div>
+
+            <div class="card" style="margin-top: 20px;">
+                <div class="section-title">Personalizar Listas</div>
+                
+                <label style="font-size: 13px; color: var(--text-muted); display: block;">Ritual Matinal (um por linha):</label>
+                <textarea id="config-ritual" rows="4"></textarea>
+
+                <label style="font-size: 13px; color: var(--text-muted); display: block; margin-top: 8px;">Autocuidado (um por linha):</label>
+                <textarea id="config-care" rows="4"></textarea>
+
+                <button class="btn-main" onclick="saveSettings()">Salvar Configurações</button>
             </div>
         </div>
 
@@ -323,10 +363,9 @@
         <div id="tab-aulas" class="tab-content"><div class="card">Gestão de Aulas & Turmas</div></div>
         <div id="tab-financas" class="tab-content"><div class="card">Controle Financeiro</div></div>
 
-        <!-- Botão Flutuante de Reflexão -->
+        <!-- Botão Flutuante & Modal de Reflexão -->
         <button class="float-reflection-btn" onclick="toggleModal(true)">Reflexão do Dia</button>
 
-        <!-- Modal de Reflexão -->
         <div id="reflection-modal" class="modal-overlay">
             <div class="modal-card">
                 <div class="section-title">Reflexão do Dia</div>
@@ -339,7 +378,7 @@
                     <textarea id="ref-improve" rows="3" placeholder="Sua resposta..."></textarea>
 
                     <div style="display: flex; gap: 8px; margin-top: 12px;">
-                        <button class="btn-main" style="background: var(--border); color: var(--text);" onclick="toggleModal(false)">Voltar</button>
+                        <button class="btn-main" style="background: #e2e8f0; color: #334155;" onclick="toggleModal(false)">Voltar</button>
                         <button class="btn-main" onclick="finishDay()">Finalizar o Dia</button>
                     </div>
                 </div>
@@ -356,9 +395,9 @@
 
     <!-- LÓGICA -->
     <script>
-        // Itens Padrão caso o usuário ainda não tenha configurado
         const defaultRitual = ["Água/Chá na mesa", "Ambiente de tela limpo", "Bloco de tempo definido"];
         const defaultCare = ["Hidratação vocal", "Pausa para os olhos", "Alongamento de maxilar / pescoço"];
+        let tempEnergy = '';
 
         function switchTab(tabName) {
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
@@ -367,17 +406,52 @@
             event.target.classList.add('active');
         }
 
-        function setEnergy(level) {
+        // Seleção e Submissão do Ritmo com Troca de Cores
+        function selectEnergy(level) {
+            tempEnergy = level;
             document.querySelectorAll('.btn-energy').forEach(btn => btn.classList.remove('selected'));
             event.target.classList.add('selected');
-            localStorage.setItem('app_energy', level);
         }
 
+        function submitEnergy() {
+            if(!tempEnergy) return;
+            localStorage.setItem('app_energy', tempEnergy);
+            applyTheme(tempEnergy);
+        }
+
+        function applyTheme(level) {
+            document.body.classList.remove('theme-alta', 'theme-media', 'theme-baixa');
+            if(level) document.body.classList.add(`theme-${level}`);
+        }
+
+        // Upload e Opacidade da Imagem de Fundo
+        function handleBgUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const bgData = evt.target.result;
+                localStorage.setItem('app_bg_image', bgData);
+                document.getElementById('bg-overlay').style.backgroundImage = `url(${bgData})`;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function updateOpacity(val) {
+            localStorage.setItem('app_bg_opacity', val);
+            document.getElementById('bg-overlay').style.opacity = val;
+        }
+
+        function removeBg() {
+            localStorage.removeItem('app_bg_image');
+            document.getElementById('bg-overlay').style.backgroundImage = 'none';
+        }
+
+        // Funções de Foco e Checklists
         function addFocusTask() {
             const task = document.getElementById('task-input').value;
             const why = document.getElementById('why-input').value;
             if(!task) return;
-
             localStorage.setItem('app_focus_task', task);
             localStorage.setItem('app_focus_why', why);
             renderFocusTask();
@@ -387,14 +461,11 @@
             const task = localStorage.getItem('app_focus_task');
             const why = localStorage.getItem('app_focus_why');
             const card = document.getElementById('focus-card');
-
             if(task) {
                 document.getElementById('display-task').innerText = task;
                 document.getElementById('display-why').innerText = why ? `Por quê: ${why}` : '';
                 card.style.display = 'block';
-            } else {
-                card.style.display = 'none';
-            }
+            } else { card.style.display = 'none'; }
         }
 
         function clearFocusTask() {
@@ -405,7 +476,6 @@
             renderFocusTask();
         }
 
-        // Renderizar listas customizadas de Ritual e Autocuidado
         function renderCustomLists() {
             const ritualData = JSON.parse(localStorage.getItem('app_custom_ritual')) || defaultRitual;
             const careData = JSON.parse(localStorage.getItem('app_custom_care')) || defaultCare;
@@ -415,11 +485,7 @@
             ritualData.forEach((item, idx) => {
                 const id = `ritual_${idx}`;
                 const checked = localStorage.getItem(`app_check_${id}`) === 'true';
-                ritualContainer.innerHTML += `
-                    <div class="check-item">
-                        <input type="checkbox" id="${id}" ${checked ? 'checked' : ''} onchange="saveCheck('${id}')">
-                        <label for="${id}">${item}</label>
-                    </div>`;
+                ritualContainer.innerHTML += `<div class="check-item"><input type="checkbox" id="${id}" ${checked ? 'checked' : ''} onchange="saveCheck('${id}')"><label for="${id}">${item}</label></div>`;
             });
 
             const careContainer = document.getElementById('care-list');
@@ -427,36 +493,24 @@
             careData.forEach((item, idx) => {
                 const id = `care_${idx}`;
                 const checked = localStorage.getItem(`app_check_${id}`) === 'true';
-                careContainer.innerHTML += `
-                    <div class="check-item">
-                        <input type="checkbox" id="${id}" ${checked ? 'checked' : ''} onchange="saveCheck('${id}')">
-                        <label for="${id}">${item}</label>
-                    </div>`;
+                careContainer.innerHTML += `<div class="check-item"><input type="checkbox" id="${id}" ${checked ? 'checked' : ''} onchange="saveCheck('${id}')"><label for="${id}">${item}</label></div>`;
             });
         }
 
         function saveCheck(id) {
-            const isChecked = document.getElementById(id).checked;
-            localStorage.setItem(`app_check_${id}`, isChecked);
+            localStorage.setItem(`app_check_${id}`, document.getElementById(id).checked);
         }
 
-        // Configurações
         function saveSettings() {
-            const ritualText = document.getElementById('config-ritual').value;
-            const careText = document.getElementById('config-care').value;
-
-            const ritualArray = ritualText.split('\n').filter(i => i.trim() !== '');
-            const careArray = careText.split('\n').filter(i => i.trim() !== '');
-
+            const ritualArray = document.getElementById('config-ritual').value.split('\n').filter(i => i.trim() !== '');
+            const careArray = document.getElementById('config-care').value.split('\n').filter(i => i.trim() !== '');
             localStorage.setItem('app_custom_ritual', JSON.stringify(ritualArray));
             localStorage.setItem('app_custom_care', JSON.stringify(careArray));
-
             renderCustomLists();
             alert('Configurações salvas!');
             switchTab('home');
         }
 
-        // Modal de Reflexão
         function toggleModal(show) {
             document.getElementById('reflection-modal').style.display = show ? 'flex' : 'none';
             if(show) {
@@ -466,38 +520,44 @@
         }
 
         function finishDay() {
-            const good = document.getElementById('ref-good').value;
-            const improve = document.getElementById('ref-improve').value;
-
-            localStorage.setItem('app_ref_good', good);
-            localStorage.setItem('app_ref_improve', improve);
-
+            localStorage.setItem('app_ref_good', document.getElementById('ref-good').value);
+            localStorage.setItem('app_ref_improve', document.getElementById('ref-improve').value);
             document.getElementById('modal-form').style.display = 'none';
             document.getElementById('goodbye-msg').style.display = 'block';
         }
 
         window.onload = function() {
-            // Restaurar Configurações nos Textareas
+            // Exibir Data Atual
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('current-date').innerText = new Date().toLocaleDateString('pt-BR', options);
+
+            // Carregar Imagem e Opacidade de Fundo
+            const savedBg = localStorage.getItem('app_bg_image');
+            if(savedBg) document.getElementById('bg-overlay').style.backgroundImage = `url(${savedBg})`;
+            const savedOpacity = localStorage.getItem('app_bg_opacity') || '0.3';
+            document.getElementById('bg-overlay').style.opacity = savedOpacity;
+            document.getElementById('bg-opacity').value = savedOpacity;
+
+            // Carregar Configurações de Texto
             const savedRitual = JSON.parse(localStorage.getItem('app_custom_ritual')) || defaultRitual;
             const savedCare = JSON.parse(localStorage.getItem('app_custom_care')) || defaultCare;
             document.getElementById('config-ritual').value = savedRitual.join('\n');
             document.getElementById('config-care').value = savedCare.join('\n');
-
             renderCustomLists();
 
-            // Restaurar Energia e Foco
+            // Carregar Tema de Energia Salvo
             const savedEnergy = localStorage.getItem('app_energy');
             if (savedEnergy) {
+                tempEnergy = savedEnergy;
+                applyTheme(savedEnergy);
                 const buttons = document.querySelectorAll('.btn-energy');
                 if (savedEnergy === 'alta') buttons[0].classList.add('selected');
                 if (savedEnergy === 'media') buttons[1].classList.add('selected');
                 if (savedEnergy === 'baixa') buttons[2].classList.add('selected');
             }
 
-            // Restaurar Reflexões
             document.getElementById('ref-good').value = localStorage.getItem('app_ref_good') || '';
             document.getElementById('ref-improve').value = localStorage.getItem('app_ref_improve') || '';
-
             renderFocusTask();
         };
     </script>
