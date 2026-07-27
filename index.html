@@ -28,16 +28,11 @@
             position: relative;
         }
 
-        /* Camada para o Plano de Fundo Personalizado */
         #bg-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            z-index: -1;
-            pointer-events: none;
-            opacity: 0.3;
+            background-size: cover; background-position: center; background-repeat: no-repeat;
+            z-index: -1; pointer-events: none; opacity: 0.3;
         }
 
         .container {
@@ -50,7 +45,6 @@
             z-index: 1;
         }
 
-        /* Menu de Navegação */
         .nav-tabs {
             display: flex;
             gap: 12px;
@@ -60,217 +54,98 @@
 
         .tab-btn {
             padding: 8px 16px;
-            border: none;
-            background: transparent;
-            color: var(--text-muted);
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
+            border: none; background: transparent;
+            color: var(--text-muted); border-radius: 6px;
+            cursor: pointer; font-size: 14px; font-weight: 500;
             transition: all 0.2s;
         }
 
-        .tab-btn.active {
-            background: var(--theme-color);
-            color: white;
-        }
+        .tab-btn.active { background: var(--theme-color); color: white; }
 
         .tab-content { display: none; }
         .tab-content.active { display: block; }
 
-        /* Cards com opacidade leve para o fundo aparecer */
         .card {
             background: rgba(255, 255, 255, 0.92);
             backdrop-filter: blur(4px);
-            padding: 24px;
-            border-radius: 12px;
+            padding: 24px; border-radius: 12px;
             border: 1px solid var(--border);
             box-shadow: 0 2px 8px rgba(0,0,0,0.02);
-            transition: border-color 0.3s;
+            margin-bottom: 20px;
         }
 
         .section-title {
-            font-size: 13px;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            margin-bottom: 16px;
-            font-weight: 600;
+            font-size: 13px; color: var(--text-muted);
+            text-transform: uppercase; letter-spacing: 0.8px;
+            margin-bottom: 16px; font-weight: 600;
         }
 
-        /* Passo 1: Ritmo com Data */
-        .welcome-card {
-            text-align: center;
-            padding: 32px 24px;
-        }
-
-        .date-display {
-            font-size: 13px;
-            text-transform: capitalize;
-            color: var(--text-muted);
-            margin-bottom: 8px;
-            font-weight: 500;
-        }
-
-        .welcome-card h2 {
-            margin: 0 0 18px 0;
-            font-size: 20px;
-            font-weight: 400;
-        }
-
-        .energy-buttons {
-            display: inline-flex;
-            gap: 12px;
-            margin-bottom: 16px;
-        }
-
-        .btn-energy {
-            padding: 10px 24px;
-            border: 1px solid var(--border);
-            background: var(--bg);
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            color: var(--text);
-            transition: 0.2s;
-        }
-
-        .btn-energy.selected {
-            border-color: var(--theme-color);
-            background: var(--highlight);
-            font-weight: bold;
-        }
-
-        /* Layout Paisagem */
         .landscape-grid {
             display: grid;
             grid-template-columns: 1.2fr 0.8fr;
             gap: 24px;
-            margin-top: 8px;
         }
 
-        input[type="text"], textarea, input[type="file"] {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            box-sizing: border-box;
-            font-size: 14px;
-            margin-bottom: 12px;
-            font-family: inherit;
+        input[type="text"], textarea, select {
+            width: 100%; padding: 12px;
+            border: 1px solid var(--border); border-radius: 8px;
+            box-sizing: border-box; font-size: 14px;
+            margin-bottom: 12px; font-family: inherit;
             background: rgba(255, 255, 255, 0.8);
         }
 
         button.btn-main {
-            background: var(--theme-color);
-            color: white;
-            border: none;
-            padding: 12px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            width: 100%;
+            background: var(--theme-color); color: white;
+            border: none; padding: 12px; border-radius: 8px;
+            cursor: pointer; font-size: 14px; width: 100%;
             transition: background-color 0.3s;
         }
 
-        .check-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 10px 0;
-            border-bottom: 1px solid var(--bg);
+        /* Linha do Tempo e Galeria */
+        .timeline-item {
+            padding: 10px 0; border-bottom: 1px solid var(--border);
+            font-size: 13px; display: flex; justify-content: space-between;
         }
 
-        .check-item:last-child { border-bottom: none; }
-
-        .check-item input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-            cursor: pointer;
-            accent-color: var(--theme-color);
+        .journal-gallery {
+            display: flex; flex-direction: column; gap: 10px;
+            max-height: 250px; overflow-y: auto; margin-top: 10px;
         }
 
-        .agenda-link {
-            display: inline-block;
-            margin-top: 8px;
+        .gallery-card {
+            background: var(--bg); padding: 12px;
+            border-radius: 8px; border: 1px solid var(--border);
             font-size: 13px;
-            color: var(--theme-color);
-            text-decoration: underline;
         }
 
-        .float-reflection-btn {
-            position: fixed;
-            bottom: 32px;
-            right: 48px;
-            background: var(--theme-color);
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 30px;
-            cursor: pointer;
-            font-size: 14px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            transition: all 0.2s;
-            z-index: 10;
+        .gallery-card-date {
+            font-size: 11px; color: var(--text-muted); margin-bottom: 4px;
         }
 
+        /* Modal do Google Docs */
         .modal-overlay {
-            display: none;
-            position: fixed;
+            display: none; position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.4);
-            justify-content: center;
-            align-items: center;
-            z-index: 100;
+            background: rgba(0,0,0,0.4); justify-content: center;
+            align-items: center; z-index: 100;
         }
 
         .modal-card {
-            background: white;
-            padding: 32px;
-            border-radius: 12px;
-            width: 100%;
-            max-width: 500px;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
+            background: white; padding: 32px; border-radius: 12px;
+            width: 100%; max-width: 500px; text-align: center;
         }
 
-        .goodbye-message {
-            display: none;
-            text-align: center;
-            padding: 24px;
-            font-size: 18px;
-            color: var(--theme-color);
-        }
-
-        /* TEMAS DINÂMICOS */
-        body.theme-alta {
-            --theme-color: #d97706; /* Amarelo/Dourado animado */
-            --highlight: #fef3c7;
-            --border: #fde68a;
-        }
-
-        body.theme-media {
-            --theme-color: #7c3aed; /* Lavanda */
-            --highlight: #f3e8ff;
-            --border: #ddd6fe;
-        }
-
-        body.theme-baixa {
-            --theme-color: #0284c7; /* Azul Sereno */
-            --highlight: #e0f2fe;
-            --border: #bae6fd;
-        }
+        body.theme-alta { --theme-color: #d97706; --highlight: #fef3c7; --border: #fde68a; }
+        body.theme-media { --theme-color: #7c3aed; --highlight: #f3e8ff; --border: #ddd6fe; }
+        body.theme-baixa { --theme-color: #0284c7; --highlight: #e0f2fe; --border: #bae6fd; }
     </style>
 </head>
 <body>
 
-    <!-- Overlay do Fundo Personalizado -->
     <div id="bg-overlay"></div>
 
     <div class="container">
         
-        <!-- Navegação -->
         <nav class="nav-tabs">
             <button class="tab-btn active" onclick="switchTab('home')">Home</button>
             <button class="tab-btn" onclick="switchTab('pesquisa')">Pesquisa Literária</button>
@@ -281,12 +156,10 @@
 
         <!-- ABA HOME -->
         <div id="tab-home" class="tab-content active">
-            
-            <!-- Check-in de Ritmo + Data -->
-            <div class="card welcome-card">
-                <div id="current-date" class="date-display"></div>
-                <h2>Como está seu ritmo hoje?</h2>
-                <div class="energy-buttons">
+            <div class="card" style="text-align: center; padding: 32px 24px;">
+                <div id="current-date" style="font-size: 13px; color: var(--text-muted); margin-bottom: 8px; text-transform: capitalize;"></div>
+                <h2 style="margin: 0 0 18px 0; font-size: 20px; font-weight: 400;">Como está seu ritmo hoje?</h2>
+                <div style="display: inline-flex; gap: 12px; margin-bottom: 16px;">
                     <button class="btn-energy" onclick="selectEnergy('alta')">Alta</button>
                     <button class="btn-energy" onclick="selectEnergy('media')">Média</button>
                     <button class="btn-energy" onclick="selectEnergy('baixa')">Baixa</button>
@@ -295,17 +168,14 @@
             </div>
 
             <div class="landscape-grid">
-                
-                <!-- Coluna Esquerda: Braindump & Foco -->
-                <div style="display: flex; flex-direction: column; gap: 24px;">
+                <div>
                     <div class="card">
                         <div class="section-title">Braindump & Foco</div>
                         <input type="text" id="task-input" placeholder="O que precisa ser feito?">
                         <input type="text" id="why-input" placeholder="Por que isso é importante?">
                         <button class="btn-main" onclick="addFocusTask()">Definir Foco</button>
-                        <a href="https://calendar.google.com" target="_blank" class="agenda-link">Google Agenda</a>
+                        <a href="https://calendar.google.com" target="_blank" style="display: inline-block; margin-top: 8px; font-size: 13px; color: var(--theme-color);">Google Agenda</a>
                     </div>
-
                     <div id="focus-card" class="card" style="display: none; border-left: 4px solid var(--theme-color);">
                         <div class="section-title">Foco Atual</div>
                         <h3 id="display-task" style="margin: 0 0 8px 0; font-size: 16px; font-weight: 500;"></h3>
@@ -313,91 +183,130 @@
                         <button class="btn-main" onclick="clearFocusTask()" style="background: #10b981;">Concluído</button>
                     </div>
                 </div>
-
-                <!-- Coluna Direita: Ritual & Autocuidado -->
-                <div style="display: flex; flex-direction: column; gap: 24px;">
+                <div>
                     <div class="card">
                         <div class="section-title">Ritual Matinal</div>
                         <div id="ritual-list"></div>
                     </div>
-
                     <div class="card">
                         <div class="section-title">Autocuidado</div>
                         <div id="care-list"></div>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- ABA PESQUISA LITERÁRIA -->
+        <div id="tab-pesquisa" class="tab-content">
+            
+            <!-- 1. Transição & Ancoragem -->
+            <div class="card">
+                <div class="section-title">Transição para a Escrita</div>
+                <div class="landscape-grid">
+                    <div>
+                        <label style="font-size: 13px; color: var(--text-muted);">O que eu estava fazendo antes?</label>
+                        <input type="text" id="trans-before" placeholder="Ex: Respondendo e-mails, almoçando...">
+                    </div>
+                    <div>
+                        <label style="font-size: 13px; color: var(--text-muted);">Como está minha ansiedade para produzir agora?</label>
+                        <select id="trans-anxiety">
+                            <option value="Tranquila">Tranquila e presente</option>
+                            <option value="Moderada">Moderada (um pouco de dispersão)</option>
+                            <option value="Alta">Alta (resistência para começar)</option>
+                        </select>
+                    </div>
+                </div>
+                <label style="font-size: 13px; color: var(--text-muted); display: block; margin-top: 4px;">Quanto tempo tenho para escrever agora?</label>
+                <input type="text" id="trans-time" placeholder="Ex: 45 minutos, 1 hora e meia...">
+            </div>
+
+            <!-- 2. Linha do Tempo de Leitura & Journaling -->
+            <div class="landscape-grid">
+                
+                <div>
+                    <!-- Caderno Livre / Journaling -->
+                    <div class="card">
+                        <div class="section-title">Journaling (Caderno Livre)</div>
+                        <textarea id="journal-input" rows="5" placeholder="Pense no papel. Teste hipóteses, desabafe ou anote reflexões soltas sobre a leitura..."></textarea>
+                        <button class="btn-main" onclick="saveJournalEntry()">Salvar Nota no Journal</button>
+                    </div>
+
+                    <!-- Galeria de Notas Salvas -->
+                    <div class="card">
+                        <div class="section-title">Galeria de Notas</div>
+                        <div id="journal-gallery" class="journal-gallery"></div>
+                    </div>
+                </div>
+
+                <div>
+                    <!-- Linha do Tempo de Leitura -->
+                    <div class="card">
+                        <div class="section-title">Linha do Tempo de Leitura</div>
+                        <input type="text" id="reading-log" placeholder="O que você leu hoje? (ex: Cap. 2 do livro X)">
+                        <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                            <button class="btn-main" onclick="addReadingLog(false)">Registrar Leitura</button>
+                            <button class="btn-main" style="background: var(--border); color: var(--text);" onclick="addReadingLog(true)">Hoje não li</button>
+                        </div>
+
+                        <div id="timeline-list" style="max-height: 200px; overflow-y: auto;"></div>
+                    </div>
+
+                    <!-- O Grande Salto -->
+                    <div class="card" style="text-align: center; background: var(--highlight); border-color: var(--theme-color);">
+                        <h3 style="margin: 0 0 12px 0; font-size: 18px; font-weight: 500;">Tudo pronto para o texto?</h3>
+                        <button class="btn-main" style="font-size: 16px; padding: 14px;" onclick="startWritingSession()">Pronta para começar?</button>
+                    </div>
+                </div>
 
             </div>
 
         </div>
 
+        <!-- OUTRAS ABAS -->
+        <div id="tab-aulas" class="tab-content"><div class="card">Gestão de Aulas & Turmas</div></div>
+        <div id="tab-financas" class="tab-content"><div class="card">Controle Financeiro</div></div>
+        
         <!-- ABA CONFIGURAÇÕES -->
         <div id="tab-config" class="tab-content">
             <div class="card">
                 <div class="section-title">Aparência & Plano de Fundo</div>
-                
-                <label style="font-size: 13px; color: var(--text-muted); display: block;">Escolher imagem de fundo do computador:</label>
+                <label style="font-size: 13px; color: var(--text-muted); display: block;">Escolher imagem de fundo:</label>
                 <input type="file" id="bg-file-input" accept="image/*" onchange="handleBgUpload(event)">
-
-                <label style="font-size: 13px; color: var(--text-muted); display: block; margin-top: 8px;">Opacidade do Plano de Fundo:</label>
+                <label style="font-size: 13px; color: var(--text-muted); display: block; margin-top: 8px;">Opacidade:</label>
                 <input type="range" id="bg-opacity" min="0" max="1" step="0.05" value="0.3" oninput="updateOpacity(this.value)" style="width: 100%;">
-
-                <button class="btn-main" style="background: var(--border); color: var(--text); margin-top: 8px;" onclick="removeBg()">Remover Imagem de Fundo</button>
+                <button class="btn-main" style="background: var(--border); color: var(--text); margin-top: 8px;" onclick="removeBg()">Remover Fundo</button>
             </div>
-
-            <div class="card" style="margin-top: 20px;">
+            <div class="card">
                 <div class="section-title">Personalizar Listas</div>
-                
-                <label style="font-size: 13px; color: var(--text-muted); display: block;">Ritual Matinal (um por linha):</label>
+                <label style="font-size: 13px; color: var(--text-muted); display: block;">Ritual Matinal:</label>
                 <textarea id="config-ritual" rows="4"></textarea>
-
-                <label style="font-size: 13px; color: var(--text-muted); display: block; margin-top: 8px;">Autocuidado (um por linha):</label>
+                <label style="font-size: 13px; color: var(--text-muted); display: block; margin-top: 8px;">Autocuidado:</label>
                 <textarea id="config-care" rows="4"></textarea>
-
                 <button class="btn-main" onclick="saveSettings()">Salvar Configurações</button>
             </div>
         </div>
 
-        <!-- OUTRAS ABAS -->
-        <div id="tab-pesquisa" class="tab-content"><div class="card">Central de Pesquisa Literária</div></div>
-        <div id="tab-aulas" class="tab-content"><div class="card">Gestão de Aulas & Turmas</div></div>
-        <div id="tab-financas" class="tab-content"><div class="card">Controle Financeiro</div></div>
-
-        <!-- Botão Flutuante & Modal de Reflexão -->
-        <button class="float-reflection-btn" onclick="toggleModal(true)">Reflexão do Dia</button>
-
-        <div id="reflection-modal" class="modal-overlay">
+        <!-- Modal Motivacional para Ir ao Google Docs -->
+        <div id="start-modal" class="modal-overlay">
             <div class="modal-card">
-                <div class="section-title">Reflexão do Dia</div>
-                
-                <div id="modal-form">
-                    <label style="font-size: 13px; color: var(--text-muted);">O que deu certo hoje?</label>
-                    <textarea id="ref-good" rows="3" placeholder="Sua resposta..."></textarea>
-
-                    <label style="font-size: 13px; color: var(--text-muted); display: block; margin-top: 8px;">O que pode ser ajustado amanhã?</label>
-                    <textarea id="ref-improve" rows="3" placeholder="Sua resposta..."></textarea>
-
-                    <div style="display: flex; gap: 8px; margin-top: 12px;">
-                        <button class="btn-main" style="background: #e2e8f0; color: #334155;" onclick="toggleModal(false)">Voltar</button>
-                        <button class="btn-main" onclick="finishDay()">Finalizar o Dia</button>
-                    </div>
-                </div>
-
-                <div id="goodbye-msg" class="goodbye-message">
-                    Até amanhã.
-                    <br><br>
-                    <button class="btn-main" onclick="toggleModal(false)">Fechar</button>
-                </div>
+                <h2 id="motivation-title" style="margin: 0 0 12px 0; color: var(--theme-color);"></h2>
+                <p id="motivation-text" style="font-size: 14px; color: var(--text-muted); line-height: 1.5; margin-bottom: 20px;"></p>
+                <button class="btn-main" onclick="openGoogleDocs()">Ir para o Google Docs 🚀</button>
             </div>
         </div>
 
     </div>
 
-    <!-- LÓGICA -->
+    <!-- LÓGICA EM JAVASCRIPT -->
     <script>
         const defaultRitual = ["Água/Chá na mesa", "Ambiente de tela limpo", "Bloco de tempo definido"];
         const defaultCare = ["Hidratação vocal", "Pausa para os olhos", "Alongamento de maxilar / pescoço"];
-        let tempEnergy = '';
+        
+        const quotes = [
+            { t: "Respire fundo.", c: "O primeiro rascunho não precisa ser bom, ele só precisa existir. Escreva sem se julgar." },
+            { t: "Um passo de cada vez.", c: "Você não precisa terminar o artigo hoje, só precisa avançar no bloco de tempo que definiu." },
+            { t: "Confie no seu processo.", c: "A sua pesquisa é relevante e a sua voz importa. Bom trabalho!" }
+        ];
 
         function switchTab(tabName) {
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
@@ -406,17 +315,82 @@
             event.target.classList.add('active');
         }
 
-        // Seleção e Submissão do Ritmo com Troca de Cores
-        function selectEnergy(level) {
-            tempEnergy = level;
-            document.querySelectorAll('.btn-energy').forEach(btn => btn.classList.remove('selected'));
-            event.target.classList.add('selected');
+        // --- LINHA DO TEMPO DE LEITURA ---
+        function addReadingLog(didNotRead) {
+            const text = didNotRead ? "Hoje não li." : document.getElementById('reading-log').value;
+            if(!didNotRead && !text) return;
+
+            const logs = JSON.parse(localStorage.getItem('app_reading_timeline')) || [];
+            const dateStr = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+            
+            logs.unshift({ date: dateStr, text: text, skipped: didNotRead });
+            localStorage.setItem('app_reading_timeline', JSON.stringify(logs));
+            
+            document.getElementById('reading-log').value = '';
+            renderTimeline();
         }
 
-        function submitEnergy() {
-            if(!tempEnergy) return;
-            localStorage.setItem('app_energy', tempEnergy);
-            applyTheme(tempEnergy);
+        function renderTimeline() {
+            const logs = JSON.parse(localStorage.getItem('app_reading_timeline')) || [];
+            const container = document.getElementById('timeline-list');
+            container.innerHTML = '';
+
+            logs.forEach(item => {
+                const style = item.skipped ? 'color: var(--text-muted); font-style: italic;' : 'font-weight: 500;';
+                container.innerHTML += `
+                    <div class="timeline-item">
+                        <span style="${style}">${item.text}</span>
+                        <span style="color: var(--text-muted);">${item.date}</span>
+                    </div>`;
+            });
+        }
+
+        // --- JOURNALING & GALERIA ---
+        function saveJournalEntry() {
+            const text = document.getElementById('journal-input').value;
+            if(!text) return;
+
+            const entries = JSON.parse(localStorage.getItem('app_journal_entries')) || [];
+            const dateStr = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+            
+            entries.unshift({ date: dateStr, text: text });
+            localStorage.setItem('app_journal_entries', JSON.stringify(entries));
+            
+            document.getElementById('journal-input').value = '';
+            renderJournalGallery();
+        }
+
+        function renderJournalGallery() {
+            const entries = JSON.parse(localStorage.getItem('app_journal_entries')) || [];
+            const container = document.getElementById('journal-gallery');
+            container.innerHTML = '';
+
+            entries.forEach(entry => {
+                container.innerHTML += `
+                    <div class="gallery-card">
+                        <div class="gallery-card-date">${entry.date}</div>
+                        <div>${entry.text}</div>
+                    </div>`;
+            });
+        }
+
+        // --- O SALTO (GOOGLE DOCS) ---
+        function startWritingSession() {
+            const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
+            document.getElementById('motivation-title').innerText = randomQuote.t;
+            document.getElementById('motivation-text').innerText = randomQuote.c;
+            document.getElementById('start-modal').style.display = 'flex';
+        }
+
+        function openGoogleDocs() {
+            document.getElementById('start-modal').style.display = 'none';
+            window.open('https://docs.google.com', '_blank');
+        }
+
+        // --- CONFIGURAÇÕES E ESTILO ---
+        function selectEnergy(level) {
+            localStorage.setItem('app_energy', level);
+            applyTheme(level);
         }
 
         function applyTheme(level) {
@@ -424,15 +398,13 @@
             if(level) document.body.classList.add(`theme-${level}`);
         }
 
-        // Upload e Opacidade da Imagem de Fundo
         function handleBgUpload(e) {
             const file = e.target.files[0];
             if (!file) return;
             const reader = new FileReader();
             reader.onload = function(evt) {
-                const bgData = evt.target.result;
-                localStorage.setItem('app_bg_image', bgData);
-                document.getElementById('bg-overlay').style.backgroundImage = `url(${bgData})`;
+                localStorage.setItem('app_bg_image', evt.target.result);
+                document.getElementById('bg-overlay').style.backgroundImage = `url(${evt.target.result})`;
             };
             reader.readAsDataURL(file);
         }
@@ -447,7 +419,6 @@
             document.getElementById('bg-overlay').style.backgroundImage = 'none';
         }
 
-        // Funções de Foco e Checklists
         function addFocusTask() {
             const task = document.getElementById('task-input').value;
             const why = document.getElementById('why-input').value;
@@ -485,7 +456,7 @@
             ritualData.forEach((item, idx) => {
                 const id = `ritual_${idx}`;
                 const checked = localStorage.getItem(`app_check_${id}`) === 'true';
-                ritualContainer.innerHTML += `<div class="check-item"><input type="checkbox" id="${id}" ${checked ? 'checked' : ''} onchange="saveCheck('${id}')"><label for="${id}">${item}</label></div>`;
+                ritualContainer.innerHTML += `<div style="display:flex; align-items:center; gap:10px; padding:6px 0;"><input type="checkbox" id="${id}" ${checked ? 'checked' : ''} onchange="saveCheck('${id}')"><label for="${id}" style="font-size:14px;">${item}</label></div>`;
             });
 
             const careContainer = document.getElementById('care-list');
@@ -493,7 +464,7 @@
             careData.forEach((item, idx) => {
                 const id = `care_${idx}`;
                 const checked = localStorage.getItem(`app_check_${id}`) === 'true';
-                careContainer.innerHTML += `<div class="check-item"><input type="checkbox" id="${id}" ${checked ? 'checked' : ''} onchange="saveCheck('${id}')"><label for="${id}">${item}</label></div>`;
+                careContainer.innerHTML += `<div style="display:flex; align-items:center; gap:10px; padding:6px 0;"><input type="checkbox" id="${id}" ${checked ? 'checked' : ''} onchange="saveCheck('${id}')"><label for="${id}" style="font-size:14px;">${item}</label></div>`;
             });
         }
 
@@ -511,53 +482,21 @@
             switchTab('home');
         }
 
-        function toggleModal(show) {
-            document.getElementById('reflection-modal').style.display = show ? 'flex' : 'none';
-            if(show) {
-                document.getElementById('modal-form').style.display = 'block';
-                document.getElementById('goodbye-msg').style.display = 'none';
-            }
-        }
-
-        function finishDay() {
-            localStorage.setItem('app_ref_good', document.getElementById('ref-good').value);
-            localStorage.setItem('app_ref_improve', document.getElementById('ref-improve').value);
-            document.getElementById('modal-form').style.display = 'none';
-            document.getElementById('goodbye-msg').style.display = 'block';
-        }
-
         window.onload = function() {
-            // Exibir Data Atual
             const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
             document.getElementById('current-date').innerText = new Date().toLocaleDateString('pt-BR', options);
 
-            // Carregar Imagem e Opacidade de Fundo
             const savedBg = localStorage.getItem('app_bg_image');
             if(savedBg) document.getElementById('bg-overlay').style.backgroundImage = `url(${savedBg})`;
             const savedOpacity = localStorage.getItem('app_bg_opacity') || '0.3';
             document.getElementById('bg-overlay').style.opacity = savedOpacity;
-            document.getElementById('bg-opacity').value = savedOpacity;
 
-            // Carregar Configurações de Texto
-            const savedRitual = JSON.parse(localStorage.getItem('app_custom_ritual')) || defaultRitual;
-            const savedCare = JSON.parse(localStorage.getItem('app_custom_care')) || defaultCare;
-            document.getElementById('config-ritual').value = savedRitual.join('\n');
-            document.getElementById('config-care').value = savedCare.join('\n');
-            renderCustomLists();
-
-            // Carregar Tema de Energia Salvo
             const savedEnergy = localStorage.getItem('app_energy');
-            if (savedEnergy) {
-                tempEnergy = savedEnergy;
-                applyTheme(savedEnergy);
-                const buttons = document.querySelectorAll('.btn-energy');
-                if (savedEnergy === 'alta') buttons[0].classList.add('selected');
-                if (savedEnergy === 'media') buttons[1].classList.add('selected');
-                if (savedEnergy === 'baixa') buttons[2].classList.add('selected');
-            }
+            if (savedEnergy) applyTheme(savedEnergy);
 
-            document.getElementById('ref-good').value = localStorage.getItem('app_ref_good') || '';
-            document.getElementById('ref-improve').value = localStorage.getItem('app_ref_improve') || '';
+            renderCustomLists();
+            renderTimeline();
+            renderJournalGallery();
             renderFocusTask();
         };
     </script>
