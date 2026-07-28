@@ -108,6 +108,46 @@
         body.theme-alta { --theme-color: #d97706; --highlight: #fef3c7; --border: #fde68a; }
         body.theme-media { --theme-color: #7c3aed; --highlight: #f3e8ff; --border: #ddd6fe; }
         body.theme-baixa { --theme-color: #0284c7; --highlight: #e0f2fe; --border: #bae6fd; }
+
+        /* Estilos do Calendário de Leituras */
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 6px;
+            margin-top: 8px;
+        }
+        .calendar-day-header {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-align: center;
+            padding-bottom: 4px;
+        }
+        .calendar-day {
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 8px 4px;
+            text-align: center;
+            font-size: 12px;
+            background: var(--bg);
+            min-height: 38px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+        }
+        .calendar-day.active-read {
+            background: var(--highlight);
+            border-color: var(--theme-color);
+            font-weight: 600;
+        }
+        .calendar-day-dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: var(--theme-color);
+        }
     </style>
 </head>
 <body>
@@ -167,11 +207,10 @@
             </div>
         </div>
 
-        <!-- ABA PESQUISA LITERÁRIA -->
+        <!-- ABA PESQUISA LITERÁRIA (AJUSTADA PONTUALMENTE) -->
         <div id="tab-pesquisa" class="tab-content">
             <div class="card">
-                <div class="section-title">Portal de Entrada & Transição (Sessões de Escrita)</div>
-                <div style="text-align: center; color: var(--text-muted); font-size: 12px; margin-bottom: 12px;">⚓⚓⚓⚓⚓</div>
+                <div class="section-title">Portal de Entrada</div>
                 <div class="landscape-grid">
                     <div>
                         <label style="font-size: 13px; color: var(--text-muted);">O que eu estava fazendo antes?</label>
@@ -189,7 +228,7 @@
                 <label style="font-size: 13px; color: var(--text-muted); display: block; margin-top: 4px;">Quanto tempo tenho para escrever agora?</label>
                 <input type="text" id="trans-time" placeholder="Ex: 45 minutos...">
 
-                <button class="btn-main" style="margin-top: 8px; margin-bottom: 12px;" onclick="startWritingSession()">▶ Iniciar Sessão de Escrita</button>
+                <button class="btn-main" style="margin-top: 8px; margin-bottom: 12px;" onclick="startWritingSession()">▶ Iniciar</button>
 
                 <!-- LINHA DO TEMPO DAS SESSÕES -->
                 <div style="margin-top: 12px; border-top: 1px solid var(--border); padding-top: 12px;">
@@ -207,14 +246,14 @@
             <div id="subtab-leitura" class="subtab-content">
                 <div class="card">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                        <div class="section-title" style="margin-bottom: 0;">Calendário de Leituras</div>
+                        <div class="section-title" style="margin-bottom: 0;">Calendário de Leituras & Constância</div>
                         <button class="btn-sub" onclick="toggleBookModal(true)">+ Cadastrar Livro</button>
                     </div>
-                    <div id="calendar-view" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; text-align: center; font-size: 13px;"></div>
+                    <div id="reading-calendar-container"></div>
                 </div>
                 <div class="card">
                     <div class="section-title">Minha Estante</div>
-                    <div id="shelf-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; margin-top: 16px;"></div>
+                    <div id="shelf-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; margin-top: 16px;"></div>
                 </div>
             </div>
 
@@ -506,6 +545,14 @@
             </div>
         </div>
 
+        <!-- NOVO MODAL: FICHA DO LIVRO E GALERIA DE ANOTAÇÕES POR SEÇÃO -->
+        <div id="book-detail-modal" class="modal-overlay">
+            <div class="modal-card">
+                <span class="close-btn" onclick="toggleModal('book-detail-modal', false)">×</span>
+                <div id="book-detail-content"></div>
+            </div>
+        </div>
+
     </div>
 
     <!-- LÓGICA JAVASCRIPT -->
@@ -579,7 +626,7 @@
             alert(`Ritmo do dia definido como: ${currentEnergy.toUpperCase()}`);
         }
 
-        // --- PESQUISA LITERÁRIA & SESSÕES DE ESCRITA (ATUALIZADO) ---
+        // --- PESQUISA LITERÁRIA: SESSÕES DE ESCRITA ---
         function startWritingSession() {
             const before = document.getElementById('trans-before').value;
             const anxiety = document.getElementById('trans-anxiety').value;
@@ -615,7 +662,7 @@
             document.getElementById('trans-time').value = '';
 
             renderWritingSessions();
-            alert('Sessão de escrita iniciada e gravada na sua linha do tempo!');
+            alert('Sessão iniciada e registrada!');
         }
 
         function renderWritingSessions() {
@@ -626,11 +673,10 @@
             container.innerHTML = '';
             const now = new Date();
             const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-
             const monthSessions = sessions.filter(s => s.monthKey === currentMonthKey || (!s.monthKey && s.date));
 
             if(monthSessions.length === 0) {
-                container.innerHTML = '<p style="font-size:12px; color:var(--text-muted);">Nenhuma sessão de escrita registrada este mês.</p>';
+                container.innerHTML = '<p style="font-size:12px; color:var(--text-muted);">Nenhuma sessão registrada este mês.</p>';
                 return;
             }
 
@@ -645,6 +691,236 @@
                         <div style="color: var(--text-muted); font-size: 11px; margin-top: 2px;"><strong>Estado:</strong> ${s.anxiety}</div>
                     </div>`;
             });
+        }
+
+        // --- ESTANTE DE LIVROS, SESSÕES DE LEITURA & GALERIA DE ANOTAÇÕES POR SEÇÃO ---
+        function saveBook() {
+            const title = document.getElementById('book-title').value;
+            if(!title) { alert('Digite o título da obra.'); return; }
+
+            const pages = parseInt(document.getElementById('book-pages').value) || 0;
+            const payload = {
+                id: Date.now(),
+                title: title,
+                author: document.getElementById('book-author').value,
+                publisher: document.getElementById('book-publisher').value,
+                year: document.getElementById('book-year').value,
+                pages: pages,
+                readPages: 0,
+                progress: '0%',
+                type: document.getElementById('book-type').value,
+                cover: document.getElementById('book-cover').value,
+                sessions: [],
+                sectionNotes: []
+            };
+
+            const books = JSON.parse(localStorage.getItem('app_books')) || [];
+            books.push(payload);
+            localStorage.setItem('app_books', JSON.stringify(books));
+
+            sendToGoogleSheet('LEITURA', payload);
+
+            document.getElementById('book-title').value = '';
+            document.getElementById('book-author').value = '';
+            document.getElementById('book-publisher').value = '';
+            document.getElementById('book-year').value = '';
+            document.getElementById('book-pages').value = '';
+            document.getElementById('book-cover').value = '';
+
+            toggleBookModal(false);
+            renderShelf();
+            renderReadingCalendar();
+            alert('Livro cadastrado na sua estante!');
+        }
+
+        function renderShelf() {
+            const books = JSON.parse(localStorage.getItem('app_books')) || [];
+            const container = document.getElementById('shelf-list');
+            container.innerHTML = '';
+
+            if(books.length === 0) {
+                container.innerHTML = '<p style="font-size:13px; color:var(--text-muted);">Sua estante está vazia. Clique em "+ Cadastrar Livro" para começar.</p>';
+                return;
+            }
+
+            books.forEach(b => {
+                const pct = b.pages > 0 ? Math.min(100, Math.round(((b.readPages || 0) / b.pages) * 100)) : 0;
+                container.innerHTML += `
+                    <div class="item-card" onclick="openBookDetail(${b.id})">
+                        <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px;">${b.title}</div>
+                        <div style="font-size: 12px; color: var(--text-muted);">${b.author || 'Autor não informado'}</div>
+                        <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">${b.type || 'Livre'}</div>
+                        <div style="height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; margin-top: 10px;">
+                            <div style="height: 100%; background: var(--theme-color); width: ${pct}%;"></div>
+                        </div>
+                        <div style="font-size: 11px; text-align: right; color: var(--text-muted); margin-top: 4px;">${pct}% (${b.readPages || 0}/${b.pages} pág)</div>
+                    </div>`;
+            });
+        }
+
+        function openBookDetail(id) {
+            const books = JSON.parse(localStorage.getItem('app_books')) || [];
+            const b = books.find(x => x.id === id); if(!b) return;
+
+            const pct = b.pages > 0 ? Math.min(100, Math.round(((b.readPages || 0) / b.pages) * 100)) : 0;
+            
+            const notesList = (b.sectionNotes || []).map(n => `
+                <div style="padding:10px; border:1px solid var(--border); border-radius:6px; background:var(--bg); margin-bottom:8px;">
+                    <div style="font-weight:600; font-size:13px; color:var(--theme-color);">${n.section || 'Geral'}</div>
+                    <div style="font-size:12px; margin-top:4px; line-height:1.4;">${n.text}</div>
+                    <div style="font-size:10px; color:var(--text-muted); margin-top:6px;">📍 ${n.date}</div>
+                </div>`).join('');
+
+            const sessionsList = (b.sessions || []).map(s => `
+                <div style="padding:6px 0; border-bottom:1px solid var(--border); font-size:12px; display:flex; justify-content:space-between;">
+                    <span>📖 Lançamento em ${s.date}</span>
+                    <strong>Até a pág. ${s.readTo}</strong>
+                </div>`).join('');
+
+            const content = document.getElementById('book-detail-content');
+            content.innerHTML = `
+                <div class="section-title">Ficha do Livro</div>
+                <h3 style="margin:0 0 4px 0;">${b.title}</h3>
+                <p style="font-size:13px; color:var(--text-muted); margin-bottom:8px;">${b.author || 'Autor não informado'} • ${b.publisher || ''} (${b.year || '-'})</p>
+                <div style="height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; margin-top: 8px;">
+                    <div style="height: 100%; background: var(--theme-color); width: ${pct}%;"></div>
+                </div>
+                <div style="font-size:12px; color:var(--text-muted); margin-top:4px; margin-bottom:16px;">Progresso: ${pct}% (${b.readPages || 0} de ${b.pages} páginas)</div>
+
+                <hr style="border:0; border-top:1px solid var(--border); margin:16px 0;">
+
+                <div class="section-title">Registrar Sessão de Leitura do Dia</div>
+                <input type="number" id="bk-read-to" placeholder="Até qual página você leu hoje? (Ex: ${ (b.readPages || 0) + 10 })">
+                <button class="btn-sub" style="margin-bottom:12px; border-color:var(--theme-color);" onclick="recordReadingSession(${b.id})">Salvar Progresso de Leitura</button>
+
+                <div style="max-height:80px; overflow-y:auto; margin-bottom:16px;">
+                    ${sessionsList || '<p style="font-size:12px; color:var(--text-muted);">Nenhuma sessão de leitura registrada ainda.</p>'}
+                </div>
+
+                <hr style="border:0; border-top:1px solid var(--border); margin:16px 0;">
+
+                <div class="section-title">Galeria de Anotações por Seção / Capítulo</div>
+                <input type="text" id="bk-note-section" placeholder="Capítulo / Seção (Ex: Cap. 2 - A Mímesis)">
+                <textarea id="bk-note-text" rows="3" placeholder="Insira aqui seus fichamentos, citações e reflexões..."></textarea>
+                <button class="btn-sub" style="margin-bottom:12px;" onclick="addBookSectionNote(${b.id})">Salvar Anotação da Seção</button>
+
+                <div style="max-height:160px; overflow-y:auto;">
+                    ${notesList || '<p style="font-size:12px; color:var(--text-muted);">Nenhuma anotação por seção realizada neste livro.</p>'}
+                </div>
+            `;
+            toggleModal('book-detail-modal', true);
+        }
+
+        function recordReadingSession(bookId) {
+            const readTo = parseInt(document.getElementById('bk-read-to').value);
+            if(isNaN(readTo) || readTo < 0) { alert('Digite uma página válida.'); return; }
+
+            const books = JSON.parse(localStorage.getItem('app_books')) || [];
+            const b = books.find(x => x.id === bookId);
+            if(b) {
+                b.readPages = readTo;
+                b.progress = b.pages > 0 ? `${Math.min(100, Math.round((readTo / b.pages) * 100))}%` : '0%';
+                
+                if(!b.sessions) b.sessions = [];
+                const todayStr = new Date().toLocaleDateString('pt-BR');
+                b.sessions.unshift({ date: todayStr, readTo: readTo });
+
+                localStorage.setItem('app_books', JSON.stringify(books));
+                
+                sendToGoogleSheet('LEITURA', {
+                    title: b.title,
+                    readPages: readTo,
+                    progress: b.progress,
+                    date: todayStr
+                });
+
+                renderShelf();
+                renderReadingCalendar();
+                openBookDetail(bookId);
+            }
+        }
+
+        function addBookSectionNote(bookId) {
+            const section = document.getElementById('bk-note-section').value;
+            const text = document.getElementById('bk-note-text').value;
+            if(!text) { alert('Digite o texto da sua anotação.'); return; }
+
+            const books = JSON.parse(localStorage.getItem('app_books')) || [];
+            const b = books.find(x => x.id === bookId);
+            if(b) {
+                if(!b.sectionNotes) b.sectionNotes = [];
+                const item = {
+                    date: new Date().toLocaleString('pt-BR'),
+                    section: section || 'Anotação Geral',
+                    text: text
+                };
+                b.sectionNotes.unshift(item);
+                localStorage.setItem('app_books', JSON.stringify(books));
+
+                sendToGoogleSheet('JOURNALING', {
+                    date: item.date,
+                    title: `Nota: ${b.title} (${item.section})`,
+                    body: text
+                });
+
+                openBookDetail(bookId);
+            }
+        }
+
+        // --- CALENDÁRIO MENSAL DE LEITURAS & CONSTÂNCIA ---
+        function renderReadingCalendar() {
+            const container = document.getElementById('reading-calendar-container');
+            if(!container) return;
+
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth(); // 0 a 11
+            const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+            // Coletar todas as datas de leituras
+            const books = JSON.parse(localStorage.getItem('app_books')) || [];
+            const readDates = new Set();
+
+            books.forEach(b => {
+                (b.sessions || []).forEach(s => {
+                    if(s.date) readDates.add(s.date);
+                });
+            });
+
+            let calendarHTML = `
+                <div style="font-size:13px; font-weight:600; text-align:center; margin-bottom:8px; color:var(--theme-color);">
+                    ${monthNames[month]} de ${year}
+                </div>
+                <div class="calendar-grid">
+                    <div class="calendar-day-header">Dom</div>
+                    <div class="calendar-day-header">Seg</div>
+                    <div class="calendar-day-header">Ter</div>
+                    <div class="calendar-day-header">Qua</div>
+                    <div class="calendar-day-header">Qui</div>
+                    <div class="calendar-day-header">Sex</div>
+                    <div class="calendar-day-header">Sáb</div>
+            `;
+
+            const firstDayOfWeek = new Date(year, month, 1).getDay();
+
+            for(let i = 0; i < firstDayOfWeek; i++) {
+                calendarHTML += `<div></div>`;
+            }
+
+            for(let day = 1; day <= daysInMonth; day++) {
+                const dateStr = `${String(day).padStart(2,'0')}/${String(month+1).padStart(2,'0')}/${year}`;
+                const hasRead = readDates.has(dateStr);
+
+                calendarHTML += `
+                    <div class="calendar-day ${hasRead ? 'active-read' : ''}" title="${hasRead ? 'Leitura realizada!' : ''}">
+                        <span>${day}</span>
+                        ${hasRead ? '<div class="calendar-day-dot"></div>' : ''}
+                    </div>`;
+            }
+
+            calendarHTML += `</div>`;
+            container.innerHTML = calendarHTML;
         }
 
         async function generateAiReport() {
@@ -667,7 +943,7 @@
             } catch(e) { output.innerText = "Erro ao conectar com a IA."; }
         }
 
-        // --- TIMER ---
+        // --- TIMER ALUNOS & EMPRESAS ---
         function toggleTimer(type, id, start) {
             const storageKey = type === 'student' ? 'app_students' : 'app_companies';
             const items = JSON.parse(localStorage.getItem(storageKey)) || [];
@@ -690,61 +966,6 @@
             localStorage.setItem(storageKey, JSON.stringify(items));
             if(type === 'student') { openStudentDetail(id); renderStudents(); }
             else { openCompanyDetail(id); renderCompanies(); }
-        }
-
-        // --- LIVROS / ESTANTE ---
-        function saveBook() {
-            const title = document.getElementById('book-title').value;
-            if(!title) { alert('Digite o título da obra.'); return; }
-
-            const pages = parseInt(document.getElementById('book-pages').value) || 0;
-            const payload = {
-                id: Date.now(),
-                title: title,
-                author: document.getElementById('book-author').value,
-                publisher: document.getElementById('book-publisher').value,
-                year: document.getElementById('book-year').value,
-                pages: pages,
-                readPages: 0,
-                progress: '0%',
-                type: document.getElementById('book-type').value,
-                cover: document.getElementById('book-cover').value
-            };
-
-            const books = JSON.parse(localStorage.getItem('app_books')) || [];
-            books.push(payload);
-            localStorage.setItem('app_books', JSON.stringify(books));
-
-            sendToGoogleSheet('LEITURA', payload);
-
-            document.getElementById('book-title').value = '';
-            document.getElementById('book-author').value = '';
-            document.getElementById('book-publisher').value = '';
-            document.getElementById('book-year').value = '';
-            document.getElementById('book-pages').value = '';
-            document.getElementById('book-cover').value = '';
-
-            toggleBookModal(false);
-            renderShelf();
-            alert('Livro salvo com sucesso!');
-        }
-
-        function renderShelf() {
-            const books = JSON.parse(localStorage.getItem('app_books')) || [];
-            const container = document.getElementById('shelf-list');
-            container.innerHTML = '';
-            books.forEach(b => {
-                const pct = b.pages > 0 ? Math.min(100, Math.round(((b.readPages || 0) / b.pages) * 100)) : 0;
-                container.innerHTML += `
-                    <div style="border: 1px solid var(--border); border-radius: 8px; padding: 12px; background: var(--bg);">
-                        <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px;">${b.title}</div>
-                        <div style="font-size: 12px; color: var(--text-muted);">${b.author || 'Autor não informado'}</div>
-                        <div style="height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; margin-top: 8px;">
-                            <div style="height: 100%; background: var(--theme-color); width: ${pct}%;"></div>
-                        </div>
-                        <div style="font-size: 11px; text-align: right; color: var(--text-muted); margin-top: 4px;">${pct}% (${b.readPages || 0}/${b.pages} pág)</div>
-                    </div>`;
-            });
         }
 
         // --- ALUNOS PARTICULARES ---
@@ -796,7 +1017,7 @@
 
             const filtered = students.filter(s => s.archived === showArchivedStudents);
             if(filtered.length === 0) {
-                container.innerHTML = `<p style="font-size:13px; color:var(--text-muted);">Nenum aluno ${showArchivedStudents ? 'arquivado' : 'ativo'} cadastrado.</p>`;
+                container.innerHTML = `<p style="font-size:13px; color:var(--text-muted);">Nenhum aluno ${showArchivedStudents ? 'arquivado' : 'ativo'} cadastrado.</p>`;
                 return;
             }
 
@@ -1295,7 +1516,7 @@
             document.getElementById('house-target').value = localStorage.getItem('app_house_target') || '';
             document.getElementById('house-saved').value = localStorage.getItem('app_house_saved') || '';
 
-            renderCustomLists(); renderStudents(); renderCompanies(); renderFinance(); renderHouseProject(); renderHealthItems(); renderWishlist(); renderShelf(); renderFocusTask(); renderJournalGallery(); renderWritingSessions(); updateDayTimeDisplay();
+            renderCustomLists(); renderStudents(); renderCompanies(); renderFinance(); renderHouseProject(); renderHealthItems(); renderWishlist(); renderShelf(); renderReadingCalendar(); renderFocusTask(); renderJournalGallery(); renderWritingSessions(); updateDayTimeDisplay();
         };
     </script>
 </body>
