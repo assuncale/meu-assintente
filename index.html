@@ -100,7 +100,6 @@
         }
         .item-card:hover { transform: translateY(-2px); border-color: var(--theme-color); }
 
-        /* Barras de Finanças */
         .budget-bar { height: 12px; background: var(--border); border-radius: 6px; overflow: hidden; display: flex; margin-top: 8px; }
         .bar-50 { background: #3b82f6; }
         .bar-30 { background: #f59e0b; }
@@ -276,7 +275,7 @@
             </div>
         </div>
 
-        <!-- ABA CONTROLE FINANCEIRO (NOVA E COMPLETA) -->
+        <!-- ABA CONTROLE FINANCEIRO -->
         <div id="tab-financas" class="tab-content">
             <div class="card">
                 <div class="section-title">Painel Financeiro & Balanço</div>
@@ -288,7 +287,6 @@
                 </div>
             </div>
 
-            <!-- SUB-ABA 1: VISÃO GERAL -->
             <div id="fin-visão" class="fin-subtab">
                 <div class="landscape-grid">
                     <div>
@@ -337,7 +335,6 @@
                 </div>
             </div>
 
-            <!-- SUB-ABA 2: DÍVIDAS & CONTAS FIXAS -->
             <div id="fin-dividas" class="fin-subtab" style="display: none;">
                 <div class="card">
                     <div class="section-title">Histórico de Lançamentos do Mês</div>
@@ -345,7 +342,6 @@
                 </div>
             </div>
 
-            <!-- SUB-ABA 3: PROJETOS, CASA & WISHLIST -->
             <div id="fin-projetos" class="fin-subtab" style="display: none;">
                 <div class="landscape-grid">
                     <div>
@@ -385,7 +381,6 @@
                 </div>
             </div>
 
-            <!-- SUB-ABA 4: ANÁLISE IA -->
             <div id="fin-ia-fin" class="fin-subtab" style="display: none;">
                 <div class="card">
                     <div class="section-title">Balanço Financeiro com IA (Gemini)</div>
@@ -396,13 +391,28 @@
             </div>
         </div>
 
-        <!-- ABA CONFIGURAÇÕES -->
+        <!-- ABA CONFIGURAÇÕES (SINCRONIZAÇÃO EM TEMPO REAL) -->
         <div id="tab-config" class="tab-content">
+            <div class="card">
+                <div class="section-title">Sincronização em Tempo Real (Google Sheets)</div>
+                <label style="font-size: 13px; color: var(--text-muted); display: block;">Cole aqui o seu Link de Conexão do Apps Script (URL do Web App):</label>
+                <input type="text" id="sheet-sync-url" placeholder="https://script.google.com/macros/s/.../exec" onchange="saveSyncUrl()">
+            </div>
+
+            <div class="card">
+                <div class="section-title">Gestão de Backup Manual</div>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <button class="btn-sub" style="border-color: var(--theme-color);" onclick="exportDataJSON()">📥 Exportar JSON</button>
+                    <button class="btn-sub" style="border-color: #10b981; color: #059669;" onclick="exportFinanceCSV()">📊 Exportar CSV</button>
+                </div>
+            </div>
+
             <div class="card">
                 <div class="section-title">Conexão com IA (Gemini)</div>
                 <label style="font-size: 13px; color: var(--text-muted); display: block;">Sua Chave de API do Gemini:</label>
                 <input type="text" id="gemini-api-key" placeholder="Cole sua chave AIzaSy... aqui" onchange="saveApiKey()">
             </div>
+
             <div class="card">
                 <div class="section-title">Aparência & Plano de Fundo</div>
                 <input type="file" id="bg-file-input" accept="image/*" onchange="handleBgUpload(event)">
@@ -410,6 +420,7 @@
                 <input type="range" id="bg-opacity" min="0" max="1" step="0.05" value="0.3" oninput="updateOpacity(this.value)" style="width: 100%;">
                 <button class="btn-main" style="background: var(--border); color: var(--text); margin-top: 8px;" onclick="removeBg()">Remover Fundo</button>
             </div>
+
             <div class="card">
                 <div class="section-title">Personalizar Listas</div>
                 <label style="font-weight: 600; font-size: 13px;">Ritual Matinal</label>
@@ -420,7 +431,7 @@
             </div>
         </div>
 
-        <!-- MODAIS DIVERSOS -->
+        <!-- MODAIS -->
         <div id="modal-add-student" class="modal-overlay">
             <div class="modal-card">
                 <span class="close-btn" onclick="toggleModal('modal-add-student', false)">×</span>
@@ -434,10 +445,8 @@
             </div>
         </div>
 
-        <div id="modal-student-detail" class="modal-overlay">
-            <div class="modal-card"><span class="close-btn" onclick="toggleModal('modal-student-detail', false)">×</span><div id="student-detail-content"></div></div>
-        </div>
-
+        <div id="modal-student-detail" class="modal-overlay"><div class="modal-card"><span class="close-btn" onclick="toggleModal('modal-student-detail', false)">×</span><div id="student-detail-content"></div></div></div>
+        
         <div id="modal-add-company" class="modal-overlay">
             <div class="modal-card">
                 <span class="close-btn" onclick="toggleModal('modal-add-company', false)">×</span>
@@ -450,9 +459,7 @@
             </div>
         </div>
 
-        <div id="modal-company-detail" class="modal-overlay">
-            <div class="modal-card"><span class="close-btn" onclick="toggleModal('modal-company-detail', false)">×</span><div id="company-detail-content"></div></div>
-        </div>
+        <div id="modal-company-detail" class="modal-overlay"><div class="modal-card"><span class="close-btn" onclick="toggleModal('modal-company-detail', false)">×</span><div id="company-detail-content"></div></div></div>
 
         <div id="end-day-modal" class="modal-overlay">
             <div class="modal-card">
@@ -528,39 +535,51 @@
 
         function toggleModal(id, show) { document.getElementById(id).style.display = show ? 'flex' : 'none'; }
 
-        // --- LÓGICA DE FINANÇAS ---
+        // --- ENVIAR PARA A PLANILHA DO GOOGLE ---
+        function saveSyncUrl() {
+            const url = document.getElementById('sheet-sync-url').value;
+            localStorage.setItem('app_sheet_sync_url', url);
+            alert('URL de Sincronização Salva!');
+        }
+
+        function sendToGoogleSheet(target, payload) {
+            const url = localStorage.getItem('app_sheet_sync_url');
+            if(!url) return;
+
+            fetch(url, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ target: target, payload: payload })
+            }).catch(e => console.log('Erro ao sincronizar:', e));
+        }
+
+        // --- FINANÇAS ---
         function addTransaction() {
             const desc = document.getElementById('fin-desc').value;
             const amount = parseFloat(document.getElementById('fin-amount').value);
             const type = document.getElementById('fin-type').value;
-
             if(!desc || isNaN(amount)) return;
 
+            const payload = { date: new Date().toLocaleDateString('pt-BR'), desc: desc, amount: amount, category: type, type: type === 'in' ? 'in' : 'out' };
             const txs = JSON.parse(localStorage.getItem('app_fin_txs')) || [];
-            txs.unshift({ id: Date.now(), desc: desc, amount: amount, type: type, date: new Date().toLocaleDateString('pt-BR') });
+            txs.unshift(payload);
             localStorage.setItem('app_fin_txs', JSON.stringify(txs));
 
-            document.getElementById('fin-desc').value = '';
-            document.getElementById('fin-amount').value = '';
+            sendToGoogleSheet('FINANCAS', payload);
+
+            document.getElementById('fin-desc').value = ''; document.getElementById('fin-amount').value = '';
             renderFinance();
         }
 
         function renderFinance() {
             const txs = JSON.parse(localStorage.getItem('app_fin_txs')) || [];
             let inTotal = 0; let outTotal = 0;
-
-            const listContainer = document.getElementById('fin-transactions-list');
-            listContainer.innerHTML = '';
-
+            const listContainer = document.getElementById('fin-transactions-list'); listContainer.innerHTML = '';
             txs.forEach(t => {
                 if(t.type === 'in') inTotal += t.amount; else outTotal += t.amount;
-                listContainer.innerHTML += `
-                    <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border); font-size:13px;">
-                        <span>${t.date} - ${t.desc}</span>
-                        <strong style="color: ${t.type === 'in' ? '#10b981' : '#ef4444'}">${t.type === 'in' ? '+' : '-'} R$ ${t.amount.toFixed(2)}</strong>
-                    </div>`;
+                listContainer.innerHTML += `<div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border); font-size:13px;"><span>${t.date} - ${t.desc}</span><strong style="color: ${t.type === 'in' ? '#10b981' : '#ef4444'}">${t.type === 'in' ? '+' : '-'} R$ ${t.amount.toFixed(2)}</strong></div>`;
             });
-
             document.getElementById('fin-total-in').innerText = `R$ ${inTotal.toFixed(2)}`;
             document.getElementById('fin-total-out').innerText = `R$ ${outTotal.toFixed(2)}`;
             const balance = inTotal - outTotal;
@@ -569,10 +588,14 @@
         }
 
         function saveHouseProject() {
-            const target = document.getElementById('house-target').value;
-            const saved = document.getElementById('house-saved').value;
+            const target = parseFloat(document.getElementById('house-target').value) || 0;
+            const saved = parseFloat(document.getElementById('house-saved').value) || 0;
+            const pct = target > 0 ? Math.min(100, Math.round((saved / target) * 100)) : 0;
+
             localStorage.setItem('app_house_target', target);
             localStorage.setItem('app_house_saved', saved);
+
+            sendToGoogleSheet('CASA', { targetAmount: target, savedAmount: saved, progress: `${pct}%` });
             renderHouseProject();
         }
 
@@ -580,83 +603,92 @@
             const target = parseFloat(localStorage.getItem('app_house_target')) || 0;
             const saved = parseFloat(localStorage.getItem('app_house_saved')) || 0;
             const pct = target > 0 ? Math.min(100, Math.round((saved / target) * 100)) : 0;
-
             document.getElementById('house-pct').innerText = `${pct}% (R$ ${saved.toFixed(2)} de R$ ${target.toFixed(2)})`;
             document.getElementById('house-bar-fill').style.width = `${pct}%`;
         }
 
         function addWishItem() {
             const item = document.getElementById('wish-item').value;
-            const price = parseFloat(document.getElementById('wish-price').value);
-            if(!item) return;
-
+            const price = parseFloat(document.getElementById('wish-price').value) || 0; if(!item) return;
             const wish = JSON.parse(localStorage.getItem('app_wishlist')) || [];
-            wish.push({ item: item, price: price || 0 });
+            wish.push({ item: item, price: price });
             localStorage.setItem('app_wishlist', JSON.stringify(wish));
 
-            document.getElementById('wish-item').value = '';
-            document.getElementById('wish-price').value = '';
+            sendToGoogleSheet('WISHLIST_SAUDE', { desc: item, price: price, type: 'Wishlist' });
+
+            document.getElementById('wish-item').value = ''; document.getElementById('wish-price').value = '';
             renderWishlist();
         }
 
         function renderWishlist() {
             const wish = JSON.parse(localStorage.getItem('app_wishlist')) || [];
             const container = document.getElementById('wish-list'); container.innerHTML = '';
-            wish.forEach(w => {
-                container.innerHTML += `<div style="padding:4px 0; border-bottom:1px solid var(--border);">• ${w.item} (${w.price > 0 ? 'R$ ' + w.price.toFixed(2) : 'A definir'})</div>`;
+            wish.forEach(w => { container.innerHTML += `<div style="padding:4px 0; border-bottom:1px solid var(--border);">• ${w.item} (${w.price > 0 ? 'R$ ' + w.price.toFixed(2) : 'A definir'})</div>`; });
+        }
+
+        // --- JOURNALING ---
+        function saveJournalEntry() {
+            const title = document.getElementById('journal-title').value;
+            const body = document.getElementById('journal-body').value; if(!title || !body) return;
+            const payload = { date: new Date().toLocaleString('pt-BR'), title: title, body: body };
+            const entries = JSON.parse(localStorage.getItem('app_journal_entries')) || [];
+            entries.unshift(payload);
+            localStorage.setItem('app_journal_entries', JSON.stringify(entries));
+
+            sendToGoogleSheet('JOURNALING', payload);
+
+            document.getElementById('journal-title').value = ''; document.getElementById('journal-body').value = '';
+            renderJournalGallery();
+        }
+
+        function renderJournalGallery() {
+            const entries = JSON.parse(localStorage.getItem('app_journal_entries')) || [];
+            const container = document.getElementById('journal-gallery'); container.innerHTML = '';
+            entries.forEach(e => {
+                container.innerHTML += `<div style="padding:12px; border:1px solid var(--border); border-radius:8px; background:var(--bg);"><div style="font-size:11px; color:var(--text-muted);">${e.date}</div><div style="font-weight:600; font-size:14px; margin:4px 0;">${e.title}</div><div style="font-size:13px;">${e.body}</div></div>`;
             });
         }
 
-        async function generateFinancialAiReport() {
-            const key = localStorage.getItem('app_gemini_key');
-            const output = document.getElementById('fin-ai-output');
-            output.style.display = 'block';
-
-            if(!key) { output.innerText = "Cadastre sua Chave de API nas Configurações."; return; }
-            output.innerText = "Analisando suas finanças com o Gemini...";
-
-            const txs = JSON.parse(localStorage.getItem('app_fin_txs')) || [];
-            const houseTarget = localStorage.getItem('app_house_target');
-            const houseSaved = localStorage.getItem('app_house_saved');
-
-            const prompt = `Atue como um consultor financeiro pessoal acolhedor. Analise meus dados financeiros: Transações do mês: ${JSON.stringify(txs)}. Meta para construção da casa: R$ ${houseSaved} guardados de R$ ${houseTarget}. Forneça um balanço analítico e tranquilizador com dicas práticas.`;
-
-            try {
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${key}`, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-                });
-                const data = await response.json();
-                output.innerText = data.candidates[0].content.parts[0].text;
-            } catch(e) { output.innerText = "Erro ao conectar com a IA."; }
-        }
-
-        // --- DEMAIS FUNÇÕES DOS MÓDULOS ANTERIORES ---
-        function startDay() { localStorage.setItem('app_day_start_time', new Date().toISOString()); updateDayTimeDisplay(); alert('Dia iniciado!'); }
-        function openEndDayModal() {
-            const startTimeStr = localStorage.getItem('app_day_start_time');
-            const summary = document.getElementById('time-worked-summary');
-            if(startTimeStr) {
-                const diffMs = new Date() - new Date(startTimeStr);
-                const hours = Math.floor(diffMs / 3600000); const mins = Math.round((diffMs % 3600000) / 60000);
-                summary.innerText = `Tempo em modo de trabalho hoje: ${hours}h ${mins}min`;
-            } else { summary.innerText = "Dia finalizado."; }
-            toggleModal('end-day-modal', true);
-        }
+        // --- FINALIZAR DIA ---
         function confirmEndDay() {
             const todayKey = new Date().toISOString().split('T')[0];
             const logs = JSON.parse(localStorage.getItem('app_daily_history')) || {};
-            logs[todayKey] = { focus: localStorage.getItem('app_focus_task') || 'Nenhum foco', good: document.getElementById('ref-good').value, improve: document.getElementById('ref-improve').value };
+            const startTimeStr = localStorage.getItem('app_day_start_time');
+            let hoursWorked = "0h";
+            if(startTimeStr) {
+                const diffMs = new Date() - new Date(startTimeStr);
+                hoursWorked = `${Math.floor(diffMs / 3600000)}h ${Math.round((diffMs % 3600000) / 60000)}min`;
+            }
+
+            const payload = {
+                date: todayKey,
+                energy: localStorage.getItem('app_energy') || 'Não informada',
+                focus: localStorage.getItem('app_focus_task') || 'Nenhum foco',
+                why: localStorage.getItem('app_focus_why') || '',
+                hoursWorked: hoursWorked,
+                good: document.getElementById('ref-good').value,
+                improve: document.getElementById('ref-improve').value
+            };
+
+            logs[todayKey] = payload;
             localStorage.setItem('app_daily_history', JSON.stringify(logs));
+
+            sendToGoogleSheet('HOME', payload);
+
             localStorage.removeItem('app_day_start_time');
-            renderCustomLists(); updateDayTimeDisplay(); toggleModal('end-day-modal', false); alert('Dia encerrado!');
+            renderCustomLists(); updateDayTimeDisplay(); toggleModal('end-day-modal', false); alert('Dia encerrado e sincronizado com a planilha!');
         }
+
+        // --- DEMAIS LÓGICAS ---
+        function startDay() { localStorage.setItem('app_day_start_time', new Date().toISOString()); updateDayTimeDisplay(); alert('Dia iniciado!'); }
+        function openEndDayModal() { toggleModal('end-day-modal', true); }
         function updateDayTimeDisplay() {
             const startTimeStr = localStorage.getItem('app_day_start_time');
             const status = document.getElementById('day-time-status');
             if(startTimeStr) { const t = new Date(startTimeStr); status.innerText = `Em andamento desde às ${t.getHours().toString().padStart(2,'0')}:${t.getMinutes().toString().padStart(2,'0')}`; }
             else { status.innerText = "Dia não iniciado."; }
         }
+
         function selectEnergy(level) { localStorage.setItem('app_energy', level); applyTheme(level); }
         function applyTheme(level) { document.body.classList.remove('theme-alta', 'theme-media', 'theme-baixa'); if(level) document.body.classList.add(`theme-${level}`); }
         function saveApiKey() { localStorage.setItem('app_gemini_key', document.getElementById('gemini-api-key').value); alert('Chave API salva!'); }
@@ -706,14 +738,15 @@
             document.getElementById('current-date').innerText = new Date().toLocaleDateString('pt-BR', options);
 
             const savedBg = localStorage.getItem('app_bg_image'); if(savedBg) document.getElementById('bg-overlay').style.backgroundImage = `url(${savedBg})`;
-            const savedOpacity = localStorage.getItem('app_bg_opacity') || '0.3'; document.getElementById('bg-overlay').style.opacity = savedOpacity;
+            const savedOpacity = localStorage.getItem('app_bg_opacity') || '0.3'; document.getElementById('bg-opacity').style.opacity = savedOpacity;
             const savedEnergy = localStorage.getItem('app_energy'); if (savedEnergy) applyTheme(savedEnergy);
             const savedApiKey = localStorage.getItem('app_gemini_key'); if(savedApiKey) document.getElementById('gemini-api-key').value = savedApiKey;
+            const savedSyncUrl = localStorage.getItem('app_sheet_sync_url'); if(savedSyncUrl) document.getElementById('sheet-sync-url').value = savedSyncUrl;
 
             document.getElementById('house-target').value = localStorage.getItem('app_house_target') || '';
             document.getElementById('house-saved').value = localStorage.getItem('app_house_saved') || '';
 
-            renderCustomLists(); renderFinance(); renderHouseProject(); renderWishlist(); renderFocusTask(); updateDayTimeDisplay();
+            renderCustomLists(); renderFinance(); renderHouseProject(); renderWishlist(); renderFocusTask(); renderJournalGallery(); updateDayTimeDisplay();
         };
     </script>
 </body>
