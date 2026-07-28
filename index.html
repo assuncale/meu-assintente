@@ -89,7 +89,7 @@
             background: rgba(0,0,0,0.4); justify-content: center; align-items: center; z-index: 100;
         }
 
-        .modal-card { background: white; padding: 32px; border-radius: 12px; width: 100%; max-width: 600px; position: relative; max-height: 85vh; overflow-y: auto; }
+        .modal-card { background: white; padding: 32px; border-radius: 12px; width: 100%; max-width: 650px; position: relative; max-height: 85vh; overflow-y: auto; }
         .close-btn { position: absolute; top: 16px; right: 20px; font-size: 20px; cursor: pointer; color: var(--text-muted); }
 
         .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; margin-top: 16px; }
@@ -130,10 +130,11 @@
                 <div id="current-date" style="font-size: 13px; color: var(--text-muted); margin-bottom: 8px; text-transform: capitalize;"></div>
                 <h2 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 400;">Como está seu ritmo hoje?</h2>
                 <div style="display: inline-flex; gap: 12px; margin-bottom: 16px;">
-                    <button class="btn-energy" onclick="selectEnergy('alta')">Alta</button>
-                    <button class="btn-energy" onclick="selectEnergy('media')">Média</button>
-                    <button class="btn-energy" onclick="selectEnergy('baixa')">Baixa</button>
+                    <button class="btn-energy btn-sub" onclick="selectEnergy('alta')">Alta</button>
+                    <button class="btn-energy btn-sub" onclick="selectEnergy('media')">Média</button>
+                    <button class="btn-energy btn-sub" onclick="selectEnergy('baixa')">Baixa</button>
                 </div>
+                <div><button class="btn-main" style="max-width: 200px; margin: 0 auto;" onclick="submitEnergy()">Confirmar Ritmo</button></div>
 
                 <div style="display: flex; justify-content: center; gap: 12px; margin-top: 20px; border-top: 1px solid var(--border); padding-top: 16px;">
                     <button id="btn-start-day" class="btn-sub" style="border-color: #10b981; color: #059669;" onclick="startDay()">▶ Começar o Dia</button>
@@ -169,16 +170,16 @@
         <!-- ABA PESQUISA LITERÁRIA -->
         <div id="tab-pesquisa" class="tab-content">
             <div class="card">
-                <div class="section-title">Portal de Entrada</div>
+                <div class="section-title">Portal de Entrada & Transição</div>
                 <div style="text-align: center; color: var(--text-muted); font-size: 12px; margin-bottom: 12px;">⚓⚓⚓⚓⚓</div>
                 <div class="landscape-grid">
                     <div>
                         <label style="font-size: 13px; color: var(--text-muted);">O que eu estava fazendo antes?</label>
-                        <input type="text" id="trans-before" placeholder="Ex: Respondendo mensagens...">
+                        <input type="text" id="trans-before" placeholder="Ex: Respondendo mensagens..." onchange="saveTransitionState()">
                     </div>
                     <div>
                         <label style="font-size: 13px; color: var(--text-muted);">Como está minha ansiedade para produzir agora?</label>
-                        <select id="trans-anxiety">
+                        <select id="trans-anxiety" onchange="saveTransitionState()">
                             <option value="Tranquila">Tranquila e presente</option>
                             <option value="Moderada">Moderada (um pouco de dispersão)</option>
                             <option value="Alta">Alta (resistência para começar)</option>
@@ -186,11 +187,12 @@
                     </div>
                 </div>
                 <label style="font-size: 13px; color: var(--text-muted); display: block; margin-top: 4px;">Quanto tempo tenho para escrever agora?</label>
-                <input type="text" id="trans-time" placeholder="Ex: 45 minutos...">
+                <input type="text" id="trans-time" placeholder="Ex: 45 minutos..." onchange="saveTransitionState()">
 
                 <div class="sub-nav">
                     <button class="btn-sub active" onclick="switchSubTab('leitura')">Leitura & Progresso</button>
                     <button class="btn-sub" onclick="switchSubTab('journaling')">Journaling</button>
+                    <button class="btn-sub" onclick="switchSubTab('ia-report')">Relatório Mensal (IA)</button>
                 </div>
             </div>
 
@@ -219,6 +221,15 @@
                     <div class="section-title">Galeria de Entradas</div>
                     <input type="text" id="journal-search" placeholder="Buscar por título..." oninput="renderJournalGallery()">
                     <div id="journal-gallery" style="display: flex; flex-direction: column; gap: 12px; margin-top: 12px;"></div>
+                </div>
+            </div>
+
+            <div id="subtab-ia-report" class="subtab-content" style="display: none;">
+                <div class="card">
+                    <div class="section-title">Relatório & Insights (IA)</div>
+                    <p style="font-size: 13px; color: var(--text-muted);">Gere uma análise sintetizada dos seus dados de leitura, estado emocional e constância.</p>
+                    <button class="btn-main" onclick="generateAiReport()">Gerar Relatório do Mês</button>
+                    <div id="ai-report-output" style="margin-top: 20px; padding: 16px; background: var(--bg); border-radius: 8px; font-size: 14px; line-height: 1.6; display: none;"></div>
                 </div>
             </div>
 
@@ -489,13 +500,14 @@
 
     </div>
 
-    <!-- LÓGICA JAVASCRIPT COMPLETA E CORRIGIDA -->
+    <!-- LÓGICA JAVASCRIPT COMPLETA E TOTALMENTE CORRIGIDA -->
     <script>
         const defaultRitual = ["Água/Chá na mesa", "Ambiente de tela limpo", "Bloco de tempo definido"];
         const defaultCare = ["Hidratação vocal", "Pausa para os olhos", "Alongamento de maxilar / pescoço"];
 
         let showArchivedStudents = false;
         let showArchivedCompanies = false;
+        let currentEnergy = '';
 
         function switchTab(tabName) {
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
@@ -528,7 +540,7 @@
         function toggleModal(id, show) { document.getElementById(id).style.display = show ? 'flex' : 'none'; }
         function toggleBookModal(show) { toggleModal('book-modal', show); }
 
-        // --- ENVIAR PARA A PLANILHA DO GOOGLE ---
+        // --- CONEXÃO GOOGLE SHEETS ---
         function saveSyncUrl() {
             const url = document.getElementById('sheet-sync-url').value;
             localStorage.setItem('app_sheet_sync_url', url);
@@ -545,6 +557,73 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ target: target, payload: payload })
             }).catch(e => console.log('Erro ao sincronizar:', e));
+        }
+
+        // --- ABA HOME & RITMO ---
+        function selectEnergy(level) {
+            currentEnergy = level;
+            applyTheme(level);
+        }
+
+        function submitEnergy() {
+            if(!currentEnergy) { alert('Selecione um ritmo antes de confirmar.'); return; }
+            localStorage.setItem('app_energy', currentEnergy);
+            alert(`Ritmo do dia definido como: ${currentEnergy.toUpperCase()}`);
+        }
+
+        // --- PESQUISA LITERÁRIA & TRANSIÇÃO ---
+        function saveTransitionState() {
+            const before = document.getElementById('trans-before').value;
+            const anxiety = document.getElementById('trans-anxiety').value;
+            const time = document.getElementById('trans-time').value;
+
+            localStorage.setItem('app_trans_before', before);
+            localStorage.setItem('app_trans_anxiety', anxiety);
+            localStorage.setItem('app_trans_time', time);
+        }
+
+        async function generateAiReport() {
+            const key = localStorage.getItem('app_gemini_key');
+            const output = document.getElementById('ai-report-output'); output.style.display = 'block';
+            if(!key) { output.innerText = "Cadastre sua Chave de API nas Configurações."; return; }
+            output.innerText = "Analisando seus hábitos de leitura e escrita com o Gemini...";
+            
+            const books = JSON.parse(localStorage.getItem('app_books')) || [];
+            const entries = JSON.parse(localStorage.getItem('app_journal_entries')) || [];
+            const prompt = `Analise meu hábito acadêmico: Tenho ${books.length} livros na estante e ${entries.length} notas no diário. Faça uma síntese motivadora do meu progresso.`;
+            
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${key}`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                });
+                const data = await response.json(); output.innerText = data.candidates[0].content.parts[0].text;
+            } catch(e) { output.innerText = "Erro ao conectar com a IA."; }
+        }
+
+        // --- TIMER GENERICO ---
+        function toggleTimer(type, id, start) {
+            const storageKey = type === 'student' ? 'app_students' : 'app_companies';
+            const items = JSON.parse(localStorage.getItem(storageKey)) || [];
+            const item = items.find(x => x.id === id);
+
+            if(!item) return;
+
+            if(start) {
+                item.activeTimer = new Date().toISOString();
+                alert(`Sessão de trabalho iniciada para ${item.name}!`);
+            } else {
+                if(!item.activeTimer) { alert('Nenhuma sessão em andamento.'); return; }
+                const startTime = new Date(item.activeTimer);
+                const diffMins = Math.round((new Date() - startTime) / 60000);
+                item.totalMinutes = (item.totalMinutes || 0) + diffMins;
+                item.activeTimer = null;
+                alert(`Sessão encerrada! +${diffMins} minutos contabilizados.`);
+            }
+
+            localStorage.setItem(storageKey, JSON.stringify(items));
+            if(type === 'student') { openStudentDetail(id); renderStudents(); }
+            else { openCompanyDetail(id); renderCompanies(); }
         }
 
         // --- LIVROS / ESTANTE ---
@@ -581,7 +660,7 @@
 
             toggleBookModal(false);
             renderShelf();
-            alert('Livro cadastrado e enviado para a planilha!');
+            alert('Livro salvo com sucesso!');
         }
 
         function renderShelf() {
@@ -615,6 +694,8 @@
                 price: document.getElementById('st-price').value,
                 materials: document.getElementById('st-materials').value,
                 archived: false,
+                classLogs: [],
+                notes: [],
                 totalMinutes: 0
             };
 
@@ -632,7 +713,7 @@
 
             toggleModal('modal-add-student', false);
             renderStudents();
-            alert('Aluno cadastrado com sucesso!');
+            alert('Aluno salvo com sucesso!');
         }
 
         function filterStudents(archived) {
@@ -669,6 +750,9 @@
             const students = JSON.parse(localStorage.getItem('app_students')) || [];
             const s = students.find(x => x.id === id); if(!s) return;
 
+            const hours = ((s.totalMinutes || 0) / 60).toFixed(1);
+            const logsList = (s.classLogs || []).map(l => `<div style="padding:4px 0; border-bottom:1px solid var(--border); font-size:12px;">${l.date}: ${l.text}</div>`).join('');
+
             const content = document.getElementById('student-detail-content');
             content.innerHTML = `
                 <div class="section-title">Ficha do Aluno</div>
@@ -677,12 +761,44 @@
                 <p style="font-size:13px;"><strong>Objetivo:</strong> ${s.goal || '-'}</p>
                 <p style="font-size:13px;"><strong>Mensalidade:</strong> ${s.price || '-'}</p>
                 <p style="font-size:13px;"><strong>Materiais:</strong> ${s.materials || '-'}</p>
+                
                 <hr style="border:0; border-top:1px solid var(--border); margin:16px 0;">
+
+                <div class="section-title">Sessão de Aula / Timer</div>
+                <div style="display:flex; gap:8px; margin-bottom:8px;">
+                    <button class="btn-main" style="background:#10b981;" onclick="toggleTimer('student', ${s.id}, true)">▶ Iniciar Aula</button>
+                    <button class="btn-main" style="background:#ef4444;" onclick="toggleTimer('student', ${s.id}, false)">⏹ Finalizar</button>
+                </div>
+                <div style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">⏱ Total acumulado: ${hours} horas</div>
+
+                <hr style="border:0; border-top:1px solid var(--border); margin:16px 0;">
+
+                <div class="section-title">Registro de Aula Realizada</div>
+                <input type="text" id="st-log-text" placeholder="O que foi trabalhado hoje?">
+                <button class="btn-sub" style="margin-bottom:12px;" onclick="addStudentClassLog(${s.id})">Salvar Registro de Aula</button>
+                <div style="max-height:100px; overflow-y:auto; margin-bottom:16px;">
+                    ${logsList || '<p style="font-size:12px; color:var(--text-muted);">Nenhuma aula registrada ainda.</p>'}
+                </div>
+
+                <hr style="border:0; border-top:1px solid var(--border); margin:16px 0;">
+
                 <button class="btn-sub" style="color:#ef4444; border-color:#ef4444; width:100%;" onclick="toggleArchiveStudent(${s.id})">
                     ${s.archived ? 'Desarquivar Aluno' : 'Arquivar Aluno'}
                 </button>
             `;
             toggleModal('modal-student-detail', true);
+        }
+
+        function addStudentClassLog(id) {
+            const text = document.getElementById('st-log-text').value; if(!text) return;
+            const students = JSON.parse(localStorage.getItem('app_students')) || [];
+            const s = students.find(x => x.id === id);
+            if(s) {
+                if(!s.classLogs) s.classLogs = [];
+                s.classLogs.unshift({ date: new Date().toLocaleDateString('pt-BR'), text: text });
+                localStorage.setItem('app_students', JSON.stringify(students));
+                openStudentDetail(id);
+            }
         }
 
         function toggleArchiveStudent(id) {
@@ -708,6 +824,8 @@
                 location: document.getElementById('cp-location').value,
                 start: document.getElementById('cp-start').value,
                 archived: false,
+                tasks: [],
+                notes: [],
                 totalMinutes: 0
             };
 
@@ -761,19 +879,82 @@
             const companies = JSON.parse(localStorage.getItem('app_companies')) || [];
             const c = companies.find(x => x.id === id); if(!c) return;
 
+            const hours = ((c.totalMinutes || 0) / 60).toFixed(1);
+            const tasksList = (c.tasks || []).map(t => `<div style="padding:6px 0; border-bottom:1px solid var(--border); font-size:13px;">• ${t.text} <span style="font-size:10px; color:var(--text-muted);">(${t.date})</span></div>`).join('');
+            const notesList = (c.notes || []).map(n => `<div style="padding:8px; border:1px solid var(--border); border-radius:6px; background:var(--bg); margin-bottom:8px;"><div style="font-weight:600; font-size:13px;">${n.title}</div><div style="font-size:12px; margin-top:2px;">${n.body}</div><div style="font-size:10px; color:var(--text-muted); margin-top:4px;">${n.date}</div></div>`).join('');
+
             const content = document.getElementById('company-detail-content');
             content.innerHTML = `
                 <div class="section-title">Ficha do Contrato</div>
                 <h3 style="margin:0 0 4px 0;">${c.name}</h3>
-                <p style="font-size:13px; color:var(--text-muted); margin-bottom:12px;">Início do contrato: ${c.start || '-'}</p>
-                <p style="font-size:13px;"><strong>Valor Hora-Aula:</strong> ${c.rate || '-'}</p>
-                <p style="font-size:13px;"><strong>Origem/Local:</strong> ${c.location || '-'}</p>
+                <p style="font-size:13px; color:var(--text-muted); margin-bottom:8px;">Início: ${c.start || '-'} | Origem/Local: ${c.location || '-'}</p>
+                <p style="font-size:13px; margin-bottom:16px;"><strong>Valor Hora-Aula:</strong> ${c.rate || '-'}</p>
+
                 <hr style="border:0; border-top:1px solid var(--border); margin:16px 0;">
+
+                <div class="section-title">Sessão de Trabalho / Timer</div>
+                <div style="display:flex; gap:8px; margin-bottom:8px;">
+                    <button class="btn-main" style="background:#10b981;" onclick="toggleTimer('company', ${c.id}, true)">▶ Iniciar Trabalho</button>
+                    <button class="btn-main" style="background:#ef4444;" onclick="toggleTimer('company', ${c.id}, false)">⏹ Finalizar</button>
+                </div>
+                <div style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">⏱ Total trabalhado nesta empresa: <strong>${hours} horas</strong></div>
+
+                <hr style="border:0; border-top:1px solid var(--border); margin:16px 0;">
+
+                <div class="section-title">Demandas & Compromissos da Semana</div>
+                <input type="text" id="cp-task-text" placeholder="Adicionar nova demanda ou compromisso...">
+                <button class="btn-sub" style="margin-bottom:12px;" onclick="addCompanyTask(${c.id})">+ Adicionar Demanda</button>
+                <div style="max-height:120px; overflow-y:auto; margin-bottom:16px;">
+                    ${tasksList || '<p style="font-size:12px; color:var(--text-muted);">Nenhuma demanda registrada.</p>'}
+                </div>
+
+                <hr style="border:0; border-top:1px solid var(--border); margin:16px 0;">
+
+                <div class="section-title">Galeria de Anotações</div>
+                <input type="text" id="cp-note-title" placeholder="Título da Anotação">
+                <textarea id="cp-note-body" rows="3" placeholder="Anotações gerais, relatórios ou combinados..."></textarea>
+                <button class="btn-sub" style="margin-bottom:12px;" onclick="addCompanyNote(${c.id})">Salvar Anotação</button>
+                
+                <div style="max-height:150px; overflow-y:auto; margin-bottom:16px;">
+                    ${notesList || '<p style="font-size:12px; color:var(--text-muted);">Nenhuma anotação salva.</p>'}
+                </div>
+
+                <hr style="border:0; border-top:1px solid var(--border); margin:16px 0;">
+
                 <button class="btn-sub" style="color:#ef4444; border-color:#ef4444; width:100%;" onclick="toggleArchiveCompany(${c.id})">
                     ${c.archived ? 'Desarquivar Empresa' : 'Arquivar Empresa'}
                 </button>
             `;
             toggleModal('modal-company-detail', true);
+        }
+
+        function addCompanyTask(id) {
+            const text = document.getElementById('cp-task-text').value; if(!text) return;
+            const companies = JSON.parse(localStorage.getItem('app_companies')) || [];
+            const c = companies.find(x => x.id === id);
+            if(c) {
+                if(!c.tasks) c.tasks = [];
+                const item = { date: new Date().toLocaleDateString('pt-BR'), text: text };
+                c.tasks.unshift(item);
+                localStorage.setItem('app_companies', JSON.stringify(companies));
+                sendToGoogleSheet('EMPRESA', { name: c.name, task: text });
+                openCompanyDetail(id);
+            }
+        }
+
+        function addCompanyNote(id) {
+            const title = document.getElementById('cp-note-title').value;
+            const body = document.getElementById('cp-note-body').value;
+            if(!title && !body) return;
+
+            const companies = JSON.parse(localStorage.getItem('app_companies')) || [];
+            const c = companies.find(x => x.id === id);
+            if(c) {
+                if(!c.notes) c.notes = [];
+                c.notes.unshift({ date: new Date().toLocaleString('pt-BR'), title: title || 'Anotação', body: body });
+                localStorage.setItem('app_companies', JSON.stringify(companies));
+                openCompanyDetail(id);
+            }
         }
 
         function toggleArchiveCompany(id) {
@@ -986,7 +1167,6 @@
             else { status.innerText = "Dia não iniciado."; }
         }
 
-        function selectEnergy(level) { localStorage.setItem('app_energy', level); applyTheme(level); }
         function applyTheme(level) { document.body.classList.remove('theme-alta', 'theme-media', 'theme-baixa'); if(level) document.body.classList.add(`theme-${level}`); }
         function saveApiKey() { localStorage.setItem('app_gemini_key', document.getElementById('gemini-api-key').value); alert('Chave API salva!'); }
         function handleBgUpload(e) {
@@ -996,6 +1176,7 @@
         }
         function updateOpacity(val) { localStorage.setItem('app_bg_opacity', val); document.getElementById('bg-opacity').style.opacity = val; }
         function removeBg() { localStorage.removeItem('app_bg_image'); document.getElementById('bg-overlay').style.backgroundImage = 'none'; }
+        
         function addFocusTask() {
             const task = document.getElementById('task-input').value; const why = document.getElementById('why-input').value; if(!task) return;
             localStorage.setItem('app_focus_task', task); localStorage.setItem('app_focus_why', why); renderFocusTask();
@@ -1006,6 +1187,7 @@
             else { card.style.display = 'none'; }
         }
         function clearFocusTask() { localStorage.removeItem('app_focus_task'); localStorage.removeItem('app_focus_why'); document.getElementById('task-input').value = ''; document.getElementById('why-input').value = ''; renderFocusTask(); }
+        
         function renderCustomLists() {
             const ritualData = JSON.parse(localStorage.getItem('app_custom_ritual')) || defaultRitual;
             const careData = JSON.parse(localStorage.getItem('app_custom_care')) || defaultCare;
@@ -1021,6 +1203,7 @@
             });
         }
         function saveCheck(id) { localStorage.setItem(`app_check_${id}`, document.getElementById(id).checked); }
+        
         function saveSettings() {
             const ritualArray = document.getElementById('config-ritual').value.split('\n').filter(i => i.trim() !== '');
             const careArray = document.getElementById('config-care').value.split('\n').filter(i => i.trim() !== '');
@@ -1036,12 +1219,20 @@
 
             const savedBg = localStorage.getItem('app_bg_image'); if(savedBg) document.getElementById('bg-overlay').style.backgroundImage = `url(${savedBg})`;
             const savedOpacity = localStorage.getItem('app_bg_opacity') || '0.3'; document.getElementById('bg-opacity').style.opacity = savedOpacity;
-            const savedEnergy = localStorage.getItem('app_energy'); if (savedEnergy) applyTheme(savedEnergy);
+            
+            const savedEnergy = localStorage.getItem('app_energy'); 
+            if (savedEnergy) { currentEnergy = savedEnergy; applyTheme(savedEnergy); }
+            
             const savedApiKey = localStorage.getItem('app_gemini_key'); if(savedApiKey) document.getElementById('gemini-api-key').value = savedApiKey;
             const savedSyncUrl = localStorage.getItem('app_sheet_sync_url'); if(savedSyncUrl) document.getElementById('sheet-sync-url').value = savedSyncUrl;
 
             document.getElementById('house-target').value = localStorage.getItem('app_house_target') || '';
             document.getElementById('house-saved').value = localStorage.getItem('app_house_saved') || '';
+
+            // Restaurar estado de transição
+            document.getElementById('trans-before').value = localStorage.getItem('app_trans_before') || '';
+            document.getElementById('trans-anxiety').value = localStorage.getItem('app_trans_anxiety') || 'Tranquila';
+            document.getElementById('trans-time').value = localStorage.getItem('app_trans_time') || '';
 
             renderCustomLists(); renderStudents(); renderCompanies(); renderFinance(); renderHouseProject(); renderHealthItems(); renderWishlist(); renderShelf(); renderFocusTask(); renderJournalGallery(); updateDayTimeDisplay();
         };
