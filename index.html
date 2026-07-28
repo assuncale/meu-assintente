@@ -29,8 +29,7 @@
         }
 
         #bg-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background-size: cover; background-position: center; background-repeat: no-repeat;
             z-index: -1; pointer-events: none; opacity: 0.3;
         }
@@ -90,16 +89,16 @@
             background: rgba(0,0,0,0.4); justify-content: center; align-items: center; z-index: 100;
         }
 
-        .modal-card { background: white; padding: 32px; border-radius: 12px; width: 100%; max-width: 550px; position: relative; }
+        .modal-card { background: white; padding: 32px; border-radius: 12px; width: 100%; max-width: 600px; position: relative; max-height: 85vh; overflow-y: auto; }
         .close-btn { position: absolute; top: 16px; right: 20px; font-size: 20px; cursor: pointer; color: var(--text-muted); }
 
-        /* Visão Semanal */
-        .week-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; text-align: center; }
-        .week-day-card {
-            border: 1px solid var(--border); padding: 8px 4px; border-radius: 6px; background: var(--bg);
-            cursor: pointer; font-size: 11px; transition: 0.2s;
+        .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; margin-top: 16px; }
+
+        .item-card {
+            border: 1px solid var(--border); padding: 16px; border-radius: 8px;
+            background: var(--bg); cursor: pointer; transition: transform 0.2s;
         }
-        .week-day-card:hover { border-color: var(--theme-color); }
+        .item-card:hover { transform: translateY(-2px); border-color: var(--theme-color); }
 
         body.theme-alta { --theme-color: #d97706; --highlight: #fef3c7; --border: #fde68a; }
         body.theme-media { --theme-color: #7c3aed; --highlight: #f3e8ff; --border: #ddd6fe; }
@@ -122,7 +121,6 @@
 
         <!-- ABA HOME -->
         <div id="tab-home" class="tab-content active">
-            
             <div class="card" style="text-align: center; padding: 28px 24px;">
                 <div id="current-date" style="font-size: 13px; color: var(--text-muted); margin-bottom: 8px; text-transform: capitalize;"></div>
                 <h2 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 400;">Como está seu ritmo hoje?</h2>
@@ -131,11 +129,8 @@
                     <button class="btn-energy" onclick="selectEnergy('media')">Média</button>
                     <button class="btn-energy" onclick="selectEnergy('baixa')">Baixa</button>
                 </div>
-                <div>
-                    <button class="btn-main" style="max-width: 200px; margin: 0 auto;" onclick="submitEnergy()">Confirmar Ritmo</button>
-                </div>
+                <div><button class="btn-main" style="max-width: 200px; margin: 0 auto;" onclick="submitEnergy()">Confirmar Ritmo</button></div>
 
-                <!-- Botões de Iniciar e Finalizar o Dia -->
                 <div style="display: flex; justify-content: center; gap: 12px; margin-top: 20px; border-top: 1px solid var(--border); padding-top: 16px;">
                     <button id="btn-start-day" class="btn-sub" style="border-color: #10b981; color: #059669;" onclick="startDay()">▶ Começar o Dia</button>
                     <button id="btn-end-day" class="btn-sub" style="border-color: #ef4444; color: #dc2626;" onclick="openEndDayModal()">⏹ Finalizar o Dia</button>
@@ -152,21 +147,14 @@
                         <button class="btn-main" onclick="addFocusTask()">Definir Foco</button>
                         <a href="https://calendar.google.com" target="_blank" style="display: inline-block; margin-top: 8px; font-size: 13px; color: var(--theme-color);">Google Agenda</a>
                     </div>
-
                     <div id="focus-card" class="card" style="display: none; border-left: 4px solid var(--theme-color);">
                         <div class="section-title">Foco Atual</div>
                         <h3 id="display-task" style="margin: 0 0 8px 0; font-size: 16px; font-weight: 500;"></h3>
                         <p id="display-why" style="margin: 0 0 16px 0; font-size: 13px; color: var(--text-muted); font-style: italic;"></p>
                         <button class="btn-main" onclick="clearFocusTask()" style="background: #10b981;">Concluído</button>
                     </div>
-
-                    <!-- Mini Relatório: Visão da Semana -->
-                    <div class="card">
-                        <div class="section-title">Visão da Semana</div>
-                        <div id="week-view" class="week-grid"></div>
-                    </div>
+                    <div class="card"><div class="section-title">Visão da Semana</div><div id="week-view" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; text-align: center;"></div></div>
                 </div>
-
                 <div>
                     <div class="card"><div class="section-title">Ritual Matinal</div><div id="ritual-list"></div></div>
                     <div class="card"><div class="section-title">Autocuidado</div><div id="care-list"></div></div>
@@ -211,7 +199,6 @@
                     </div>
                     <div id="calendar-view" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; text-align: center; font-size: 13px;"></div>
                 </div>
-
                 <div class="card">
                     <div class="section-title">Minha Estante</div>
                     <div id="shelf-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; margin-top: 16px;"></div>
@@ -225,7 +212,6 @@
                     <textarea id="journal-body" rows="6" placeholder="Pensar no papel..."></textarea>
                     <button class="btn-main" onclick="saveJournalEntry()">Salvar Nota</button>
                 </div>
-
                 <div class="card">
                     <div class="section-title">Galeria de Entradas</div>
                     <input type="text" id="journal-search" placeholder="Buscar por título..." oninput="renderJournalGallery()">
@@ -247,18 +233,57 @@
             </div>
         </div>
 
-        <!-- OUTRAS ABAS -->
-        <div id="tab-aulas" class="tab-content"><div class="card">Gestão de Aulas & Turmas</div></div>
+        <!-- ABA AULAS & DOCÊNCIA (NOVA E COMPLETA) -->
+        <div id="tab-aulas" class="tab-content">
+            <div class="card">
+                <div class="section-title">Gestão de Aulas & Docência</div>
+                <div class="sub-nav">
+                    <button class="btn-sub active" onclick="switchTeachingSubTab('alunos')">Alunos Particulares</button>
+                    <button class="btn-sub" onclick="switchTeachingSubTab('empresas')">Contratos & Empresas</button>
+                </div>
+            </div>
+
+            <!-- SUB-ABA: ALUNOS PARTICULARES -->
+            <div id="teaching-alunos" class="teaching-subtab">
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn-sub active" id="btn-filter-active-student" onclick="filterStudents(false)">Ativos</button>
+                            <button class="btn-sub" id="btn-filter-archived-student" onclick="filterStudents(true)">Arquivados</button>
+                        </div>
+                        <button class="btn-sub" style="border-color: var(--theme-color);" onclick="toggleModal('modal-add-student', true)">+ Adicionar Aluno</button>
+                    </div>
+
+                    <div id="students-grid" class="card-grid"></div>
+                </div>
+            </div>
+
+            <!-- SUB-ABA: CONTRATOS COM EMPRESAS -->
+            <div id="teaching-empresas" class="teaching-subtab" style="display: none;">
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn-sub active" id="btn-filter-active-company" onclick="filterCompanies(false)">Ativas</button>
+                            <button class="btn-sub" id="btn-filter-archived-company" onclick="filterCompanies(true)">Arquivadas</button>
+                        </div>
+                        <button class="btn-sub" style="border-color: var(--theme-color);" onclick="toggleModal('modal-add-company', true)">+ Adicionar Empresa</button>
+                    </div>
+
+                    <div id="companies-grid" class="card-grid"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ABA FINANÇAS -->
         <div id="tab-financas" class="tab-content"><div class="card">Controle Financeiro</div></div>
         
         <!-- ABA CONFIGURAÇÕES -->
         <div id="tab-config" class="tab-content">
             <div class="card">
                 <div class="section-title">Conexão com IA (Gemini)</div>
-                <label style="font-size: 13px; color: var(--text-muted); display: block;">Sua Chave de API do Gemini (Google AI Studio):</label>
+                <label style="font-size: 13px; color: var(--text-muted); display: block;">Sua Chave de API do Gemini:</label>
                 <input type="text" id="gemini-api-key" placeholder="Cole sua chave AIzaSy... aqui" onchange="saveApiKey()">
             </div>
-
             <div class="card">
                 <div class="section-title">Aparência & Plano de Fundo</div>
                 <input type="file" id="bg-file-input" accept="image/*" onchange="handleBgUpload(event)">
@@ -266,61 +291,72 @@
                 <input type="range" id="bg-opacity" min="0" max="1" step="0.05" value="0.3" oninput="updateOpacity(this.value)" style="width: 100%;">
                 <button class="btn-main" style="background: var(--border); color: var(--text); margin-top: 8px;" onclick="removeBg()">Remover Fundo</button>
             </div>
-
             <div class="card">
                 <div class="section-title">Personalizar Listas</div>
-                
-                <label style="font-weight: 600; font-size: 13px; color: var(--text); display: block; margin-bottom: 4px;">Ritual Matinal</label>
-                <textarea id="config-ritual" rows="4" placeholder="Um item por linha"></textarea>
-
-                <label style="font-weight: 600; font-size: 13px; color: var(--text); display: block; margin-top: 12px; margin-bottom: 4px;">Autocuidado</label>
-                <textarea id="config-care" rows="4" placeholder="Um item por linha"></textarea>
-
+                <label style="font-weight: 600; font-size: 13px;">Ritual Matinal</label>
+                <textarea id="config-ritual" rows="4"></textarea>
+                <label style="font-weight: 600; font-size: 13px; margin-top: 12px; display: block;">Autocuidado</label>
+                <textarea id="config-care" rows="4"></textarea>
                 <button class="btn-main" style="margin-top: 8px;" onclick="saveSettings()">Salvar Configurações</button>
             </div>
         </div>
 
-        <!-- MODAL DETALHES DO DIA DA SEMANA -->
-        <div id="day-detail-modal" class="modal-overlay">
+        <!-- MODAIS DA DOCÊNCIA -->
+        
+        <!-- Modal Adicionar Aluno -->
+        <div id="modal-add-student" class="modal-overlay">
             <div class="modal-card">
-                <span class="close-btn" onclick="toggleModal('day-detail-modal', false)">×</span>
-                <div id="day-detail-content"></div>
+                <span class="close-btn" onclick="toggleModal('modal-add-student', false)">×</span>
+                <div class="section-title">Cadastrar Novo Aluno</div>
+                <input type="text" id="st-name" placeholder="Nome Completo do Aluno">
+                <input type="text" id="st-info" placeholder="Informações de Contato">
+                <input type="text" id="st-goal" placeholder="Objetivo com o Curso">
+                <input type="text" id="st-price" placeholder="Valor da Mensalidade (ex: R$ 350)">
+                <input type="text" id="st-materials" placeholder="Materiais Utilizados">
+                <button class="btn-main" onclick="saveStudent()">Salvar Aluno</button>
             </div>
         </div>
 
-        <!-- MODAL FINALIZAR DIA -->
+        <!-- Modal Ficha do Aluno -->
+        <div id="modal-student-detail" class="modal-overlay">
+            <div class="modal-card">
+                <span class="close-btn" onclick="toggleModal('modal-student-detail', false)">×</span>
+                <div id="student-detail-content"></div>
+            </div>
+        </div>
+
+        <!-- Modal Adicionar Empresa -->
+        <div id="modal-add-company" class="modal-overlay">
+            <div class="modal-card">
+                <span class="close-btn" onclick="toggleModal('modal-add-company', false)">×</span>
+                <div class="section-title">Cadastrar Empresa / Contrato</div>
+                <input type="text" id="cp-name" placeholder="Nome da Empresa">
+                <input type="text" id="cp-rate" placeholder="Valor Hora-Aula (ex: R$ 80/h)">
+                <input type="text" id="cp-location" placeholder="De onde é / Cidade ou EAD">
+                <input type="text" id="cp-start" placeholder="Data de Início da Parceria">
+                <button class="btn-main" onclick="saveCompany()">Salvar Empresa</button>
+            </div>
+        </div>
+
+        <!-- Modal Ficha da Empresa -->
+        <div id="modal-company-detail" class="modal-overlay">
+            <div class="modal-card">
+                <span class="close-btn" onclick="toggleModal('modal-company-detail', false)">×</span>
+                <div id="company-detail-content"></div>
+            </div>
+        </div>
+
+        <!-- OUTROS MODAIS EXISTENTES -->
         <div id="end-day-modal" class="modal-overlay">
             <div class="modal-card">
                 <span class="close-btn" onclick="toggleModal('end-day-modal', false)">×</span>
                 <div class="section-title">Encerramento do Dia</div>
                 <p id="time-worked-summary" style="font-size: 14px; font-weight: 500; color: var(--theme-color);"></p>
-
                 <label style="font-size: 13px; color: var(--text-muted);">O que deu certo hoje?</label>
-                <textarea id="ref-good" rows="3" placeholder="Sua resposta..."></textarea>
-
+                <textarea id="ref-good" rows="3"></textarea>
                 <label style="font-size: 13px; color: var(--text-muted); display: block; margin-top: 8px;">O que pode ser ajustado amanhã?</label>
-                <textarea id="ref-improve" rows="3" placeholder="Sua resposta..."></textarea>
-
+                <textarea id="ref-improve" rows="3"></textarea>
                 <button class="btn-main" style="margin-top: 12px;" onclick="confirmEndDay()">Finalizar & Resetar Checklist</button>
-            </div>
-        </div>
-
-        <!-- MODAL CADASTRAR LIVRO -->
-        <div id="book-modal" class="modal-overlay">
-            <div class="modal-card">
-                <span class="close-btn" onclick="toggleBookModal(false)">×</span>
-                <div class="section-title">Cadastrar Novo Livro / Artigo</div>
-                <input type="text" id="book-title" placeholder="Título da Obra">
-                <input type="text" id="book-author" placeholder="Autor(a)">
-                <input type="text" id="book-publisher" placeholder="Editora">
-                <input type="number" id="book-year" placeholder="Ano de Publicação">
-                <input type="number" id="book-pages" placeholder="Total de Páginas">
-                <select id="book-type">
-                    <option value="Academica">Leitura Acadêmica</option>
-                    <option value="Livre">Leitura por Prazer / Livre</option>
-                </select>
-                <input type="text" id="book-cover" placeholder="URL da Capa">
-                <button class="btn-main" onclick="saveBook()">Adicionar à Estante</button>
             </div>
         </div>
 
@@ -333,12 +369,30 @@
             </div>
         </div>
 
+        <div id="book-modal" class="modal-overlay">
+            <div class="modal-card">
+                <span class="close-btn" onclick="toggleBookModal(false)">×</span>
+                <div class="section-title">Cadastrar Novo Livro / Artigo</div>
+                <input type="text" id="book-title" placeholder="Título da Obra">
+                <input type="text" id="book-author" placeholder="Autor(a)">
+                <input type="text" id="book-publisher" placeholder="Editora">
+                <input type="number" id="book-year" placeholder="Ano de Publicação">
+                <input type="number" id="book-pages" placeholder="Total de Páginas">
+                <select id="book-type"><option value="Academica">Leitura Acadêmica</option><option value="Livre">Leitura por Prazer / Livre</option></select>
+                <input type="text" id="book-cover" placeholder="URL da Capa">
+                <button class="btn-main" onclick="saveBook()">Adicionar à Estante</button>
+            </div>
+        </div>
+
     </div>
 
     <!-- LÓGICA JAVASCRIPT -->
     <script>
         const defaultRitual = ["Água/Chá na mesa", "Ambiente de tela limpo", "Bloco de tempo definido"];
         const defaultCare = ["Hidratação vocal", "Pausa para os olhos", "Alongamento de maxilar / pescoço"];
+
+        let showArchivedStudents = false;
+        let showArchivedCompanies = false;
 
         function switchTab(tabName) {
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
@@ -354,63 +408,294 @@
             event.target.classList.add('active');
         }
 
+        function switchTeachingSubTab(subName) {
+            document.querySelectorAll('.teaching-subtab').forEach(s => s.style.display = 'none');
+            document.querySelectorAll('#tab-aulas .sub-nav .btn-sub').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`teaching-${subName}`).style.display = 'block';
+            event.target.classList.add('active');
+        }
+
         function toggleModal(id, show) { document.getElementById(id).style.display = show ? 'flex' : 'none'; }
 
-        // --- COMEÇAR E FINALIZAR DIA ---
+        // --- GESTÃO DE ALUNOS PARTICULARES ---
+        function saveStudent() {
+            const name = document.getElementById('st-name').value; if(!name) return;
+            const students = JSON.parse(localStorage.getItem('app_students')) || [];
+            students.push({
+                id: Date.now(), name: name, info: document.getElementById('st-info').value,
+                goal: document.getElementById('st-goal').value, price: document.getElementById('st-price').value,
+                materials: document.getElementById('st-materials').value, archived: false,
+                classLogs: [], notes: [], totalMinutes: 0, activeTimer: null
+            });
+            localStorage.setItem('app_students', JSON.stringify(students));
+            toggleModal('modal-add-student', false);
+            document.getElementById('st-name').value = '';
+            renderStudents();
+        }
+
+        function filterStudents(archived) {
+            showArchivedStudents = archived;
+            document.getElementById('btn-filter-active-student').classList.toggle('active', !archived);
+            document.getElementById('btn-filter-archived-student').classList.toggle('active', archived);
+            renderStudents();
+        }
+
+        function renderStudents() {
+            const students = JSON.parse(localStorage.getItem('app_students')) || [];
+            const container = document.getElementById('students-grid');
+            container.innerHTML = '';
+
+            const filtered = students.filter(s => s.archived === showArchivedStudents);
+            if(filtered.length === 0) {
+                container.innerHTML = `<p style="font-size:13px; color:var(--text-muted);">Nenhum aluno ${showArchivedStudents ? 'arquivado' : 'ativo'} cadastrado.</p>`;
+                return;
+            }
+
+            filtered.forEach(s => {
+                const hours = (s.totalMinutes / 60).toFixed(1);
+                container.innerHTML += `
+                    <div class="item-card" onclick="openStudentDetail(${s.id})">
+                        <div style="font-weight:600; font-size:15px; margin-bottom:4px;">${s.name}</div>
+                        <div style="font-size:12px; color:var(--text-muted);">${s.goal || 'Sem objetivo cadastrado'}</div>
+                        <div style="font-size:12px; margin-top:8px;"><strong>Mensalidade:</strong> ${s.price || 'A definir'}</div>
+                        <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">⏱ Tempo Investido: ${hours}h</div>
+                    </div>`;
+            });
+        }
+
+        function openStudentDetail(id) {
+            const students = JSON.parse(localStorage.getItem('app_students')) || [];
+            const s = students.find(x => x.id === id); if(!s) return;
+
+            const content = document.getElementById('student-detail-content');
+            content.innerHTML = `
+                <div style="display:flex; justify-size:space-between; align-items:center;">
+                    <div class="section-title">Ficha do Aluno</div>
+                </div>
+                <h3 style="margin:0 0 4px 0;">${s.name}</h3>
+                <p style="font-size:13px; color:var(--text-muted); margin-bottom:12px;">Contato: ${s.info || '-'}</p>
+                
+                <p style="font-size:13px;"><strong>Objetivo:</strong> ${s.goal || '-'}</p>
+                <p style="font-size:13px;"><strong>Mensalidade:</strong> ${s.price || '-'}</p>
+                <p style="font-size:13px;"><strong>Materiais:</strong> ${s.materials || '-'}</p>
+
+                <hr style="border:0; border-top:1px solid var(--border); margin:16px 0;">
+
+                <div class="section-title">Sessão de Trabalho / Aula</div>
+                <div style="display:flex; gap:8px; margin-bottom:16px;">
+                    <button class="btn-main" style="background:#10b981;" onclick="toggleTimer('student', ${s.id}, true)">▶ Iniciar Aula/Tarefa</button>
+                    <button class="btn-main" style="background:#ef4444;" onclick="toggleTimer('student', ${s.id}, false)">⏹ Finalizar</button>
+                </div>
+                <div style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">Total acumulado: ${(s.totalMinutes/60).toFixed(1)} horas</div>
+
+                <hr style="border:0; border-top:1px solid var(--border); margin:16px 0;">
+
+                <div class="section-title">Registro de Aulas</div>
+                <input type="text" id="st-log-text" placeholder="O que foi trabalhado hoje?">
+                <button class="btn-sub" onclick="addStudentClassLog(${s.id})">Salvar Registro de Aula</button>
+                <div id="st-logs-list" style="margin-top:12px; max-height:120px; overflow-y:auto; font-size:12px;">
+                    ${s.classLogs.map(l => `<div style="padding:4px 0; border-bottom:1px solid var(--border);">${l.date}: ${l.text}</div>`).join('')}
+                </div>
+
+                <hr style="border:0; border-top:1px solid var(--border); margin:16px 0;">
+
+                <button class="btn-sub" style="color:#ef4444; border-color:#ef4444; width:100%;" onclick="toggleArchiveStudent(${s.id})">
+                    ${s.archived ? 'Desarquivar Aluno' : 'Arquivar Aluno'}
+                </button>
+            `;
+            toggleModal('modal-student-detail', true);
+        }
+
+        function addStudentClassLog(id) {
+            const text = document.getElementById('st-log-text').value; if(!text) return;
+            const students = JSON.parse(localStorage.getItem('app_students')) || [];
+            const s = students.find(x => x.id === id);
+            if(s) {
+                s.classLogs.unshift({ date: new Date().toLocaleDateString('pt-BR'), text: text });
+                localStorage.setItem('app_students', JSON.stringify(students));
+                openStudentDetail(id);
+            }
+        }
+
+        function toggleArchiveStudent(id) {
+            const students = JSON.parse(localStorage.getItem('app_students')) || [];
+            const s = students.find(x => x.id === id);
+            if(s) {
+                s.archived = !s.archived;
+                localStorage.setItem('app_students', JSON.stringify(students));
+                toggleModal('modal-student-detail', false);
+                renderStudents();
+            }
+        }
+
+        // --- GESTÃO DE CONTRATOS COM EMPRESAS ---
+        function saveCompany() {
+            const name = document.getElementById('cp-name').value; if(!name) return;
+            const companies = JSON.parse(localStorage.getItem('app_companies')) || [];
+            companies.push({
+                id: Date.now(), name: name, rate: document.getElementById('cp-rate').value,
+                location: document.getElementById('cp-location').value, start: document.getElementById('cp-start').value,
+                archived: false, tasks: [], totalMinutes: 0, activeTimer: null
+            });
+            localStorage.setItem('app_companies', JSON.stringify(companies));
+            toggleModal('modal-add-company', false);
+            document.getElementById('cp-name').value = '';
+            renderCompanies();
+        }
+
+        function filterCompanies(archived) {
+            showArchivedCompanies = archived;
+            document.getElementById('btn-filter-active-company').classList.toggle('active', !archived);
+            document.getElementById('btn-filter-archived-company').classList.toggle('active', archived);
+            renderCompanies();
+        }
+
+        function renderCompanies() {
+            const companies = JSON.parse(localStorage.getItem('app_companies')) || [];
+            const container = document.getElementById('companies-grid');
+            container.innerHTML = '';
+
+            const filtered = companies.filter(c => c.archived === showArchivedCompanies);
+            if(filtered.length === 0) {
+                container.innerHTML = `<p style="font-size:13px; color:var(--text-muted);">Nenhuma empresa ${showArchivedCompanies ? 'arquivada' : 'ativa'} cadastrada.</p>`;
+                return;
+            }
+
+            filtered.forEach(c => {
+                const hours = (c.totalMinutes / 60).toFixed(1);
+                container.innerHTML += `
+                    <div class="item-card" onclick="openCompanyDetail(${c.id})">
+                        <div style="font-weight:600; font-size:15px; margin-bottom:4px;">${c.name}</div>
+                        <div style="font-size:12px; color:var(--text-muted);">${c.location || 'Localização não informada'}</div>
+                        <div style="font-size:12px; margin-top:8px;"><strong>Hora-Aula:</strong> ${c.rate || 'A definir'}</div>
+                        <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">⏱ Tempo Investido: ${hours}h</div>
+                    </div>`;
+            });
+        }
+
+        function openCompanyDetail(id) {
+            const companies = JSON.parse(localStorage.getItem('app_companies')) || [];
+            const c = companies.find(x => x.id === id); if(!c) return;
+
+            const content = document.getElementById('company-detail-content');
+            content.innerHTML = `
+                <div class="section-title">Ficha do Contrato</div>
+                <h3 style="margin:0 0 4px 0;">${c.name}</h3>
+                <p style="font-size:13px; color:var(--text-muted); margin-bottom:12px;">Início do contrato: ${c.start || '-'}</p>
+                
+                <p style="font-size:13px;"><strong>Valor Hora-Aula:</strong> ${c.rate || '-'}</p>
+                <p style="font-size:13px;"><strong>Origem/Local:</strong> ${c.location || '-'}</p>
+
+                <hr style="border:0; border-top:1px solid var(--border); margin:16px 0;">
+
+                <div class="section-title">Sessão de Trabalho / Reunião</div>
+                <div style="display:flex; gap:8px; margin-bottom:16px;">
+                    <button class="btn-main" style="background:#10b981;" onclick="toggleTimer('company', ${c.id}, true)">▶ Iniciar Trabalho</button>
+                    <button class="btn-main" style="background:#ef4444;" onclick="toggleTimer('company', ${c.id}, false)">⏹ Finalizar</button>
+                </div>
+                <div style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">Total acumulado: ${(c.totalMinutes/60).toFixed(1)} horas</div>
+
+                <hr style="border:0; border-top:1px solid var(--border); margin:16px 0;">
+
+                <div class="section-title">Demandas & Compromissos da Semana</div>
+                <input type="text" id="cp-task-text" placeholder="Adicionar reunião, entrega ou aula...">
+                <button class="btn-sub" onclick="addCompanyTask(${c.id})">Adicionar Demanda</button>
+                <div id="cp-tasks-list" style="margin-top:12px; max-height:120px; overflow-y:auto; font-size:12px;">
+                    ${c.tasks.map(t => `<div style="padding:4px 0; border-bottom:1px solid var(--border);">• ${t}</div>`).join('')}
+                </div>
+
+                <hr style="border:0; border-top:1px solid var(--border); margin:16px 0;">
+
+                <button class="btn-sub" style="color:#ef4444; border-color:#ef4444; width:100%;" onclick="toggleArchiveCompany(${c.id})">
+                    ${c.archived ? 'Desarquivar Empresa' : 'Arquivar Empresa'}
+                </button>
+            `;
+            toggleModal('modal-company-detail', true);
+        }
+
+        function addCompanyTask(id) {
+            const text = document.getElementById('cp-task-text').value; if(!text) return;
+            const companies = JSON.parse(localStorage.getItem('app_companies')) || [];
+            const c = companies.find(x => x.id === id);
+            if(c) {
+                c.tasks.unshift(text);
+                localStorage.setItem('app_companies', JSON.stringify(companies));
+                openCompanyDetail(id);
+            }
+        }
+
+        function toggleArchiveCompany(id) {
+            const companies = JSON.parse(localStorage.getItem('app_companies')) || [];
+            const c = companies.find(x => x.id === id);
+            if(c) {
+                c.archived = !c.archived;
+                localStorage.setItem('app_companies', JSON.stringify(companies));
+                toggleModal('modal-company-detail', false);
+                renderCompanies();
+            }
+        }
+
+        // TIMER GENÉRICO DE DURAÇÃO DE TRABALHO
+        function toggleTimer(type, id, start) {
+            const storageKey = type === 'student' ? 'app_students' : 'app_companies';
+            const items = JSON.parse(localStorage.getItem(storageKey)) || [];
+            const item = items.find(x => x.id === id);
+
+            if(!item) return;
+
+            if(start) {
+                item.activeTimer = new Date().toISOString();
+                alert(`Sessão iniciada para ${item.name}!`);
+            } else {
+                if(!item.activeTimer) { alert('Nenhuma sessão em andamento.'); return; }
+                const startTime = new Date(item.activeTimer);
+                const diffMins = Math.round((new Date() - startTime) / 60000);
+                item.totalMinutes += diffMins;
+                item.activeTimer = null;
+                alert(`Sessão encerrada! +${diffMins} minutos computados para ${item.name}.`);
+            }
+
+            localStorage.setItem(storageKey, JSON.stringify(items));
+            if(type === 'student') openStudentDetail(id); else openCompanyDetail(id);
+        }
+
+        // --- DEMAIS LÓGICAS DO APP ---
         function startDay() {
-            const now = new Date();
-            localStorage.setItem('app_day_start_time', now.toISOString());
-            updateDayTimeDisplay();
-            alert('Dia iniciado! A IA começará a contabilizar suas métricas a partir de agora.');
+            localStorage.setItem('app_day_start_time', new Date().toISOString());
+            updateDayTimeDisplay(); alert('Dia iniciado!');
         }
 
         function openEndDayModal() {
             const startTimeStr = localStorage.getItem('app_day_start_time');
             const summary = document.getElementById('time-worked-summary');
             if(startTimeStr) {
-                const start = new Date(startTimeStr);
-                const end = new Date();
-                const diffMs = end - start;
+                const diffMs = new Date() - new Date(startTimeStr);
                 const hours = Math.floor(diffMs / 3600000);
                 const mins = Math.round((diffMs % 3600000) / 60000);
                 summary.innerText = `Tempo em modo de trabalho hoje: ${hours}h ${mins}min`;
-            } else {
-                summary.innerText = "Dia finalizado (horário de início não registrado).";
-            }
+            } else { summary.innerText = "Dia finalizado."; }
             toggleModal('end-day-modal', true);
         }
 
         function confirmEndDay() {
             const todayKey = new Date().toISOString().split('T')[0];
             const logs = JSON.parse(localStorage.getItem('app_daily_history')) || {};
-            
-            // Salvar histórico do dia
             const ritualData = JSON.parse(localStorage.getItem('app_custom_ritual')) || defaultRitual;
             const careData = JSON.parse(localStorage.getItem('app_custom_care')) || defaultCare;
-            
-            const ritualChecked = ritualData.map((_, idx) => localStorage.getItem(`app_check_ritual_${idx}`) === 'true');
-            const careChecked = careData.map((_, idx) => localStorage.getItem(`app_check_care_${idx}`) === 'true');
 
             logs[todayKey] = {
-                focus: localStorage.getItem('app_focus_task') || 'Nenhum foco definido',
-                ritualChecked: ritualChecked,
-                careChecked: careChecked,
+                focus: localStorage.getItem('app_focus_task') || 'Nenhum foco',
                 good: document.getElementById('ref-good').value,
                 improve: document.getElementById('ref-improve').value
             };
 
             localStorage.setItem('app_daily_history', JSON.stringify(logs));
-
-            // RESETAR CHECKBOXES
             ritualData.forEach((_, idx) => localStorage.removeItem(`app_check_ritual_${idx}`));
             careData.forEach((_, idx) => localStorage.removeItem(`app_check_care_${idx}`));
             localStorage.removeItem('app_day_start_time');
 
-            renderCustomLists();
-            renderWeekView();
-            updateDayTimeDisplay();
-            toggleModal('end-day-modal', false);
-            alert('Dia encerrado e rituais resetados para amanhã. Até amanhã!');
+            renderCustomLists(); updateDayTimeDisplay();
+            toggleModal('end-day-modal', false); alert('Dia encerrado e rituais resetados!');
         }
 
         function updateDayTimeDisplay() {
@@ -419,85 +704,9 @@
             if(startTimeStr) {
                 const t = new Date(startTimeStr);
                 status.innerText = `Em andamento desde às ${t.getHours().toString().padStart(2,'0')}:${t.getMinutes().toString().padStart(2,'0')}`;
-            } else {
-                status.innerText = "Dia não iniciado.";
-            }
+            } else { status.innerText = "Dia não iniciado."; }
         }
 
-        // --- VISÃO DA SEMANA ---
-        function renderWeekView() {
-            const container = document.getElementById('week-view');
-            container.innerHTML = '';
-            const logs = JSON.parse(localStorage.getItem('app_daily_history')) || {};
-
-            for(let i = 6; i >= 0; i--) {
-                const d = new Date();
-                d.setDate(d.getDate() - i);
-                const key = d.toISOString().split('T')[0];
-                const hasData = logs[key];
-
-                container.innerHTML += `
-                    <div class="week-day-card" onclick="openDayDetail('${key}')">
-                        <div style="font-weight:600;">${d.getDate()}/${d.getMonth()+1}</div>
-                        <div style="margin-top:4px; font-size:10px; color:var(--text-muted);">${hasData ? '✓ Salvo' : '-'}</div>
-                    </div>`;
-            }
-        }
-
-        function openDayDetail(dateKey) {
-            const logs = JSON.parse(localStorage.getItem('app_daily_history')) || {};
-            const day = logs[dateKey];
-            const content = document.getElementById('day-detail-content');
-
-            if(!day) {
-                content.innerHTML = `<div class="section-title">Registro do Dia</div><p style="font-size:13px; color:var(--text-muted);">Nenhum registro finalizado nesta data.</p>`;
-            } else {
-                content.innerHTML = `
-                    <div class="section-title">Registro do Dia (${dateKey})</div>
-                    <p style="font-size:14px;"><strong>Foco:</strong> ${day.focus}</p>
-                    <p style="font-size:13px;"><strong>O que deu certo:</strong> ${day.good || 'Sem registro'}</p>
-                    <p style="font-size:13px;"><strong>Ajustes para o dia seguinte:</strong> ${day.improve || 'Sem registro'}</p>
-                `;
-            }
-            toggleModal('day-detail-modal', true);
-        }
-
-        // --- ESTANTE & CALENDÁRIO ---
-        function toggleBookModal(show) { toggleModal('book-modal', show); }
-
-        function saveBook() {
-            const title = document.getElementById('book-title').value;
-            if(!title) return;
-            const books = JSON.parse(localStorage.getItem('app_books')) || [];
-            books.push({
-                id: Date.now(), title: title, author: document.getElementById('book-author').value,
-                publisher: document.getElementById('book-publisher').value, year: document.getElementById('book-year').value,
-                pages: parseInt(document.getElementById('book-pages').value) || 0, readPages: 0,
-                type: document.getElementById('book-type').value, cover: document.getElementById('book-cover').value, sessions: []
-            });
-            localStorage.setItem('app_books', JSON.stringify(books));
-            toggleBookModal(false); renderShelf();
-        }
-
-        function renderShelf() {
-            const books = JSON.parse(localStorage.getItem('app_books')) || [];
-            const container = document.getElementById('shelf-list');
-            container.innerHTML = '';
-            books.forEach(b => {
-                const pct = b.pages > 0 ? Math.min(100, Math.round((b.readPages / b.pages) * 100)) : 0;
-                container.innerHTML += `
-                    <div style="border: 1px solid var(--border); border-radius: 8px; padding: 12px; background: var(--bg); cursor: pointer;" onclick="openBookDetails(${b.id})">
-                        <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px;">${b.title}</div>
-                        <div style="font-size: 12px; color: var(--text-muted);">${b.author || 'Autor não informado'}</div>
-                        <div style="height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; margin-top: 8px;">
-                            <div style="height: 100%; background: var(--theme-color); width: ${pct}%;"></div>
-                        </div>
-                        <div style="font-size: 11px; text-align: right; color: var(--text-muted); margin-top: 4px;">${pct}% (${b.readPages}/${b.pages} pág)</div>
-                    </div>`;
-            });
-        }
-
-        // --- OUTRAS LÓGICAS ---
         function selectEnergy(level) { localStorage.setItem('app_energy', level); applyTheme(level); }
         function applyTheme(level) {
             document.body.classList.remove('theme-alta', 'theme-media', 'theme-baixa');
@@ -505,7 +714,6 @@
         }
 
         function saveApiKey() { localStorage.setItem('app_gemini_key', document.getElementById('gemini-api-key').value); alert('Chave API salva!'); }
-
         function handleBgUpload(e) {
             const file = e.target.files[0]; if (!file) return;
             const reader = new FileReader();
@@ -515,7 +723,6 @@
             };
             reader.readAsDataURL(file);
         }
-
         function updateOpacity(val) { localStorage.setItem('app_bg_opacity', val); document.getElementById('bg-overlay').style.opacity = val; }
         function removeBg() { localStorage.removeItem('app_bg_image'); document.getElementById('bg-overlay').style.backgroundImage = 'none'; }
 
@@ -536,8 +743,7 @@
 
         function clearFocusTask() {
             localStorage.removeItem('app_focus_task'); localStorage.removeItem('app_focus_why');
-            document.getElementById('task-input').value = ''; document.getElementById('why-input').value = '';
-            renderFocusTask();
+            document.getElementById('task-input').value = ''; document.getElementById('why-input').value = ''; renderFocusTask();
         }
 
         function renderCustomLists() {
@@ -585,14 +791,9 @@
             const savedApiKey = localStorage.getItem('app_gemini_key');
             if(savedApiKey) document.getElementById('gemini-api-key').value = savedApiKey;
 
-            const savedRitual = JSON.parse(localStorage.getItem('app_custom_ritual')) || defaultRitual;
-            const savedCare = JSON.parse(localStorage.getItem('app_custom_care')) || defaultCare;
-            document.getElementById('config-ritual').value = savedRitual.join('\n');
-            document.getElementById('config-care').value = savedCare.join('\n');
-
             renderCustomLists();
-            renderShelf();
-            renderWeekView();
+            renderStudents();
+            renderCompanies();
             renderFocusTask();
             updateDayTimeDisplay();
         };
