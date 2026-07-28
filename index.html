@@ -391,7 +391,7 @@
             </div>
         </div>
 
-        <!-- ABA CONFIGURAÇÕES (SINCRONIZAÇÃO EM TEMPO REAL) -->
+        <!-- ABA CONFIGURAÇÕES -->
         <div id="tab-config" class="tab-content">
             <div class="card">
                 <div class="section-title">Sincronização em Tempo Real (Google Sheets)</div>
@@ -500,10 +500,13 @@
 
     </div>
 
-    <!-- LÓGICA JAVASCRIPT COMPLETA -->
+    <!-- LÓGICA JAVASCRIPT CORRIGIDA -->
     <script>
         const defaultRitual = ["Água/Chá na mesa", "Ambiente de tela limpo", "Bloco de tempo definido"];
         const defaultCare = ["Hidratação vocal", "Pausa para os olhos", "Alongamento de maxilar / pescoço"];
+
+        let showArchivedStudents = false;
+        let showArchivedCompanies = false;
 
         function switchTab(tabName) {
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
@@ -552,6 +555,194 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ target: target, payload: payload })
             }).catch(e => console.log('Erro ao sincronizar:', e));
+        }
+
+        // --- ALUNOS PARTICULARES ---
+        function saveStudent() {
+            const name = document.getElementById('st-name').value;
+            if(!name) { alert('Digite ao menos o nome do aluno.'); return; }
+
+            const payload = {
+                id: Date.now(),
+                name: name,
+                info: document.getElementById('st-info').value,
+                goal: document.getElementById('st-goal').value,
+                price: document.getElementById('st-price').value,
+                materials: document.getElementById('st-materials').value,
+                archived: false,
+                classLogs: [],
+                notes: [],
+                totalMinutes: 0
+            };
+
+            const students = JSON.parse(localStorage.getItem('app_students')) || [];
+            students.push(payload);
+            localStorage.setItem('app_students', JSON.stringify(students));
+
+            sendToGoogleSheet('ALUNO', payload);
+
+            document.getElementById('st-name').value = '';
+            document.getElementById('st-info').value = '';
+            document.getElementById('st-goal').value = '';
+            document.getElementById('st-price').value = '';
+            document.getElementById('st-materials').value = '';
+
+            toggleModal('modal-add-student', false);
+            renderStudents();
+            alert('Aluno cadastrado e sincronizado!');
+        }
+
+        function filterStudents(archived) {
+            showArchivedStudents = archived;
+            document.getElementById('btn-filter-active-student').classList.toggle('active', !archived);
+            document.getElementById('btn-filter-archived-student').classList.toggle('active', archived);
+            renderStudents();
+        }
+
+        function renderStudents() {
+            const students = JSON.parse(localStorage.getItem('app_students')) || [];
+            const container = document.getElementById('students-grid');
+            container.innerHTML = '';
+
+            const filtered = students.filter(s => s.archived === showArchivedStudents);
+            if(filtered.length === 0) {
+                container.innerHTML = `<p style="font-size:13px; color:var(--text-muted);">Nenhum aluno ${showArchivedStudents ? 'arquivado' : 'ativo'} cadastrado.</p>`;
+                return;
+            }
+
+            filtered.forEach(s => {
+                const hours = ((s.totalMinutes || 0) / 60).toFixed(1);
+                container.innerHTML += `
+                    <div class="item-card" onclick="openStudentDetail(${s.id})">
+                        <div style="font-weight:600; font-size:15px; margin-bottom:4px;">${s.name}</div>
+                        <div style="font-size:12px; color:var(--text-muted);">${s.goal || 'Sem objetivo cadastrado'}</div>
+                        <div style="font-size:12px; margin-top:8px;"><strong>Mensalidade:</strong> ${s.price || 'A definir'}</div>
+                        <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">⏱ Tempo Investido: ${hours}h</div>
+                    </div>`;
+            });
+        }
+
+        function openStudentDetail(id) {
+            const students = JSON.parse(localStorage.getItem('app_students')) || [];
+            const s = students.find(x => x.id === id); if(!s) return;
+
+            const content = document.getElementById('student-detail-content');
+            content.innerHTML = `
+                <div class="section-title">Ficha do Aluno</div>
+                <h3 style="margin:0 0 4px 0;">${s.name}</h3>
+                <p style="font-size:13px; color:var(--text-muted); margin-bottom:12px;">Contato: ${s.info || '-'}</p>
+                <p style="font-size:13px;"><strong>Objetivo:</strong> ${s.goal || '-'}</p>
+                <p style="font-size:13px;"><strong>Mensalidade:</strong> ${s.price || '-'}</p>
+                <p style="font-size:13px;"><strong>Materiais:</strong> ${s.materials || '-'}</p>
+                <hr style="border:0; border-top:1px solid var(--border); margin:16px 0;">
+                <button class="btn-sub" style="color:#ef4444; border-color:#ef4444; width:100%;" onclick="toggleArchiveStudent(${s.id})">
+                    ${s.archived ? 'Desarquivar Aluno' : 'Arquivar Aluno'}
+                </button>
+            `;
+            toggleModal('modal-student-detail', true);
+        }
+
+        function toggleArchiveStudent(id) {
+            const students = JSON.parse(localStorage.getItem('app_students')) || [];
+            const s = students.find(x => x.id === id);
+            if(s) {
+                s.archived = !s.archived;
+                localStorage.setItem('app_students', JSON.stringify(students));
+                toggleModal('modal-student-detail', false);
+                renderStudents();
+            }
+        }
+
+        // --- CONTRATOS COM EMPRESAS ---
+        function saveCompany() {
+            const name = document.getElementById('cp-name').value;
+            if(!name) { alert('Digite ao menos o nome da empresa.'); return; }
+
+            const payload = {
+                id: Date.now(),
+                name: name,
+                rate: document.getElementById('cp-rate').value,
+                location: document.getElementById('cp-location').value,
+                start: document.getElementById('cp-start').value,
+                archived: false,
+                tasks: [],
+                totalMinutes: 0
+            };
+
+            const companies = JSON.parse(localStorage.getItem('app_companies')) || [];
+            companies.push(payload);
+            localStorage.setItem('app_companies', JSON.stringify(companies));
+
+            sendToGoogleSheet('EMPRESA', payload);
+
+            document.getElementById('cp-name').value = '';
+            document.getElementById('cp-rate').value = '';
+            document.getElementById('cp-location').value = '';
+            document.getElementById('cp-start').value = '';
+
+            toggleModal('modal-add-company', false);
+            renderCompanies();
+            alert('Empresa salva e enviada para o Google Sheets!');
+        }
+
+        function filterCompanies(archived) {
+            showArchivedCompanies = archived;
+            document.getElementById('btn-filter-active-company').classList.toggle('active', !archived);
+            document.getElementById('btn-filter-archived-company').classList.toggle('active', archived);
+            renderCompanies();
+        }
+
+        function renderCompanies() {
+            const companies = JSON.parse(localStorage.getItem('app_companies')) || [];
+            const container = document.getElementById('companies-grid');
+            container.innerHTML = '';
+
+            const filtered = companies.filter(c => c.archived === showArchivedCompanies);
+            if(filtered.length === 0) {
+                container.innerHTML = `<p style="font-size:13px; color:var(--text-muted);">Nenhuma empresa ${showArchivedCompanies ? 'arquivada' : 'ativa'} cadastrada.</p>`;
+                return;
+            }
+
+            filtered.forEach(c => {
+                const hours = ((c.totalMinutes || 0) / 60).toFixed(1);
+                container.innerHTML += `
+                    <div class="item-card" onclick="openCompanyDetail(${c.id})">
+                        <div style="font-weight:600; font-size:15px; margin-bottom:4px;">${c.name}</div>
+                        <div style="font-size:12px; color:var(--text-muted);">${c.location || 'Localização não informada'}</div>
+                        <div style="font-size:12px; margin-top:8px;"><strong>Hora-Aula:</strong> ${c.rate || 'A definir'}</div>
+                        <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">⏱ Tempo Investido: ${hours}h</div>
+                    </div>`;
+            });
+        }
+
+        function openCompanyDetail(id) {
+            const companies = JSON.parse(localStorage.getItem('app_companies')) || [];
+            const c = companies.find(x => x.id === id); if(!c) return;
+
+            const content = document.getElementById('company-detail-content');
+            content.innerHTML = `
+                <div class="section-title">Ficha do Contrato</div>
+                <h3 style="margin:0 0 4px 0;">${c.name}</h3>
+                <p style="font-size:13px; color:var(--text-muted); margin-bottom:12px;">Início do contrato: ${c.start || '-'}</p>
+                <p style="font-size:13px;"><strong>Valor Hora-Aula:</strong> ${c.rate || '-'}</p>
+                <p style="font-size:13px;"><strong>Origem/Local:</strong> ${c.location || '-'}</p>
+                <hr style="border:0; border-top:1px solid var(--border); margin:16px 0;">
+                <button class="btn-sub" style="color:#ef4444; border-color:#ef4444; width:100%;" onclick="toggleArchiveCompany(${c.id})">
+                    ${c.archived ? 'Desarquivar Empresa' : 'Arquivar Empresa'}
+                </button>
+            `;
+            toggleModal('modal-company-detail', true);
+        }
+
+        function toggleArchiveCompany(id) {
+            const companies = JSON.parse(localStorage.getItem('app_companies')) || [];
+            const c = companies.find(x => x.id === id);
+            if(c) {
+                c.archived = !c.archived;
+                localStorage.setItem('app_companies', JSON.stringify(companies));
+                toggleModal('modal-company-detail', false);
+                renderCompanies();
+            }
         }
 
         // --- FINANÇAS ---
@@ -697,7 +888,7 @@
             reader.onload = function(evt) { localStorage.setItem('app_bg_image', evt.target.result); document.getElementById('bg-overlay').style.backgroundImage = `url(${evt.target.result})`; };
             reader.readAsDataURL(file);
         }
-        function updateOpacity(val) { localStorage.setItem('app_bg_opacity', val); document.getElementById('bg-overlay').style.opacity = val; }
+        function updateOpacity(val) { localStorage.setItem('app_bg_opacity', val); document.getElementById('bg-opacity').style.opacity = val; }
         function removeBg() { localStorage.removeItem('app_bg_image'); document.getElementById('bg-overlay').style.backgroundImage = 'none'; }
         function addFocusTask() {
             const task = document.getElementById('task-input').value; const why = document.getElementById('why-input').value; if(!task) return;
@@ -746,7 +937,7 @@
             document.getElementById('house-target').value = localStorage.getItem('app_house_target') || '';
             document.getElementById('house-saved').value = localStorage.getItem('app_house_saved') || '';
 
-            renderCustomLists(); renderFinance(); renderHouseProject(); renderWishlist(); renderFocusTask(); renderJournalGallery(); updateDayTimeDisplay();
+            renderCustomLists(); renderStudents(); renderCompanies(); renderFinance(); renderHouseProject(); renderWishlist(); renderFocusTask(); renderJournalGallery(); updateDayTimeDisplay();
         };
     </script>
 </body>
