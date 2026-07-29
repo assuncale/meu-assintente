@@ -178,6 +178,20 @@
             background: #10b981;
             margin-top: 2px;
         }
+
+        /* Estilos das Tags da Matriz de Eisenhower */
+        .eisen-tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+        .eisen-do { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; } /* Fazer Agora */
+        .eisen-schedule { background: #f3e8ff; color: #7c3aed; border: 1px solid #ddd6fe; } /* Agendar */
+        .eisen-delegate { background: #fef3c7; color: #d97706; border: 1px solid #fde68a; } /* Delegar */
+        .eisen-low { background: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; } /* Baixa Prioridade */
     </style>
 </head>
 <body>
@@ -239,13 +253,28 @@
 
             <div class="landscape-grid">
                 <div>
-                    <!-- BRAINDUMP & FOCO -->
+                    <!-- BRAINDUMP & FOCO (REVISADO COM MATRIZ DE EISENHOWER E LISTA DE TAREFAS) -->
                     <div class="card">
-                        <div class="section-title">Braindump & Foco</div>
+                        <div class="section-title">Braindump & Matriz de Prioridades</div>
                         <input type="text" id="task-input" placeholder="O que precisa ser feito?">
                         <input type="text" id="why-input" placeholder="Por que isso é importante?">
-                        <button class="btn-main" onclick="addFocusTask()">Definir Foco</button>
+                        
+                        <label style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px; display: block;">Grau de Prioridade (Eisenhower):</label>
+                        <select id="eisen-input">
+                            <option value="do">Fazer Agora (Urgente & Importante)</option>
+                            <option value="schedule">Agendar (Importante, Não Urgente)</option>
+                            <option value="delegate">Delegar / Resolver Rápido (Urgente, Não Importante)</option>
+                            <option value="low">Baixa Prioridade (Não Urgente, Não Importante)</option>
+                        </select>
+
+                        <button class="btn-main" onclick="addFocusTask()">+ Capturar no Braindump</button>
                         <a href="https://calendar.google.com" target="_blank" style="display: inline-block; margin-top: 8px; font-size: 13px; color: var(--theme-color);">Google Agenda</a>
+
+                        <!-- LISTA DE TAREFAS CAPTURADAS NO BRAINDUMP -->
+                        <div style="margin-top: 16px; border-top: 1px solid var(--border); padding-top: 12px;">
+                            <div style="font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px;">📋 Lista de Tarefas Capturadas</div>
+                            <div id="braindump-list-container" style="max-height: 250px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;"></div>
+                        </div>
                     </div>
                     
                     <div id="focus-card" class="card" style="display: none; border-left: 4px solid var(--theme-color);">
@@ -255,7 +284,7 @@
                         <button class="btn-main" onclick="clearFocusTask()" style="background: #10b981;">Concluído</button>
                     </div>
 
-                    <!-- NOVO CARD: ALARMES, NOTIFICAÇÕES & GOOGLE AGENDA -->
+                    <!-- CARD: ALARMES, NOTIFICAÇÕES & GOOGLE AGENDA -->
                     <div class="card" style="border-left: 4px solid #8b5cf6;">
                         <div class="section-title" style="color: #7c3aed;">🔔 Alarmes & Lembretes no Agenda</div>
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
@@ -741,6 +770,8 @@
             renderWeekView();
             renderBreaksTodaySummary();
             renderAlarmsList();
+            renderBraindumpList();
+            renderFocusTask();
         }
 
         function switchTab(tabName) {
@@ -791,6 +822,143 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ target: target, payload: payload })
             }).catch(e => console.log('Erro ao sincronizar:', e));
+        }
+
+        // --- BRAINDUMP & MATRIZ DE EISENHOWER (LÓGICA REVISADA COM HIGHLIGHTS DE CORES) ---
+        function addFocusTask() {
+            const taskInput = document.getElementById('task-input');
+            const whyInput = document.getElementById('why-input');
+            const eisenInput = document.getElementById('eisen-input');
+
+            const task = taskInput ? taskInput.value.trim() : '';
+            const why = whyInput ? whyInput.value.trim() : '';
+            const priority = eisenInput ? eisenInput.value : 'do';
+
+            if(!task) {
+                alert('Digite a descrição da tarefa.');
+                return;
+            }
+
+            const meta = getTimestampData();
+            const payload = {
+                id: Date.now(),
+                ...meta,
+                task: task,
+                why: why,
+                priority: priority,
+                status: 'pending'
+            };
+
+            const tasksList = JSON.parse(localStorage.getItem('app_braindump_tasks')) || [];
+            tasksList.unshift(payload);
+            localStorage.setItem('app_braindump_tasks', JSON.stringify(tasksList));
+
+            taskInput.value = '';
+            whyInput.value = '';
+
+            renderBraindumpList();
+        }
+
+        function renderBraindumpList() {
+            const container = document.getElementById('braindump-list-container');
+            if(!container) return;
+
+            const tasksList = JSON.parse(localStorage.getItem('app_braindump_tasks')) || [];
+            const activeMonthTasks = tasksList.filter(t => t.monthKey === currentMonthKey && t.status === 'pending');
+
+            if(activeMonthTasks.length === 0) {
+                container.innerHTML = '<p style="font-size:11px; color:var(--text-muted); margin:4px 0;">Nenhuma tarefa capturada no braindump.</p>';
+                return;
+            }
+
+            const priorityLabels = {
+                do: { text: 'Fazer Agora', class: 'eisen-do' },
+                schedule: { text: 'Agendar', class: 'eisen-schedule' },
+                delegate: { text: 'Delegar / Rápido', class: 'eisen-delegate' },
+                low: { text: 'Baixa Prioridade', class: 'eisen-low' }
+            };
+
+            container.innerHTML = activeMonthTasks.map(t => {
+                const tagInfo = priorityLabels[t.priority] || priorityLabels.low;
+                return `
+                    <div style="padding: 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg);">
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                            <span class="eisen-tag ${tagInfo.class}">${tagInfo.text}</span>
+                            <span style="font-size:10px; color:var(--text-muted);">${t.date}</span>
+                        </div>
+                        <div style="font-weight: 600; font-size: 13px; margin-bottom: 2px;">${t.task}</div>
+                        ${t.why ? `<div style="font-size: 11px; color: var(--text-muted); font-style: italic; margin-bottom: 8px;">Por quê: ${t.why}</div>` : ''}
+                        
+                        <div style="display: flex; gap: 6px; margin-top: 6px;">
+                            <button class="btn-sub" style="padding: 2px 8px; font-size: 10px; border-color: var(--theme-color);" onclick="setTaskAsActiveFocus(${t.id})">🎯 Definir como Foco</button>
+                            <button class="btn-sub" style="padding: 2px 8px; font-size: 10px; border-color: #10b981; color: #059669;" onclick="completeBraindumpTask(${t.id})">✓ Concluir</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function setTaskAsActiveFocus(id) {
+            const tasksList = JSON.parse(localStorage.getItem('app_braindump_tasks')) || [];
+            const t = tasksList.find(x => x.id === id);
+            if(t) {
+                localStorage.setItem('app_focus_task', t.task);
+                localStorage.setItem('app_focus_why', t.why || '');
+                renderFocusTask();
+                alert(`"${t.task}" definido como seu foco atual!`);
+            }
+        }
+
+        function completeBraindumpTask(id) {
+            const tasksList = JSON.parse(localStorage.getItem('app_braindump_tasks')) || [];
+            const t = tasksList.find(x => x.id === id);
+            if(t) {
+                t.status = 'completed';
+                localStorage.setItem('app_braindump_tasks', JSON.stringify(tasksList));
+
+                // Se era a tarefa atual de foco, limpa a exibição do foco do topo
+                const currentFocusTask = localStorage.getItem('app_focus_task');
+                if(currentFocusTask === t.task) {
+                    clearFocusTask();
+                } else {
+                    renderBraindumpList();
+                }
+
+                sendToGoogleSheet('HOME', {
+                    date: `${t.date} ${t.timeStr}`,
+                    focus: t.task,
+                    why: t.why || '',
+                    good: `Concluído (${t.priority})`
+                });
+
+                renderWeekView();
+            }
+        }
+
+        function renderFocusTask() {
+            const task = localStorage.getItem('app_focus_task'); 
+            const why = localStorage.getItem('app_focus_why'); 
+            const card = document.getElementById('focus-card');
+            if(card) {
+                if(task) { 
+                    document.getElementById('display-task').innerText = task; 
+                    document.getElementById('display-why').innerText = why ? `Por quê: ${why}` : ''; 
+                    card.style.display = 'block'; 
+                } else { 
+                    card.style.display = 'none'; 
+                }
+            }
+        }
+
+        function clearFocusTask() { 
+            localStorage.removeItem('app_focus_task'); 
+            localStorage.removeItem('app_focus_why'); 
+            const taskInput = document.getElementById('task-input');
+            const whyInput = document.getElementById('why-input');
+            if(taskInput) taskInput.value = ''; 
+            if(whyInput) whyInput.value = ''; 
+            renderFocusTask(); 
+            renderBraindumpList();
         }
 
         // --- ALARMES, NOTIFICAÇÕES NATIVAS & GOOGLE AGENDA ---
@@ -860,10 +1028,8 @@
                 startMin = parts[1];
             }
 
-            // ISO string YYYYMMDDTHHMMSS
             const startISO = `${startYear}${startMonth}${startDay}T${startHour}${startMin}00`;
             
-            // Fim 30 min depois por padrão
             const endDateObj = new Date(startYear, now.getMonth(), startDay, parseInt(startHour), parseInt(startMin) + 30);
             const endYear = endDateObj.getFullYear();
             const endMonth = String(endDateObj.getMonth() + 1).padStart(2, '0');
@@ -2239,19 +2405,6 @@
         function updateOpacity(val) { localStorage.setItem('app_bg_opacity', val); document.getElementById('bg-opacity').style.opacity = val; }
         function removeBg() { localStorage.removeItem('app_bg_image'); document.getElementById('bg-overlay').style.backgroundImage = 'none'; }
         
-        function addFocusTask() {
-            const task = document.getElementById('task-input').value; const why = document.getElementById('why-input').value; if(!task) return;
-            localStorage.setItem('app_focus_task', task); localStorage.setItem('app_focus_why', why); renderFocusTask();
-        }
-        function renderFocusTask() {
-            const task = localStorage.getItem('app_focus_task'); const why = localStorage.getItem('app_focus_why'); const card = document.getElementById('focus-card');
-            if(card) {
-                if(task) { document.getElementById('display-task').innerText = task; document.getElementById('display-why').innerText = why ? `Por quê: ${why}` : ''; card.style.display = 'block'; }
-                else { card.style.display = 'none'; }
-            }
-        }
-        function clearFocusTask() { localStorage.removeItem('app_focus_task'); localStorage.removeItem('app_focus_why'); document.getElementById('task-input').value = ''; document.getElementById('why-input').value = ''; renderFocusTask(); }
-        
         function renderCustomLists() {
             checkDailyReset();
 
@@ -2366,6 +2519,7 @@
             renderChoresTodaySummary();
             renderBreaksTodaySummary();
             renderAlarmsList();
+            renderBraindumpList();
             renderWeekView();
             updateDayTimeDisplay();
         };
