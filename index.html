@@ -64,7 +64,7 @@
 
         .landscape-grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 24px; }
 
-        input[type="text"], input[type="number"], textarea, select {
+        input[type="text"], input[type="number"], input[type="time"], textarea, select {
             width: 100%; padding: 12px; border: 1px solid var(--border);
             border-radius: 8px; box-sizing: border-box; font-size: 14px;
             margin-bottom: 12px; font-family: inherit; background: rgba(255, 255, 255, 0.8);
@@ -221,7 +221,7 @@
                 <div id="day-time-status" style="font-size: 12px; color: var(--text-muted); margin-top: 8px;"></div>
             </div>
 
-            <!-- 2. NOVO CARD: LEMBRETE DE AUTOCUIDADO & PAUSAS (POSICIONADO LOGO ABAIXO DO RITMO) -->
+            <!-- 2. CARD: LEMBRETE DE AUTOCUIDADO & PAUSAS -->
             <div class="card" style="border-left: 4px solid #f59e0b;">
                 <div class="section-title" style="color: #d97706;">🪴 Lembrete de Autocuidado & Pausas</div>
                 <p style="font-size: 13px; color: var(--text-muted); margin: 0 0 12px 0; font-style: italic;">
@@ -253,6 +253,27 @@
                         <h3 id="display-task" style="margin: 0 0 8px 0; font-size: 16px; font-weight: 500;"></h3>
                         <p id="display-why" style="margin: 0 0 16px 0; font-size: 13px; color: var(--text-muted); font-style: italic;"></p>
                         <button class="btn-main" onclick="clearFocusTask()" style="background: #10b981;">Concluído</button>
+                    </div>
+
+                    <!-- NOVO CARD: ALARMES, NOTIFICAÇÕES & GOOGLE AGENDA -->
+                    <div class="card" style="border-left: 4px solid #8b5cf6;">
+                        <div class="section-title" style="color: #7c3aed;">🔔 Alarmes & Lembretes no Agenda</div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                            <span style="font-size: 12px; color: var(--text-muted);">Notificações do PC/Browser:</span>
+                            <button id="btn-request-notif" class="btn-sub" style="padding: 4px 10px; font-size: 11px;" onclick="requestNotificationPermission()">Ativar Alertas Nativos</button>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                            <input type="text" id="alarm-title" placeholder="Ex: Pausa para Almoço, Lanche..." style="margin-bottom: 8px;">
+                            <input type="time" id="alarm-time" style="margin-bottom: 8px;">
+                        </div>
+                        
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn-main" style="background: #8b5cf6; flex: 1;" onclick="addAlarmReminder()">🔔 Criar Lembrete</button>
+                            <button class="btn-sub" style="border-color: #8b5cf6; color: #7c3aed;" onclick="openGoogleCalendarEvent()">📅 Abrir no Google Agenda</button>
+                        </div>
+
+                        <div id="alarms-list" style="margin-top: 12px; max-height: 120px; overflow-y: auto;"></div>
                     </div>
 
                     <!-- SERVIÇOS DOMÉSTICOS -->
@@ -719,6 +740,7 @@
             renderJournalGallery();
             renderWeekView();
             renderBreaksTodaySummary();
+            renderAlarmsList();
         }
 
         function switchTab(tabName) {
@@ -771,7 +793,138 @@
             }).catch(e => console.log('Erro ao sincronizar:', e));
         }
 
-        // --- PAUSAS DE DESCANSO & ALMOÇO (LÓGICA DEDICADA) ---
+        // --- ALARMES, NOTIFICAÇÕES NATIVAS & GOOGLE AGENDA ---
+        function requestNotificationPermission() {
+            if (!("Notification" in window)) {
+                alert("Seu navegador não suporta notificações de área de trabalho.");
+                return;
+            }
+            Notification.requestPermission().then(permission => {
+                if (permission === "granted") {
+                    const btn = document.getElementById('btn-request-notif');
+                    if(btn) btn.innerText = "✓ Permissão Concedida";
+                    alert("Notificações nativas ativadas com sucesso!");
+                } else {
+                    alert("Permissão para notificações não foi concedida.");
+                }
+            });
+        }
+
+        function addAlarmReminder() {
+            const titleInput = document.getElementById('alarm-title');
+            const timeInput = document.getElementById('alarm-time');
+            
+            const title = titleInput ? titleInput.value.trim() : '';
+            const time = timeInput ? timeInput.value : '';
+
+            if(!title || !time) {
+                alert("Preencha o título do lembrete e o horário.");
+                return;
+            }
+
+            const meta = getTimestampData();
+            const payload = {
+                id: Date.now(),
+                ...meta,
+                title: title,
+                time: time
+            };
+
+            const alarms = JSON.parse(localStorage.getItem('app_alarms_list')) || [];
+            alarms.unshift(payload);
+            localStorage.setItem('app_alarms_list', JSON.stringify(alarms));
+
+            titleInput.value = '';
+            timeInput.value = '';
+
+            renderAlarmsList();
+            scheduleLocalNotification(payload);
+            alert(`Lembrete "${title}" agendado para às ${time}!`);
+        }
+
+        function openGoogleCalendarEvent() {
+            const title = document.getElementById('alarm-title')?.value.trim() || 'Pausa de Autocuidado';
+            const timeStr = document.getElementById('alarm-time')?.value;
+
+            const now = new Date();
+            let startYear = now.getFullYear();
+            let startMonth = String(now.getMonth() + 1).padStart(2, '0');
+            let startDay = String(now.getDate()).padStart(2, '0');
+            
+            let startHour = "12";
+            let startMin = "00";
+
+            if(timeStr) {
+                const parts = timeStr.split(':');
+                startHour = parts[0];
+                startMin = parts[1];
+            }
+
+            // ISO string YYYYMMDDTHHMMSS
+            const startISO = `${startYear}${startMonth}${startDay}T${startHour}${startMin}00`;
+            
+            // Fim 30 min depois por padrão
+            const endDateObj = new Date(startYear, now.getMonth(), startDay, parseInt(startHour), parseInt(startMin) + 30);
+            const endYear = endDateObj.getFullYear();
+            const endMonth = String(endDateObj.getMonth() + 1).padStart(2, '0');
+            const endDayStr = String(endDateObj.getDate()).padStart(2, '0');
+            const endHour = String(endDateObj.getHours()).padStart(2, '0');
+            const endMin = String(endDateObj.getMinutes()).padStart(2, '0');
+            const endISO = `${endYear}${endMonth}${endDayStr}T${endHour}${endMin}00`;
+
+            const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${startISO}/${endISO}&details=${encodeURIComponent("Lembrete criado pelo Assistente Pessoal")}`;
+            
+            window.open(url, '_blank');
+        }
+
+        function renderAlarmsList() {
+            const container = document.getElementById('alarms-list');
+            if(!container) return;
+
+            const alarms = JSON.parse(localStorage.getItem('app_alarms_list')) || [];
+            const todayStr = new Date().toLocaleDateString('pt-BR');
+            const todayAlarms = alarms.filter(a => a.date === todayStr);
+
+            if(todayAlarms.length === 0) {
+                container.innerHTML = '<p style="font-size:11px; color:var(--text-muted); margin:4px 0;">Nenhum lembrete agendado para hoje.</p>';
+                return;
+            }
+
+            container.innerHTML = todayAlarms.map(a => `
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:4px 0; border-bottom:1px solid var(--border); font-size:12px;">
+                    <span>⏰ <strong>${a.time}</strong> - ${a.title}</span>
+                    <button class="btn-sub" style="padding:2px 6px; font-size:10px; color:#ef4444; border-color:#ef4444;" onclick="deleteAlarm(${a.id})">×</button>
+                </div>
+            `).join('');
+        }
+
+        function deleteAlarm(id) {
+            let alarms = JSON.parse(localStorage.getItem('app_alarms_list')) || [];
+            alarms = alarms.filter(a => a.id !== id);
+            localStorage.setItem('app_alarms_list', JSON.stringify(alarms));
+            renderAlarmsList();
+        }
+
+        function scheduleLocalNotification(alarm) {
+            if (!("Notification" in window) || Notification.permission !== "granted") return;
+
+            const parts = alarm.time.split(':');
+            const now = new Date();
+            const alarmDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), parseInt(parts[0]), parseInt(parts[1]), 0);
+
+            const diffMs = alarmDate.getTime() - now.getTime();
+
+            if (diffMs > 0) {
+                setTimeout(() => {
+                    new Notification(`⏰ Lembrete: ${alarm.title}`, {
+                        body: `Chegou a hora: ${alarm.time}. Lembre-se de cuidar de você!`,
+                        icon: 'https://cdn-icons-png.flaticon.com/512/3239/3239952.png'
+                    });
+                }, diffMs);
+            }
+        }
+
+        // --- PAUSAS DE DESCANSO & ALMOÇO ---
         function toggleBreakTimer(type, start) {
             const statusEl = document.getElementById('break-timer-status');
             const keyStart = type === 'lunch' ? 'app_lunch_timer_start' : 'app_rest_timer_start';
@@ -2212,6 +2365,7 @@
             renderWritingSessions(); 
             renderChoresTodaySummary();
             renderBreaksTodaySummary();
+            renderAlarmsList();
             renderWeekView();
             updateDayTimeDisplay();
         };
