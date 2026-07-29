@@ -291,9 +291,8 @@
             </div>
         </div>
 
-        <!-- ABA AULAS & DOCÊNCIA (EXPANDIDA COM QUADRO DE HORAS E DISTRIBUIÇÃO) -->
+        <!-- ABA AULAS & DOCÊNCIA -->
         <div id="tab-aulas" class="tab-content">
-            <!-- QUADRO DE INSIGHTS & HORAS TRABALHADAS -->
             <div class="card">
                 <div class="section-title">Quadro de Horas & Energia Docente</div>
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
@@ -585,7 +584,7 @@
 
     </div>
 
-    <!-- ARQUITETURA DE DADOS REVISADA COM TIMESTAMPS & FILTRO MENSUAL -->
+    <!-- ARQUITETURA DE DADOS REVISADA COM RESET DIÁRIO E TIMESTAMPS -->
     <script>
         const defaultRitual = ["Água/Chá na mesa", "Ambiente de tela limpo", "Bloco de tempo definido"];
         const defaultCare = ["Hidratação vocal", "Pausa para os olhos", "Alongamento de maxilar / pescoço"];
@@ -1643,12 +1642,51 @@
             sendToGoogleSheet('HOME', payload);
 
             localStorage.removeItem('app_day_start_time');
-            renderCustomLists(); updateDayTimeDisplay(); toggleModal('end-day-modal', false); alert('Dia encerrado e sincronizado com a planilha!');
+            
+            // Força a limpeza das marcações do dia ao finalizar o dia
+            clearChecklistsForNewDay();
+            renderCustomLists(); 
+            updateDayTimeDisplay(); 
+            toggleModal('end-day-modal', false); 
+            alert('Dia encerrado, checklists limpos e sincronizados com a planilha!');
         }
 
-        // --- DEMAIS LÓGICAS ---
-        function startDay() { localStorage.setItem('app_day_start_time', new Date().toISOString()); updateDayTimeDisplay(); alert('Dia iniciado!'); }
+        // --- RESET DIÁRIO DOS CHECKLISTS (RITUAL & AUTOCUIDADO) ---
+        function clearChecklistsForNewDay() {
+            const todayStr = new Date().toLocaleDateString('pt-BR');
+            localStorage.setItem('app_last_check_date', todayStr);
+
+            const ritualData = JSON.parse(localStorage.getItem('app_custom_ritual')) || defaultRitual;
+            ritualData.forEach((_, idx) => {
+                localStorage.removeItem(`app_check_ritual_${idx}`);
+            });
+
+            const careData = JSON.parse(localStorage.getItem('app_custom_care')) || defaultCare;
+            careData.forEach((_, idx) => {
+                localStorage.removeItem(`app_check_care_${idx}`);
+            });
+        }
+
+        function checkDailyReset() {
+            const todayStr = new Date().toLocaleDateString('pt-BR');
+            const lastCheckDate = localStorage.getItem('app_last_check_date');
+
+            // Se a última data salva for diferente da data de hoje, reseta as caixas
+            if (lastCheckDate !== todayStr) {
+                clearChecklistsForNewDay();
+            }
+        }
+
+        function startDay() { 
+            localStorage.setItem('app_day_start_time', new Date().toISOString()); 
+            clearChecklistsForNewDay();
+            renderCustomLists();
+            updateDayTimeDisplay(); 
+            alert('Dia iniciado e checklists zerados para hoje!'); 
+        }
+
         function openEndDayModal() { toggleModal('end-day-modal', true); }
+        
         function updateDayTimeDisplay() {
             const startTimeStr = localStorage.getItem('app_day_start_time');
             const status = document.getElementById('day-time-status');
@@ -1665,7 +1703,7 @@
             reader.onload = function(evt) { localStorage.setItem('app_bg_image', evt.target.result); document.getElementById('bg-overlay').style.backgroundImage = `url(${evt.target.result})`; };
             reader.readAsDataURL(file);
         }
-        function updateOpacity(val) { localStorage.setItem('app_bg_opacity', val); document.getElementById('bg-overlay').style.opacity = val; }
+        function updateOpacity(val) { localStorage.setItem('app_bg_opacity', val); document.getElementById('bg-opacity').style.opacity = val; }
         function removeBg() { localStorage.removeItem('app_bg_image'); document.getElementById('bg-overlay').style.backgroundImage = 'none'; }
         
         function addFocusTask() {
@@ -1682,6 +1720,8 @@
         function clearFocusTask() { localStorage.removeItem('app_focus_task'); localStorage.removeItem('app_focus_why'); document.getElementById('task-input').value = ''; document.getElementById('why-input').value = ''; renderFocusTask(); }
         
         function renderCustomLists() {
+            checkDailyReset(); // Verifica se precisa resetar para o novo dia antes de desenhar na tela
+
             const ritualData = JSON.parse(localStorage.getItem('app_custom_ritual')) || defaultRitual;
             const careData = JSON.parse(localStorage.getItem('app_custom_care')) || defaultCare;
             const ritualContainer = document.getElementById('ritual-list'); 
@@ -1701,7 +1741,12 @@
                 });
             }
         }
-        function saveCheck(id) { localStorage.setItem(`app_check_${id}`, document.getElementById(id).checked); }
+
+        function saveCheck(id) { 
+            const isChecked = document.getElementById(id).checked;
+            localStorage.setItem(`app_check_${id}`, isChecked); 
+            localStorage.setItem('app_last_check_date', new Date().toLocaleDateString('pt-BR'));
+        }
         
         function saveSettings() {
             const ritualArray = document.getElementById('config-ritual').value.split('\n').filter(i => i.trim() !== '');
