@@ -38,7 +38,8 @@
             width: 100%; max-width: 1100px; display: flex; flex-direction: column; gap: 24px; position: relative; z-index: 1;
         }
 
-        .nav-tabs { display: flex; gap: 12px; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
+        .nav-tabs { display: flex; gap: 12px; border-bottom: 1px solid var(--border); padding-bottom: 12px; align-items: center; justify-content: space-between; }
+        .nav-tabs-left { display: flex; gap: 12px; }
 
         .tab-btn {
             padding: 8px 16px; border: none; background: transparent;
@@ -109,7 +110,6 @@
         body.theme-media { --theme-color: #7c3aed; --highlight: #f3e8ff; --border: #ddd6fe; }
         body.theme-baixa { --theme-color: #0284c7; --highlight: #e0f2fe; --border: #bae6fd; }
 
-        /* Estilos do Calendário de Leituras */
         .calendar-grid {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
@@ -157,11 +157,18 @@
     <div class="container">
         
         <nav class="nav-tabs">
-            <button class="tab-btn active" onclick="switchTab('home')">Home</button>
-            <button class="tab-btn" onclick="switchTab('pesquisa')">Pesquisa Literária</button>
-            <button class="tab-btn" onclick="switchTab('aulas')">Aulas & Docência</button>
-            <button class="tab-btn" onclick="switchTab('financas')">Finanças</button>
-            <button class="tab-btn" onclick="switchTab('config')">Configurações</button>
+            <div class="nav-tabs-left">
+                <button class="tab-btn active" onclick="switchTab('home')">Home</button>
+                <button class="tab-btn" onclick="switchTab('pesquisa')">Pesquisa Literária</button>
+                <button class="tab-btn" onclick="switchTab('aulas')">Aulas & Docência</button>
+                <button class="tab-btn" onclick="switchTab('financas')">Finanças</button>
+                <button class="tab-btn" onclick="switchTab('config')">Configurações</button>
+            </div>
+            <!-- SELETOR GLOBAL DE MÊS/ANO -->
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <label style="font-size: 12px; color: var(--text-muted); margin: 0;">Ciclo:</label>
+                <input type="month" id="global-month-picker" style="margin: 0; padding: 4px 8px; font-size: 12px; width: auto;" onchange="changeGlobalMonth()">
+            </div>
         </nav>
 
         <!-- ABA HOME -->
@@ -207,7 +214,7 @@
             </div>
         </div>
 
-        <!-- ABA PESQUISA LITERÁRIA (AJUSTADA PONTUALMENTE) -->
+        <!-- ABA PESQUISA LITERÁRIA -->
         <div id="tab-pesquisa" class="tab-content">
             <div class="card">
                 <div class="section-title">Portal de Entrada</div>
@@ -230,7 +237,6 @@
 
                 <button class="btn-main" style="margin-top: 8px; margin-bottom: 12px;" onclick="startWritingSession()">▶ Iniciar</button>
 
-                <!-- LINHA DO TEMPO DAS SESSÕES -->
                 <div style="margin-top: 12px; border-top: 1px solid var(--border); padding-top: 12px;">
                     <div style="font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px;">⏳ Linha do Tempo das Sessões do Mês</div>
                     <div id="writing-sessions-timeline" style="max-height: 180px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;"></div>
@@ -285,8 +291,33 @@
             </div>
         </div>
 
-        <!-- ABA AULAS & DOCÊNCIA -->
+        <!-- ABA AULAS & DOCÊNCIA (EXPANDIDA COM QUADRO DE HORAS E DISTRIBUIÇÃO) -->
         <div id="tab-aulas" class="tab-content">
+            <!-- QUADRO DE INSIGHTS & HORAS TRABALHADAS -->
+            <div class="card">
+                <div class="section-title">Quadro de Horas & Energia Docente</div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <div>
+                        <span style="font-size: 13px; color: var(--text-muted);">Total de Horas Trabalhadas no Mês:</span>
+                        <h2 id="teaching-total-hours" style="margin: 4px 0 0 0; font-size: 24px; font-weight: 600; color: var(--theme-color);">0.0h</h2>
+                    </div>
+                    <button class="btn-sub" style="border-color: var(--theme-color);" onclick="generateTeachingAiReport()">Analisar Distribuição com IA</button>
+                </div>
+
+                <div style="margin-top: 12px;">
+                    <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">
+                        <span>Alunos Particulares: <strong id="pct-students-label">0%</strong></span>
+                        <span>Contratos & Empresas: <strong id="pct-companies-label">0%</strong></span>
+                    </div>
+                    <div class="budget-bar">
+                        <div id="bar-students-fill" style="width: 50%; background: #3b82f6;"></div>
+                        <div id="bar-companies-fill" style="width: 50%; background: #f59e0b;"></div>
+                    </div>
+                </div>
+
+                <div id="teaching-ai-output" style="margin-top: 16px; padding: 12px; background: var(--bg); border-radius: 8px; font-size: 13px; line-height: 1.5; display: none;"></div>
+            </div>
+
             <div class="card">
                 <div class="section-title">Gestão de Aulas & Docência</div>
                 <div class="sub-nav">
@@ -545,7 +576,6 @@
             </div>
         </div>
 
-        <!-- NOVO MODAL: FICHA DO LIVRO E GALERIA DE ANOTAÇÕES POR SEÇÃO -->
         <div id="book-detail-modal" class="modal-overlay">
             <div class="modal-card">
                 <span class="close-btn" onclick="toggleModal('book-detail-modal', false)">×</span>
@@ -555,7 +585,7 @@
 
     </div>
 
-    <!-- LÓGICA JAVASCRIPT -->
+    <!-- ARQUITETURA DE DADOS REVISADA COM TIMESTAMPS & FILTRO MENSUAL -->
     <script>
         const defaultRitual = ["Água/Chá na mesa", "Ambiente de tela limpo", "Bloco de tempo definido"];
         const defaultCare = ["Hidratação vocal", "Pausa para os olhos", "Alongamento de maxilar / pescoço"];
@@ -563,6 +593,48 @@
         let showArchivedStudents = false;
         let showArchivedCompanies = false;
         let currentEnergy = '';
+        let currentMonthKey = ''; // Formato: "YYYY-MM"
+
+        // --- SISTEMA DE NAVEGAÇÃO TEMPORAL (TIMESTAMPS & MESES) ---
+        function getTimestampData(customDate) {
+            const now = customDate ? new Date(customDate) : new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            return {
+                timestamp: now.toISOString(),
+                date: now.toLocaleDateString('pt-BR'),
+                timeStr: now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+                monthKey: `${year}-${month}`,
+                yearKey: String(year)
+            };
+        }
+
+        function initGlobalMonthPicker() {
+            const now = new Date();
+            const monthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+            const picker = document.getElementById('global-month-picker');
+            if(picker) {
+                picker.value = monthStr;
+                currentMonthKey = monthStr;
+            }
+        }
+
+        function changeGlobalMonth() {
+            const picker = document.getElementById('global-month-picker');
+            if(picker) {
+                currentMonthKey = picker.value;
+                refreshAllViews();
+            }
+        }
+
+        function refreshAllViews() {
+            renderWritingSessions();
+            renderShelf();
+            renderReadingCalendar();
+            renderFinance();
+            renderTeachingDashboard();
+            renderJournalGallery();
+        }
 
         function switchTab(tabName) {
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
@@ -626,7 +698,7 @@
             alert(`Ritmo do dia definido como: ${currentEnergy.toUpperCase()}`);
         }
 
-        // --- PESQUISA LITERÁRIA: SESSÕES DE ESCRITA ---
+        // --- PESQUISA LITERÁRIA: SESSÕES DE ESCRITA (COM TIMESTAMP) ---
         function startWritingSession() {
             const before = document.getElementById('trans-before').value;
             const anxiety = document.getElementById('trans-anxiety').value;
@@ -637,12 +709,10 @@
                 return;
             }
 
-            const now = new Date();
+            const meta = getTimestampData();
             const payload = {
                 id: Date.now(),
-                date: now.toLocaleDateString('pt-BR'),
-                timeStr: now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-                monthKey: `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`,
+                ...meta,
                 before: before || 'Não informado',
                 anxiety: anxiety || 'Tranquila e presente',
                 duration: time || 'Não informado'
@@ -671,12 +741,10 @@
             if(!container) return;
 
             container.innerHTML = '';
-            const now = new Date();
-            const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-            const monthSessions = sessions.filter(s => s.monthKey === currentMonthKey || (!s.monthKey && s.date));
+            const monthSessions = sessions.filter(s => s.monthKey === currentMonthKey);
 
             if(monthSessions.length === 0) {
-                container.innerHTML = '<p style="font-size:12px; color:var(--text-muted);">Nenhuma sessão registrada este mês.</p>';
+                container.innerHTML = '<p style="font-size:12px; color:var(--text-muted);">Nenhuma sessão registrada neste ciclo.</p>';
                 return;
             }
 
@@ -693,14 +761,16 @@
             });
         }
 
-        // --- ESTANTE DE LIVROS, SESSÕES DE LEITURA & GALERIA DE ANOTAÇÕES POR SEÇÃO ---
+        // --- ESTANTE DE LIVROS, SESSÕES DE LEITURA & ANOTAÇÕES ---
         function saveBook() {
             const title = document.getElementById('book-title').value;
             if(!title) { alert('Digite o título da obra.'); return; }
 
             const pages = parseInt(document.getElementById('book-pages').value) || 0;
+            const meta = getTimestampData();
             const payload = {
                 id: Date.now(),
+                ...meta,
                 title: title,
                 author: document.getElementById('book-author').value,
                 publisher: document.getElementById('book-publisher').value,
@@ -764,14 +834,16 @@
 
             const pct = b.pages > 0 ? Math.min(100, Math.round(((b.readPages || 0) / b.pages) * 100)) : 0;
             
-            const notesList = (b.sectionNotes || []).map(n => `
+            const filteredNotes = (b.sectionNotes || []).filter(n => n.monthKey === currentMonthKey);
+            const notesList = filteredNotes.map(n => `
                 <div style="padding:10px; border:1px solid var(--border); border-radius:6px; background:var(--bg); margin-bottom:8px;">
                     <div style="font-weight:600; font-size:13px; color:var(--theme-color);">${n.section || 'Geral'}</div>
                     <div style="font-size:12px; margin-top:4px; line-height:1.4;">${n.text}</div>
                     <div style="font-size:10px; color:var(--text-muted); margin-top:6px;">📍 ${n.date}</div>
                 </div>`).join('');
 
-            const sessionsList = (b.sessions || []).map(s => `
+            const filteredSessions = (b.sessions || []).filter(s => s.monthKey === currentMonthKey);
+            const sessionsList = filteredSessions.map(s => `
                 <div style="padding:6px 0; border-bottom:1px solid var(--border); font-size:12px; display:flex; justify-content:space-between;">
                     <span>📖 Lançamento em ${s.date}</span>
                     <strong>Até a pág. ${s.readTo}</strong>
@@ -794,7 +866,7 @@
                 <button class="btn-sub" style="margin-bottom:12px; border-color:var(--theme-color);" onclick="recordReadingSession(${b.id})">Salvar Progresso de Leitura</button>
 
                 <div style="max-height:80px; overflow-y:auto; margin-bottom:16px;">
-                    ${sessionsList || '<p style="font-size:12px; color:var(--text-muted);">Nenhuma sessão de leitura registrada ainda.</p>'}
+                    ${sessionsList || '<p style="font-size:12px; color:var(--text-muted);">Nenhuma sessão de leitura neste ciclo.</p>'}
                 </div>
 
                 <hr style="border:0; border-top:1px solid var(--border); margin:16px 0;">
@@ -805,7 +877,7 @@
                 <button class="btn-sub" style="margin-bottom:12px;" onclick="addBookSectionNote(${b.id})">Salvar Anotação da Seção</button>
 
                 <div style="max-height:160px; overflow-y:auto;">
-                    ${notesList || '<p style="font-size:12px; color:var(--text-muted);">Nenhuma anotação por seção realizada neste livro.</p>'}
+                    ${notesList || '<p style="font-size:12px; color:var(--text-muted);">Nenhuma anotação registrada neste ciclo.</p>'}
                 </div>
             `;
             toggleModal('book-detail-modal', true);
@@ -822,8 +894,8 @@
                 b.progress = b.pages > 0 ? `${Math.min(100, Math.round((readTo / b.pages) * 100))}%` : '0%';
                 
                 if(!b.sessions) b.sessions = [];
-                const todayStr = new Date().toLocaleDateString('pt-BR');
-                b.sessions.unshift({ date: todayStr, readTo: readTo });
+                const meta = getTimestampData();
+                b.sessions.unshift({ ...meta, readTo: readTo });
 
                 localStorage.setItem('app_books', JSON.stringify(books));
                 
@@ -831,7 +903,7 @@
                     title: b.title,
                     readPages: readTo,
                     progress: b.progress,
-                    date: todayStr
+                    date: meta.date
                 });
 
                 renderShelf();
@@ -849,8 +921,9 @@
             const b = books.find(x => x.id === bookId);
             if(b) {
                 if(!b.sectionNotes) b.sectionNotes = [];
+                const meta = getTimestampData();
                 const item = {
-                    date: new Date().toLocaleString('pt-BR'),
+                    ...meta,
                     section: section || 'Anotação Geral',
                     text: text
                 };
@@ -858,7 +931,7 @@
                 localStorage.setItem('app_books', JSON.stringify(books));
 
                 sendToGoogleSheet('JOURNALING', {
-                    date: item.date,
+                    date: `${item.date} ${item.timeStr}`,
                     title: `Nota: ${b.title} (${item.section})`,
                     body: text
                 });
@@ -867,24 +940,23 @@
             }
         }
 
-        // --- CALENDÁRIO MENSAL DE LEITURAS & CONSTÂNCIA ---
+        // --- CALENDÁRIO MENSAL DE LEITURAS ---
         function renderReadingCalendar() {
             const container = document.getElementById('reading-calendar-container');
             if(!container) return;
 
-            const now = new Date();
-            const year = now.getFullYear();
-            const month = now.getMonth(); // 0 a 11
+            const [yearStr, monthStr] = currentMonthKey.split('-');
+            const year = parseInt(yearStr);
+            const month = parseInt(monthStr) - 1;
             const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
             const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-            // Coletar todas as datas de leituras
             const books = JSON.parse(localStorage.getItem('app_books')) || [];
             const readDates = new Set();
 
             books.forEach(b => {
                 (b.sessions || []).forEach(s => {
-                    if(s.date) readDates.add(s.date);
+                    if(s.monthKey === currentMonthKey && s.date) readDates.add(s.date);
                 });
             });
 
@@ -903,10 +975,7 @@
             `;
 
             const firstDayOfWeek = new Date(year, month, 1).getDay();
-
-            for(let i = 0; i < firstDayOfWeek; i++) {
-                calendarHTML += `<div></div>`;
-            }
+            for(let i = 0; i < firstDayOfWeek; i++) calendarHTML += `<div></div>`;
 
             for(let day = 1; day <= daysInMonth; day++) {
                 const dateStr = `${String(day).padStart(2,'0')}/${String(month+1).padStart(2,'0')}/${year}`;
@@ -923,27 +992,51 @@
             container.innerHTML = calendarHTML;
         }
 
-        async function generateAiReport() {
-            const key = localStorage.getItem('app_gemini_key');
-            const output = document.getElementById('ai-report-output'); output.style.display = 'block';
-            if(!key) { output.innerText = "Cadastre sua Chave de API nas Configurações."; return; }
-            output.innerText = "Analisando seus hábitos de leitura e escrita com o Gemini...";
-            
-            const books = JSON.parse(localStorage.getItem('app_books')) || [];
-            const entries = JSON.parse(localStorage.getItem('app_journal_entries')) || [];
-            const sessions = JSON.parse(localStorage.getItem('app_writing_sessions')) || [];
-            const prompt = `Analise meu hábito acadêmico: Tenho ${books.length} livros na estante, ${entries.length} notas no diário e realizei ${sessions.length} sessões de escrita este mês. Faça uma síntese motivadora do meu progresso.`;
-            
-            try {
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${key}`, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+        // --- ABA AULAS & DOCÊNCIA: QUADRO DE HORAS E DISTRIBUIÇÃO ---
+        function renderTeachingDashboard() {
+            const students = JSON.parse(localStorage.getItem('app_students')) || [];
+            const companies = JSON.parse(localStorage.getItem('app_companies')) || [];
+
+            let studentMinutes = 0;
+            let companyMinutes = 0;
+
+            students.forEach(s => {
+                (s.workLogs || []).forEach(log => {
+                    if(log.monthKey === currentMonthKey) studentMinutes += (log.minutes || 0);
                 });
-                const data = await response.json(); output.innerText = data.candidates[0].content.parts[0].text;
-            } catch(e) { output.innerText = "Erro ao conectar com a IA."; }
+            });
+
+            companies.forEach(c => {
+                (c.workLogs || []).forEach(log => {
+                    if(log.monthKey === currentMonthKey) companyMinutes += (log.minutes || 0);
+                });
+            });
+
+            const totalMins = studentMinutes + companyMinutes;
+            const totalHours = (totalMins / 60).toFixed(1);
+
+            const displayTotal = document.getElementById('teaching-total-hours');
+            if(displayTotal) displayTotal.innerText = `${totalHours}h`;
+
+            let stPct = 0;
+            let cpPct = 0;
+            if(totalMins > 0) {
+                stPct = Math.round((studentMinutes / totalMins) * 100);
+                cpPct = 100 - stPct;
+            }
+
+            const stLabel = document.getElementById('pct-students-label');
+            const cpLabel = document.getElementById('pct-companies-label');
+            const stBar = document.getElementById('bar-students-fill');
+            const cpBar = document.getElementById('bar-companies-fill');
+
+            if(stLabel) stLabel.innerText = `${stPct}%`;
+            if(cpLabel) cpLabel.innerText = `${cpPct}%`;
+            if(stBar) stBar.style.width = `${stPct}%`;
+            if(cpBar) cpBar.style.width = `${cpPct}%`;
         }
 
-        // --- TIMER ALUNOS & EMPRESAS ---
+        // --- TIMER DE DOCÊNCIA COM TIMESTAMPS ---
         function toggleTimer(type, id, start) {
             const storageKey = type === 'student' ? 'app_students' : 'app_companies';
             const items = JSON.parse(localStorage.getItem(storageKey)) || [];
@@ -953,28 +1046,61 @@
 
             if(start) {
                 item.activeTimer = new Date().toISOString();
-                alert(`Sessão de trabalho iniciada para ${item.name}!`);
+                alert(`Sessão iniciada para ${item.name}!`);
             } else {
                 if(!item.activeTimer) { alert('Nenhuma sessão em andamento.'); return; }
                 const startTime = new Date(item.activeTimer);
                 const diffMins = Math.round((new Date() - startTime) / 60000);
+                
+                if(!item.workLogs) item.workLogs = [];
+                const meta = getTimestampData();
+                item.workLogs.unshift({ ...meta, minutes: diffMins });
+                
                 item.totalMinutes = (item.totalMinutes || 0) + diffMins;
                 item.activeTimer = null;
                 alert(`Sessão encerrada! +${diffMins} minutos contabilizados.`);
             }
 
             localStorage.setItem(storageKey, JSON.stringify(items));
+            renderTeachingDashboard();
             if(type === 'student') { openStudentDetail(id); renderStudents(); }
             else { openCompanyDetail(id); renderCompanies(); }
         }
 
-        // --- ALUNOS PARTICULARES ---
+        async function generateTeachingAiReport() {
+            const key = localStorage.getItem('app_gemini_key');
+            const output = document.getElementById('teaching-ai-output'); 
+            if(!output) return;
+            output.style.display = 'block';
+            
+            if(!key) { output.innerText = "Cadastre sua Chave de API nas Configurações."; return; }
+            output.innerText = "Analisando sua distribuição de horas de aula com o Gemini...";
+
+            const totalStr = document.getElementById('teaching-total-hours')?.innerText || '0h';
+            const stPct = document.getElementById('pct-students-label')?.innerText || '0%';
+            const cpPct = document.getElementById('pct-companies-label')?.innerText || '0%';
+
+            const prompt = `Analise minha carga horária de docência neste mês (${currentMonthKey}): Trabalhei ${totalStr} no total. Distribuição: ${stPct} em alunos particulares e ${cpPct} em contratos/empresas. Forneça um conselho equilibrado sobre minha gestão de energia e tempo.`;
+
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${key}`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                });
+                const data = await response.json(); 
+                output.innerText = data.candidates[0].content.parts[0].text;
+            } catch(e) { output.innerText = "Erro ao conectar com a IA."; }
+        }
+
+        // --- ALUNOS PARTICULARES (COM METADADOS) ---
         function saveStudent() {
             const name = document.getElementById('st-name').value;
             if(!name) { alert('Digite ao menos o nome do aluno.'); return; }
 
+            const meta = getTimestampData();
             const payload = {
                 id: Date.now(),
+                ...meta,
                 name: name,
                 info: document.getElementById('st-info').value,
                 goal: document.getElementById('st-goal').value,
@@ -982,6 +1108,7 @@
                 materials: document.getElementById('st-materials').value,
                 archived: false,
                 classLogs: [],
+                workLogs: [],
                 notes: [],
                 totalMinutes: 0
             };
@@ -1022,13 +1149,16 @@
             }
 
             filtered.forEach(s => {
-                const hours = ((s.totalMinutes || 0) / 60).toFixed(1);
+                let monthMins = 0;
+                (s.workLogs || []).forEach(l => { if(l.monthKey === currentMonthKey) monthMins += l.minutes || 0; });
+                const hours = (monthMins / 60).toFixed(1);
+
                 container.innerHTML += `
                     <div class="item-card" onclick="openStudentDetail(${s.id})">
                         <div style="font-weight:600; font-size:15px; margin-bottom:4px;">${s.name}</div>
                         <div style="font-size:12px; color:var(--text-muted);">${s.goal || 'Sem objetivo cadastrado'}</div>
                         <div style="font-size:12px; margin-top:8px;"><strong>Mensalidade:</strong> ${s.price || 'A definir'}</div>
-                        <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">⏱ Tempo Investido: ${hours}h</div>
+                        <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">⏱ Mês atual: ${hours}h</div>
                     </div>`;
             });
         }
@@ -1037,8 +1167,12 @@
             const students = JSON.parse(localStorage.getItem('app_students')) || [];
             const s = students.find(x => x.id === id); if(!s) return;
 
-            const hours = ((s.totalMinutes || 0) / 60).toFixed(1);
-            const logsList = (s.classLogs || []).map(l => `<div style="padding:4px 0; border-bottom:1px solid var(--border); font-size:12px;">${l.date}: ${l.text}</div>`).join('');
+            let monthMins = 0;
+            (s.workLogs || []).forEach(l => { if(l.monthKey === currentMonthKey) monthMins += l.minutes || 0; });
+            const hours = (monthMins / 60).toFixed(1);
+
+            const filteredLogs = (s.classLogs || []).filter(l => l.monthKey === currentMonthKey);
+            const logsList = filteredLogs.map(l => `<div style="padding:4px 0; border-bottom:1px solid var(--border); font-size:12px;">${l.date}: ${l.text}</div>`).join('');
 
             const content = document.getElementById('student-detail-content');
             content.innerHTML = `
@@ -1056,7 +1190,7 @@
                     <button class="btn-main" style="background:#10b981;" onclick="toggleTimer('student', ${s.id}, true)">▶ Iniciar Aula</button>
                     <button class="btn-main" style="background:#ef4444;" onclick="toggleTimer('student', ${s.id}, false)">⏹ Finalizar</button>
                 </div>
-                <div style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">⏱ Total acumulado: ${hours} horas</div>
+                <div style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">⏱ Total acumulado no mês (${currentMonthKey}): ${hours} horas</div>
 
                 <hr style="border:0; border-top:1px solid var(--border); margin:16px 0;">
 
@@ -1064,7 +1198,7 @@
                 <input type="text" id="st-log-text" placeholder="O que foi trabalhado hoje?">
                 <button class="btn-sub" style="margin-bottom:12px;" onclick="addStudentClassLog(${s.id})">Salvar Registro de Aula</button>
                 <div style="max-height:100px; overflow-y:auto; margin-bottom:16px;">
-                    ${logsList || '<p style="font-size:12px; color:var(--text-muted);">Nenhuma aula registrada ainda.</p>'}
+                    ${logsList || '<p style="font-size:12px; color:var(--text-muted);">Nenhuma aula registrada neste ciclo.</p>'}
                 </div>
 
                 <hr style="border:0; border-top:1px solid var(--border); margin:16px 0;">
@@ -1082,7 +1216,8 @@
             const s = students.find(x => x.id === id);
             if(s) {
                 if(!s.classLogs) s.classLogs = [];
-                s.classLogs.unshift({ date: new Date().toLocaleDateString('pt-BR'), text: text });
+                const meta = getTimestampData();
+                s.classLogs.unshift({ ...meta, text: text });
                 localStorage.setItem('app_students', JSON.stringify(students));
                 openStudentDetail(id);
             }
@@ -1099,19 +1234,22 @@
             }
         }
 
-        // --- CONTRATOS COM EMPRESAS ---
+        // --- CONTRATOS COM EMPRESAS (COM METADADOS) ---
         function saveCompany() {
             const name = document.getElementById('cp-name').value;
             if(!name) { alert('Digite ao menos o nome da empresa.'); return; }
 
+            const meta = getTimestampData();
             const payload = {
                 id: Date.now(),
+                ...meta,
                 name: name,
                 rate: document.getElementById('cp-rate').value,
                 location: document.getElementById('cp-location').value,
                 start: document.getElementById('cp-start').value,
                 archived: false,
                 tasks: [],
+                workLogs: [],
                 notes: [],
                 totalMinutes: 0
             };
@@ -1151,13 +1289,16 @@
             }
 
             filtered.forEach(c => {
-                const hours = ((c.totalMinutes || 0) / 60).toFixed(1);
+                let monthMins = 0;
+                (c.workLogs || []).forEach(l => { if(l.monthKey === currentMonthKey) monthMins += l.minutes || 0; });
+                const hours = (monthMins / 60).toFixed(1);
+
                 container.innerHTML += `
                     <div class="item-card" onclick="openCompanyDetail(${c.id})">
                         <div style="font-weight:600; font-size:15px; margin-bottom:4px;">${c.name}</div>
                         <div style="font-size:12px; color:var(--text-muted);">${c.location || 'Localização não informada'}</div>
                         <div style="font-size:12px; margin-top:8px;"><strong>Hora-Aula:</strong> ${c.rate || 'A definir'}</div>
-                        <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">⏱ Tempo Investido: ${hours}h</div>
+                        <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">⏱ Mês atual: ${hours}h</div>
                     </div>`;
             });
         }
@@ -1166,9 +1307,15 @@
             const companies = JSON.parse(localStorage.getItem('app_companies')) || [];
             const c = companies.find(x => x.id === id); if(!c) return;
 
-            const hours = ((c.totalMinutes || 0) / 60).toFixed(1);
-            const tasksList = (c.tasks || []).map(t => `<div style="padding:6px 0; border-bottom:1px solid var(--border); font-size:13px;">• ${t.text} <span style="font-size:10px; color:var(--text-muted);">(${t.date})</span></div>`).join('');
-            const notesList = (c.notes || []).map(n => `<div style="padding:8px; border:1px solid var(--border); border-radius:6px; background:var(--bg); margin-bottom:8px;"><div style="font-weight:600; font-size:13px;">${n.title}</div><div style="font-size:12px; margin-top:2px;">${n.body}</div><div style="font-size:10px; color:var(--text-muted); margin-top:4px;">${n.date}</div></div>`).join('');
+            let monthMins = 0;
+            (c.workLogs || []).forEach(l => { if(l.monthKey === currentMonthKey) monthMins += l.minutes || 0; });
+            const hours = (monthMins / 60).toFixed(1);
+
+            const filteredTasks = (c.tasks || []).filter(t => t.monthKey === currentMonthKey);
+            const tasksList = filteredTasks.map(t => `<div style="padding:6px 0; border-bottom:1px solid var(--border); font-size:13px;">• ${t.text} <span style="font-size:10px; color:var(--text-muted);">(${t.date})</span></div>`).join('');
+
+            const filteredNotes = (c.notes || []).filter(n => n.monthKey === currentMonthKey);
+            const notesList = filteredNotes.map(n => `<div style="padding:8px; border:1px solid var(--border); border-radius:6px; background:var(--bg); margin-bottom:8px;"><div style="font-weight:600; font-size:13px;">${n.title}</div><div style="font-size:12px; margin-top:2px;">${n.body}</div><div style="font-size:10px; color:var(--text-muted); margin-top:4px;">${n.date}</div></div>`).join('');
 
             const content = document.getElementById('company-detail-content');
             content.innerHTML = `
@@ -1184,7 +1331,7 @@
                     <button class="btn-main" style="background:#10b981;" onclick="toggleTimer('company', ${c.id}, true)">▶ Iniciar Trabalho</button>
                     <button class="btn-main" style="background:#ef4444;" onclick="toggleTimer('company', ${c.id}, false)">⏹ Finalizar</button>
                 </div>
-                <div style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">⏱ Total trabalhado nesta empresa: <strong>${hours} horas</strong></div>
+                <div style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">⏱ Total trabalhado no mês (${currentMonthKey}): <strong>${hours} horas</strong></div>
 
                 <hr style="border:0; border-top:1px solid var(--border); margin:16px 0;">
 
@@ -1192,7 +1339,7 @@
                 <input type="text" id="cp-task-text" placeholder="Adicionar nova demanda ou compromisso...">
                 <button class="btn-sub" style="margin-bottom:12px;" onclick="addCompanyTask(${c.id})">+ Adicionar Demanda</button>
                 <div style="max-height:120px; overflow-y:auto; margin-bottom:16px;">
-                    ${tasksList || '<p style="font-size:12px; color:var(--text-muted);">Nenhuma demanda registrada.</p>'}
+                    ${tasksList || '<p style="font-size:12px; color:var(--text-muted);">Nenhuma demanda neste ciclo.</p>'}
                 </div>
 
                 <hr style="border:0; border-top:1px solid var(--border); margin:16px 0;">
@@ -1203,7 +1350,7 @@
                 <button class="btn-sub" style="margin-bottom:12px;" onclick="addCompanyNote(${c.id})">Salvar Anotação</button>
                 
                 <div style="max-height:150px; overflow-y:auto; margin-bottom:16px;">
-                    ${notesList || '<p style="font-size:12px; color:var(--text-muted);">Nenhuma anotação salva.</p>'}
+                    ${notesList || '<p style="font-size:12px; color:var(--text-muted);">Nenhuma anotação neste ciclo.</p>'}
                 </div>
 
                 <hr style="border:0; border-top:1px solid var(--border); margin:16px 0;">
@@ -1221,7 +1368,8 @@
             const c = companies.find(x => x.id === id);
             if(c) {
                 if(!c.tasks) c.tasks = [];
-                const item = { date: new Date().toLocaleDateString('pt-BR'), text: text };
+                const meta = getTimestampData();
+                const item = { ...meta, text: text };
                 c.tasks.unshift(item);
                 localStorage.setItem('app_companies', JSON.stringify(companies));
                 sendToGoogleSheet('EMPRESA', { name: c.name, task: text });
@@ -1238,7 +1386,8 @@
             const c = companies.find(x => x.id === id);
             if(c) {
                 if(!c.notes) c.notes = [];
-                c.notes.unshift({ date: new Date().toLocaleString('pt-BR'), title: title || 'Anotação', body: body });
+                const meta = getTimestampData();
+                c.notes.unshift({ ...meta, title: title || 'Anotação', body: body });
                 localStorage.setItem('app_companies', JSON.stringify(companies));
                 openCompanyDetail(id);
             }
@@ -1255,14 +1404,23 @@
             }
         }
 
-        // --- FINANÇAS ---
+        // --- FINANÇAS (COM METADADOS E FILTRO MENSUAL) ---
         function addTransaction() {
             const desc = document.getElementById('fin-desc').value;
             const amount = parseFloat(document.getElementById('fin-amount').value);
             const type = document.getElementById('fin-type').value;
             if(!desc || isNaN(amount)) return;
 
-            const payload = { date: new Date().toLocaleDateString('pt-BR'), desc: desc, amount: amount, category: type, type: type === 'in' ? 'in' : 'out' };
+            const meta = getTimestampData();
+            const payload = {
+                id: Date.now(),
+                ...meta,
+                desc: desc,
+                amount: amount,
+                category: type,
+                type: type === 'in' ? 'in' : 'out'
+            };
+            
             const txs = JSON.parse(localStorage.getItem('app_fin_txs')) || [];
             txs.unshift(payload);
             localStorage.setItem('app_fin_txs', JSON.stringify(txs));
@@ -1276,17 +1434,30 @@
 
         function renderFinance() {
             const txs = JSON.parse(localStorage.getItem('app_fin_txs')) || [];
+            const monthTxs = txs.filter(t => t.monthKey === currentMonthKey);
+
             let inTotal = 0; let outTotal = 0;
-            const listContainer = document.getElementById('fin-transactions-list'); listContainer.innerHTML = '';
-            txs.forEach(t => {
+            const listContainer = document.getElementById('fin-transactions-list'); 
+            if(listContainer) listContainer.innerHTML = '';
+
+            monthTxs.forEach(t => {
                 if(t.type === 'in') inTotal += t.amount; else outTotal += t.amount;
-                listContainer.innerHTML += `<div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border); font-size:13px;"><span>${t.date} - ${t.desc}</span><strong style="color: ${t.type === 'in' ? '#10b981' : '#ef4444'}">${t.type === 'in' ? '+' : '-'} R$ ${t.amount.toFixed(2)}</strong></div>`;
+                if(listContainer) {
+                    listContainer.innerHTML += `<div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border); font-size:13px;"><span>${t.date} - ${t.desc}</span><strong style="color: ${t.type === 'in' ? '#10b981' : '#ef4444'}">${t.type === 'in' ? '+' : '-'} R$ ${t.amount.toFixed(2)}</strong></div>`;
+                }
             });
-            document.getElementById('fin-total-in').innerText = `R$ ${inTotal.toFixed(2)}`;
-            document.getElementById('fin-total-out').innerText = `R$ ${outTotal.toFixed(2)}`;
+
+            const finIn = document.getElementById('fin-total-in');
+            const finOut = document.getElementById('fin-total-out');
+            const finBal = document.getElementById('fin-balance');
+
+            if(finIn) finIn.innerText = `R$ ${inTotal.toFixed(2)}`;
+            if(finOut) finOut.innerText = `R$ ${outTotal.toFixed(2)}`;
             const balance = inTotal - outTotal;
-            document.getElementById('fin-balance').innerText = `R$ ${balance.toFixed(2)}`;
-            document.getElementById('fin-balance').style.color = balance >= 0 ? '#10b981' : '#ef4444';
+            if(finBal) {
+                finBal.innerText = `R$ ${balance.toFixed(2)}`;
+                finBal.style.color = balance >= 0 ? '#10b981' : '#ef4444';
+            }
         }
 
         function saveHouseProject() {
@@ -1305,8 +1476,10 @@
             const target = parseFloat(localStorage.getItem('app_house_target')) || 0;
             const saved = parseFloat(localStorage.getItem('app_house_saved')) || 0;
             const pct = target > 0 ? Math.min(100, Math.round((saved / target) * 100)) : 0;
-            document.getElementById('house-pct').innerText = `${pct}% (R$ ${saved.toFixed(2)} de R$ ${target.toFixed(2)})`;
-            document.getElementById('house-bar-fill').style.width = `${pct}%`;
+            const elPct = document.getElementById('house-pct');
+            const elFill = document.getElementById('house-bar-fill');
+            if(elPct) elPct.innerText = `${pct}% (R$ ${saved.toFixed(2)} de R$ ${target.toFixed(2)})`;
+            if(elFill) elFill.style.width = `${pct}%`;
         }
 
         function addHealthItem() {
@@ -1314,8 +1487,9 @@
             const val = parseFloat(document.getElementById('health-item-val').value) || 0;
             if(!desc) return;
 
+            const meta = getTimestampData();
             const items = JSON.parse(localStorage.getItem('app_health_items')) || [];
-            items.push({ desc: desc, val: val });
+            items.push({ ...meta, desc: desc, val: val });
             localStorage.setItem('app_health_items', JSON.stringify(items));
 
             sendToGoogleSheet('WISHLIST_SAUDE', { desc: desc, price: val, type: 'Saúde/Pet' });
@@ -1327,42 +1501,56 @@
 
         function renderHealthItems() {
             const items = JSON.parse(localStorage.getItem('app_health_items')) || [];
-            const container = document.getElementById('health-items-list'); container.innerHTML = '';
+            const container = document.getElementById('health-items-list'); 
+            if(!container) return;
+            container.innerHTML = '';
             items.forEach(i => { container.innerHTML += `<div style="padding:4px 0; border-bottom:1px solid var(--border);">• ${i.desc} (${i.val > 0 ? 'R$ ' + i.val.toFixed(2) : 'A definir'})</div>`; });
         }
 
         function addWishItem() {
             const item = document.getElementById('wish-item').value;
             const price = parseFloat(document.getElementById('wish-price').value) || 0; if(!item) return;
+
+            const meta = getTimestampData();
             const wish = JSON.parse(localStorage.getItem('app_wishlist')) || [];
-            wish.push({ item: item, price: price });
+            wish.push({ ...meta, item: item, price: price });
             localStorage.setItem('app_wishlist', JSON.stringify(wish));
 
             sendToGoogleSheet('WISHLIST_SAUDE', { desc: item, price: price, type: 'Wishlist' });
 
-            document.getElementById('wish-item').value = ''; document.getElementById('wish-price').value = '';
+            document.getElementById('wish-item').value = ''; 
+            document.getElementById('wish-price').value = '';
             renderWishlist();
         }
 
         function renderWishlist() {
             const wish = JSON.parse(localStorage.getItem('app_wishlist')) || [];
-            const container = document.getElementById('wish-list'); container.innerHTML = '';
+            const container = document.getElementById('wish-list'); 
+            if(!container) return;
+            container.innerHTML = '';
             wish.forEach(w => { container.innerHTML += `<div style="padding:4px 0; border-bottom:1px solid var(--border);">• ${w.item} (${w.price > 0 ? 'R$ ' + w.price.toFixed(2) : 'A definir'})</div>`; });
         }
 
         async function generateFinancialAiReport() {
             const key = localStorage.getItem('app_gemini_key');
-            const output = document.getElementById('fin-ai-output'); output.style.display = 'block';
+            const output = document.getElementById('fin-ai-output'); 
+            if(!output) return;
+            output.style.display = 'block';
+
             if(!key) { output.innerText = "Cadastre sua Chave de API nas Configurações."; return; }
             output.innerText = "Analisando suas finanças com o Gemini...";
+
             const txs = JSON.parse(localStorage.getItem('app_fin_txs')) || [];
-            const prompt = `Atue como um consultor financeiro pessoal acolhedor. Analise meus dados financeiros: Transações do mês: ${JSON.stringify(txs)}. Forneça um balanço analítico e tranquilizador.`;
+            const monthTxs = txs.filter(t => t.monthKey === currentMonthKey);
+            const prompt = `Atue como um consultor financeiro pessoal acolhedor. Analise meus dados financeiros do mês (${currentMonthKey}): Transações: ${JSON.stringify(monthTxs)}. Forneça um balanço analítico e tranquilizador.`;
+
             try {
                 const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${key}`, {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
                 });
-                const data = await response.json(); output.innerText = data.candidates[0].content.parts[0].text;
+                const data = await response.json(); 
+                output.innerText = data.candidates[0].content.parts[0].text;
             } catch(e) { output.innerText = "Erro ao conectar com a IA."; }
         }
 
@@ -1383,40 +1571,54 @@
         function exportFinanceCSV() {
             const txs = JSON.parse(localStorage.getItem('app_fin_txs')) || [];
             if(txs.length === 0) { alert('Nenhuma transação registrada.'); return; }
-            let csvContent = "data:text/csv;charset=utf-8,Data,Descrição,Tipo,Valor\n";
-            txs.forEach(t => { csvContent += `${t.date},"${t.desc}",${t.type},${t.amount}\n`; });
+            let csvContent = "data:text/csv;charset=utf-8,Data,Descrição,Tipo,Valor,Mes\n";
+            txs.forEach(t => { csvContent += `${t.date},"${t.desc}",${t.type},${t.amount},${t.monthKey || ''}\n`; });
             const encodedUri = encodeURI(csvContent);
             const link = document.createElement("a"); link.setAttribute("href", encodedUri);
             link.setAttribute("download", `planilha_financas_${new Date().toISOString().split('T')[0]}.csv`);
             document.body.appendChild(link); link.click(); document.body.removeChild(link);
         }
 
-        // --- JOURNALING ---
+        // --- JOURNALING (COM FILTRO MENSUAL) ---
         function saveJournalEntry() {
             const title = document.getElementById('journal-title').value;
             const body = document.getElementById('journal-body').value; if(!title || !body) return;
-            const payload = { date: new Date().toLocaleString('pt-BR'), title: title, body: body };
+
+            const meta = getTimestampData();
+            const payload = { ...meta, title: title, body: body };
             const entries = JSON.parse(localStorage.getItem('app_journal_entries')) || [];
             entries.unshift(payload);
             localStorage.setItem('app_journal_entries', JSON.stringify(entries));
 
             sendToGoogleSheet('JOURNALING', payload);
 
-            document.getElementById('journal-title').value = ''; document.getElementById('journal-body').value = '';
+            document.getElementById('journal-title').value = ''; 
+            document.getElementById('journal-body').value = '';
             renderJournalGallery();
         }
 
         function renderJournalGallery() {
             const entries = JSON.parse(localStorage.getItem('app_journal_entries')) || [];
-            const container = document.getElementById('journal-gallery'); container.innerHTML = '';
-            entries.forEach(e => {
-                container.innerHTML += `<div style="padding:12px; border:1px solid var(--border); border-radius:8px; background:var(--bg);"><div style="font-size:11px; color:var(--text-muted);">${e.date}</div><div style="font-weight:600; font-size:14px; margin:4px 0;">${e.title}</div><div style="font-size:13px;">${e.body}</div></div>`;
+            const container = document.getElementById('journal-gallery'); 
+            if(!container) return;
+            container.innerHTML = '';
+
+            const monthEntries = entries.filter(e => e.monthKey === currentMonthKey);
+
+            if(monthEntries.length === 0) {
+                container.innerHTML = '<p style="font-size:12px; color:var(--text-muted);">Nenhuma nota registrada neste ciclo.</p>';
+                return;
+            }
+
+            monthEntries.forEach(e => {
+                container.innerHTML += `<div style="padding:12px; border:1px solid var(--border); border-radius:8px; background:var(--bg);"><div style="font-size:11px; color:var(--text-muted);">${e.date} ${e.timeStr || ''}</div><div style="font-weight:600; font-size:14px; margin:4px 0;">${e.title}</div><div style="font-size:13px;">${e.body}</div></div>`;
             });
         }
 
         // --- FINALIZAR DIA ---
         function confirmEndDay() {
-            const todayKey = new Date().toISOString().split('T')[0];
+            const meta = getTimestampData();
+            const todayKey = meta.date.replace(/\//g, '-');
             const logs = JSON.parse(localStorage.getItem('app_daily_history')) || {};
             const startTimeStr = localStorage.getItem('app_day_start_time');
             let hoursWorked = "0h";
@@ -1426,7 +1628,7 @@
             }
 
             const payload = {
-                date: todayKey,
+                ...meta,
                 energy: localStorage.getItem('app_energy') || 'Não informada',
                 focus: localStorage.getItem('app_focus_task') || 'Nenhum foco',
                 why: localStorage.getItem('app_focus_why') || '',
@@ -1450,8 +1652,10 @@
         function updateDayTimeDisplay() {
             const startTimeStr = localStorage.getItem('app_day_start_time');
             const status = document.getElementById('day-time-status');
-            if(startTimeStr) { const t = new Date(startTimeStr); status.innerText = `Em andamento desde às ${t.getHours().toString().padStart(2,'0')}:${t.getMinutes().toString().padStart(2,'0')}`; }
-            else { status.innerText = "Dia não iniciado."; }
+            if(status) {
+                if(startTimeStr) { const t = new Date(startTimeStr); status.innerText = `Em andamento desde às ${t.getHours().toString().padStart(2,'0')}:${t.getMinutes().toString().padStart(2,'0')}`; }
+                else { status.innerText = "Dia não iniciado."; }
+            }
         }
 
         function applyTheme(level) { document.body.classList.remove('theme-alta', 'theme-media', 'theme-baixa'); if(level) document.body.classList.add(`theme-${level}`); }
@@ -1461,7 +1665,7 @@
             reader.onload = function(evt) { localStorage.setItem('app_bg_image', evt.target.result); document.getElementById('bg-overlay').style.backgroundImage = `url(${evt.target.result})`; };
             reader.readAsDataURL(file);
         }
-        function updateOpacity(val) { localStorage.setItem('app_bg_opacity', val); document.getElementById('bg-opacity').style.opacity = val; }
+        function updateOpacity(val) { localStorage.setItem('app_bg_opacity', val); document.getElementById('bg-overlay').style.opacity = val; }
         function removeBg() { localStorage.removeItem('app_bg_image'); document.getElementById('bg-overlay').style.backgroundImage = 'none'; }
         
         function addFocusTask() {
@@ -1470,24 +1674,32 @@
         }
         function renderFocusTask() {
             const task = localStorage.getItem('app_focus_task'); const why = localStorage.getItem('app_focus_why'); const card = document.getElementById('focus-card');
-            if(task) { document.getElementById('display-task').innerText = task; document.getElementById('display-why').innerText = why ? `Por quê: ${why}` : ''; card.style.display = 'block'; }
-            else { card.style.display = 'none'; }
+            if(card) {
+                if(task) { document.getElementById('display-task').innerText = task; document.getElementById('display-why').innerText = why ? `Por quê: ${why}` : ''; card.style.display = 'block'; }
+                else { card.style.display = 'none'; }
+            }
         }
         function clearFocusTask() { localStorage.removeItem('app_focus_task'); localStorage.removeItem('app_focus_why'); document.getElementById('task-input').value = ''; document.getElementById('why-input').value = ''; renderFocusTask(); }
         
         function renderCustomLists() {
             const ritualData = JSON.parse(localStorage.getItem('app_custom_ritual')) || defaultRitual;
             const careData = JSON.parse(localStorage.getItem('app_custom_care')) || defaultCare;
-            const ritualContainer = document.getElementById('ritual-list'); ritualContainer.innerHTML = '';
-            ritualData.forEach((item, idx) => {
-                const id = `ritual_${idx}`; const checked = localStorage.getItem(`app_check_${id}`) === 'true';
-                ritualContainer.innerHTML += `<div style="display:flex; align-items:center; gap:10px; padding:6px 0;"><input type="checkbox" id="${id}" ${checked ? 'checked' : ''} onchange="saveCheck('${id}')"><label for="${id}" style="font-size:14px;">${item}</label></div>`;
-            });
-            const careContainer = document.getElementById('care-list'); careContainer.innerHTML = '';
-            careData.forEach((item, idx) => {
-                const id = `care_${idx}`; const checked = localStorage.getItem(`app_check_${id}`) === 'true';
-                careContainer.innerHTML += `<div style="display:flex; align-items:center; gap:10px; padding:6px 0;"><input type="checkbox" id="${id}" ${checked ? 'checked' : ''} onchange="saveCheck('${id}')"><label for="${id}" style="font-size:14px;">${item}</label></div>`;
-            });
+            const ritualContainer = document.getElementById('ritual-list'); 
+            if(ritualContainer) {
+                ritualContainer.innerHTML = '';
+                ritualData.forEach((item, idx) => {
+                    const id = `ritual_${idx}`; const checked = localStorage.getItem(`app_check_${id}`) === 'true';
+                    ritualContainer.innerHTML += `<div style="display:flex; align-items:center; gap:10px; padding:6px 0;"><input type="checkbox" id="${id}" ${checked ? 'checked' : ''} onchange="saveCheck('${id}')"><label for="${id}" style="font-size:14px;">${item}</label></div>`;
+                });
+            }
+            const careContainer = document.getElementById('care-list'); 
+            if(careContainer) {
+                careContainer.innerHTML = '';
+                careData.forEach((item, idx) => {
+                    const id = `care_${idx}`; const checked = localStorage.getItem(`app_check_${id}`) === 'true';
+                    careContainer.innerHTML += `<div style="display:flex; align-items:center; gap:10px; padding:6px 0;"><input type="checkbox" id="${id}" ${checked ? 'checked' : ''} onchange="saveCheck('${id}')"><label for="${id}" style="font-size:14px;">${item}</label></div>`;
+                });
+            }
         }
         function saveCheck(id) { localStorage.setItem(`app_check_${id}`, document.getElementById(id).checked); }
         
@@ -1500,23 +1712,80 @@
         function openJumpModal() { toggleModal('jump-modal', true); }
         function goToGoogleDocs() { toggleModal('jump-modal', false); window.open('https://docs.google.com', '_blank'); }
 
-        window.onload = function() {
-            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-            document.getElementById('current-date').innerText = new Date().toLocaleDateString('pt-BR', options);
+        async function generateAiReport() {
+            const key = localStorage.getItem('app_gemini_key');
+            const output = document.getElementById('ai-report-output'); 
+            if(!output) return;
+            output.style.display = 'block';
 
-            const savedBg = localStorage.getItem('app_bg_image'); if(savedBg) document.getElementById('bg-overlay').style.backgroundImage = `url(${savedBg})`;
-            const savedOpacity = localStorage.getItem('app_bg_opacity') || '0.3'; document.getElementById('bg-opacity').style.opacity = savedOpacity;
-            
+            if(!key) { output.innerText = "Cadastre sua Chave de API nas Configurações."; return; }
+            output.innerText = "Analisando seus hábitos de leitura e escrita com o Gemini...";
+
+            const books = JSON.parse(localStorage.getItem('app_books')) || [];
+            const entries = JSON.parse(localStorage.getItem('app_journal_entries')) || [];
+            const sessions = JSON.parse(localStorage.getItem('app_writing_sessions')) || [];
+            const monthSessions = sessions.filter(s => s.monthKey === currentMonthKey);
+
+            const prompt = `Analise meu hábito acadêmico neste mês (${currentMonthKey}): Tenho ${books.length} livros na estante, ${entries.length} notas no diário e realizei ${monthSessions.length} sessões de escrita. Faça uma síntese motivadora do meu progresso.`;
+
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${key}`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                });
+                const data = await response.json(); 
+                output.innerText = data.candidates[0].content.parts[0].text;
+            } catch(e) { output.innerText = "Erro ao conectar com a IA."; }
+        }
+
+        window.onload = function() {
+            initGlobalMonthPicker();
+
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const dateEl = document.getElementById('current-date');
+            if(dateEl) dateEl.innerText = new Date().toLocaleDateString('pt-BR', options);
+
+            const savedBg = localStorage.getItem('app_bg_image'); 
+            if(savedBg) document.getElementById('bg-overlay').style.backgroundImage = `url(${savedBg})`;
+
+            const savedOpacity = localStorage.getItem('app_bg_opacity') || '0.3'; 
+            const opEl = document.getElementById('bg-opacity');
+            if(opEl) opEl.value = savedOpacity;
+
             const savedEnergy = localStorage.getItem('app_energy'); 
             if (savedEnergy) { currentEnergy = savedEnergy; applyTheme(savedEnergy); }
-            
-            const savedApiKey = localStorage.getItem('app_gemini_key'); if(savedApiKey) document.getElementById('gemini-api-key').value = savedApiKey;
-            const savedSyncUrl = localStorage.getItem('app_sheet_sync_url'); if(savedSyncUrl) document.getElementById('sheet-sync-url').value = savedSyncUrl;
 
-            document.getElementById('house-target').value = localStorage.getItem('app_house_target') || '';
-            document.getElementById('house-saved').value = localStorage.getItem('app_house_saved') || '';
+            const savedApiKey = localStorage.getItem('app_gemini_key'); 
+            if(savedApiKey) {
+                const keyEl = document.getElementById('gemini-api-key');
+                if(keyEl) keyEl.value = savedApiKey;
+            }
 
-            renderCustomLists(); renderStudents(); renderCompanies(); renderFinance(); renderHouseProject(); renderHealthItems(); renderWishlist(); renderShelf(); renderReadingCalendar(); renderFocusTask(); renderJournalGallery(); renderWritingSessions(); updateDayTimeDisplay();
+            const savedSyncUrl = localStorage.getItem('app_sheet_sync_url'); 
+            if(savedSyncUrl) {
+                const syncEl = document.getElementById('sheet-sync-url');
+                if(syncEl) syncEl.value = savedSyncUrl;
+            }
+
+            const houseT = document.getElementById('house-target');
+            const houseS = document.getElementById('house-saved');
+            if(houseT) houseT.value = localStorage.getItem('app_house_target') || '';
+            if(houseS) houseS.value = localStorage.getItem('app_house_saved') || '';
+
+            renderCustomLists(); 
+            renderStudents(); 
+            renderCompanies(); 
+            renderTeachingDashboard();
+            renderFinance(); 
+            renderHouseProject(); 
+            renderHealthItems(); 
+            renderWishlist(); 
+            renderShelf(); 
+            renderReadingCalendar(); 
+            renderFocusTask(); 
+            renderJournalGallery(); 
+            renderWritingSessions(); 
+            updateDayTimeDisplay();
         };
     </script>
 </body>
