@@ -149,18 +149,35 @@
             background: var(--theme-color);
         }
 
-        /* Estilo dos quadros da semana */
+        /* Estilo interativo dos quadros da semana */
         .week-day-box {
             border: 1px solid var(--border);
             border-radius: 6px;
             padding: 8px 4px;
             background: var(--bg);
             font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+        }
+        .week-day-box:hover {
+            border-color: var(--theme-color);
+            transform: translateY(-2px);
         }
         .week-day-box.is-today {
             border-color: var(--theme-color);
             background: var(--highlight);
             font-weight: 600;
+        }
+        .week-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #10b981;
+            margin-top: 2px;
         }
     </style>
 </head>
@@ -222,7 +239,7 @@
                         <button class="btn-main" onclick="clearFocusTask()" style="background: #10b981;">Concluído</button>
                     </div>
 
-                    <!-- 2. NOVO CARD: SERVIÇOS DOMÉSTICOS (ENTRE FOCO E VISÃO DA SEMANA) -->
+                    <!-- 2. SERVIÇOS DOMÉSTICOS -->
                     <div class="card">
                         <div class="section-title">🧹 Serviços Domésticos (Home Office)</div>
                         <div style="display: flex; gap: 8px; margin-bottom: 8px;">
@@ -233,9 +250,9 @@
                         <div id="chores-today-summary" style="font-size: 12px; font-weight: 600; color: var(--theme-color);"></div>
                     </div>
 
-                    <!-- 3. VISÃO DA SEMANA (AGORA TOTALMENTE FUNCIONAL) -->
+                    <!-- 3. VISÃO DA SEMANA CLICÁVEL -->
                     <div class="card">
-                        <div class="section-title">Visão da Semana</div>
+                        <div class="section-title">Visão da Semana (Clique no dia para ver o resumo)</div>
                         <div id="week-view" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; text-align: center;"></div>
                     </div>
                 </div>
@@ -578,7 +595,7 @@
                 <p id="time-worked-summary" style="font-size: 14px; font-weight: 500; color: var(--theme-color);"></p>
                 <label style="font-size: 13px; color: var(--text-muted);">O que deu certo hoje?</label>
                 <textarea id="ref-good" rows="3"></textarea>
-                <label style="font-size: 13px; color: var(--text-muted); display: block; margin-top: 8px;">O que pode ser adjusted amanhã?</label>
+                <label style="font-size: 13px; color: var(--text-muted); display: block; margin-top: 8px;">O que pode ser ajustado amanhã?</label>
                 <textarea id="ref-improve" rows="3"></textarea>
                 <button class="btn-main" style="margin-top: 12px;" onclick="confirmEndDay()">Finalizar & Resetar Checklist</button>
             </div>
@@ -615,7 +632,7 @@
             </div>
         </div>
 
-        <!-- NOVO MODAL: ENCERRAMENTO DE SERVIÇOS DOMÉSTICOS -->
+        <!-- MODAL DE SERVIÇOS DOMÉSTICOS -->
         <div id="modal-home-chores" class="modal-overlay">
             <div class="modal-card">
                 <span class="close-btn" onclick="toggleModal('modal-home-chores', false)">×</span>
@@ -624,6 +641,14 @@
                 <label style="font-size: 13px; color: var(--text-muted);">O que você realizou na casa nesse período?</label>
                 <textarea id="chores-log-text" rows="4" placeholder="Ex: Lavar louça, arrumar a cozinha, estender roupas..."></textarea>
                 <button class="btn-main" style="margin-top: 8px;" onclick="confirmHouseChores()">Salvar e Voltar ao Trabalho</button>
+            </div>
+        </div>
+
+        <!-- NOVO MODAL: RESUMO DO DIA CLICADO NA VISÃO DA SEMANA -->
+        <div id="modal-day-summary" class="modal-overlay">
+            <div class="modal-card">
+                <span class="close-btn" onclick="toggleModal('modal-day-summary', false)">×</span>
+                <div id="day-summary-content"></div>
             </div>
         </div>
 
@@ -774,7 +799,6 @@
             choresLogs.unshift(payload);
             localStorage.setItem('app_chores_history', JSON.stringify(choresLogs));
 
-            // Envia para a planilha
             sendToGoogleSheet('CASA', {
                 date: `${payload.date} ${payload.timeStr}`,
                 desc: `Serviços Domésticos (${payload.minutes} min): ${payload.text}`,
@@ -821,12 +845,17 @@
 
             container.innerHTML = '';
             const now = new Date();
-            const currentDayOfWeek = now.getDay(); // 0 = Dom, 1 = Seg...
+            const currentDayOfWeek = now.getDay(); 
             const dayNames = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
-            // Achar o domingo da semana atual
             const sunday = new Date(now);
             sunday.setDate(now.getDate() - currentDayOfWeek);
+
+            // Carregar históricos para checar atividade
+            const choresLogs = JSON.parse(localStorage.getItem('app_chores_history')) || [];
+            const students = JSON.parse(localStorage.getItem('app_students')) || [];
+            const companies = JSON.parse(localStorage.getItem('app_companies')) || [];
+            const writingSessions = JSON.parse(localStorage.getItem('app_writing_sessions')) || [];
 
             for(let i = 0; i < 7; i++) {
                 const dayDate = new Date(sunday);
@@ -834,12 +863,97 @@
                 const dayStr = dayDate.toLocaleDateString('pt-BR');
                 const isToday = dayStr === now.toLocaleDateString('pt-BR');
 
+                // Verificar se houve atividade nesse dia
+                let hasActivity = choresLogs.some(c => c.date === dayStr) ||
+                                  writingSessions.some(w => w.date === dayStr);
+
+                students.forEach(s => { if((s.workLogs||[]).some(w => w.date === dayStr)) hasActivity = true; });
+                companies.forEach(c => { if((c.workLogs||[]).some(w => w.date === dayStr)) hasActivity = true; });
+
                 container.innerHTML += `
-                    <div class="week-day-box ${isToday ? 'is-today' : ''}">
+                    <div class="week-day-box ${isToday ? 'is-today' : ''}" onclick="openDaySummary('${dayStr}')">
                         <div>${dayNames[i]}</div>
                         <div style="font-weight:600; margin-top:2px;">${dayDate.getDate()}</div>
+                        ${hasActivity ? '<div class="week-dot"></div>' : ''}
                     </div>`;
             }
+        }
+
+        function openDaySummary(dateStr) {
+            const content = document.getElementById('day-summary-content');
+            if(!content) return;
+
+            const choresLogs = JSON.parse(localStorage.getItem('app_chores_history')) || [];
+            const writingSessions = JSON.parse(localStorage.getItem('app_writing_sessions')) || [];
+            const dailyHistory = JSON.parse(localStorage.getItem('app_daily_history')) || {};
+            const students = JSON.parse(localStorage.getItem('app_students')) || [];
+            const companies = JSON.parse(localStorage.getItem('app_companies')) || [];
+
+            // Filtrar o que aconteceu na data clicada
+            const dayChores = choresLogs.filter(c => c.date === dateStr);
+            const dayWriting = writingSessions.filter(w => w.date === dateStr);
+            const dayEndLog = dailyHistory[dateStr.replace(/\//g, '-')];
+
+            let dayTeachingMins = 0;
+            let teachingDetails = [];
+
+            students.forEach(s => {
+                (s.workLogs || []).forEach(w => {
+                    if(w.date === dateStr) {
+                        dayTeachingMins += (w.minutes || 0);
+                        teachingDetails.push(`• Aluno ${s.name}: ${w.minutes || 0} min`);
+                    }
+                });
+            });
+
+            companies.forEach(c => {
+                (c.workLogs || []).forEach(w => {
+                    if(w.date === dateStr) {
+                        dayTeachingMins += (w.minutes || 0);
+                        teachingDetails.push(`• Empresa ${c.name}: ${w.minutes || 0} min`);
+                    }
+                });
+            });
+
+            let choresHTML = dayChores.map(c => `<div style="font-size:12px; margin-top:2px;">• ${c.minutes} min: ${c.text}</div>`).join('');
+            let writingHTML = dayWriting.map(w => `<div style="font-size:12px; margin-top:2px;">• ${w.duration} (Antes: ${w.before})</div>`).join('');
+
+            content.innerHTML = `
+                <div class="section-title">Resumo do Dia</div>
+                <h3 style="margin:0 0 12px 0;">📍 ${dateStr}</h3>
+
+                <div style="margin-bottom:12px;">
+                    <strong>🎓 Aulas & Docência:</strong> ${(dayTeachingMins/60).toFixed(1)}h acumuladas
+                    ${teachingDetails.length > 0 ? `<div style="font-size:12px; margin-top:4px;">${teachingDetails.join('<br>')}</div>` : '<div style="font-size:12px; color:var(--text-muted);">Sem registros de aulas.</div>'}
+                </div>
+
+                <hr style="border:0; border-top:1px solid var(--border); margin:12px 0;">
+
+                <div style="margin-bottom:12px;">
+                    <strong>🧹 Serviços Domésticos:</strong>
+                    ${choresHTML || '<div style="font-size:12px; color:var(--text-muted);">Nenhum serviço doméstico registrado.</div>'}
+                </div>
+
+                <hr style="border:0; border-top:1px solid var(--border); margin:12px 0;">
+
+                <div style="margin-bottom:12px;">
+                    <strong>✍️ Sessões de Escrita:</strong>
+                    ${writingHTML || '<div style="font-size:12px; color:var(--text-muted);">Nenhuma sessão de escrita realizada.</div>'}
+                </div>
+
+                ${dayEndLog ? `
+                    <hr style="border:0; border-top:1px solid var(--border); margin:12px 0;">
+                    <div style="font-size:12px; background:var(--bg); padding:10px; border-radius:6px;">
+                        <strong>Encerramento do Dia:</strong><br>
+                        • Ritmo: ${dayEndLog.energy}<br>
+                        • Tempo Trabalhado: ${dayEndLog.hoursWorked}<br>
+                        • O que deu certo: ${dayEndLog.good || '-'}<br>
+                        • Ajustar: ${dayEndLog.improve || '-'}
+                    </div>
+                ` : ''}
+            `;
+
+            toggleModal('modal-day-summary', true);
         }
 
         // --- ABA HOME & RITMO ---
@@ -888,6 +1002,7 @@
             document.getElementById('trans-time').value = '';
 
             renderWritingSessions();
+            renderWeekView();
             alert('Sessão iniciada e registrada!');
         }
 
@@ -1219,6 +1334,7 @@
 
             localStorage.setItem(storageKey, JSON.stringify(items));
             renderTeachingDashboard();
+            renderWeekView();
             if(type === 'student') { openStudentDetail(id); renderStudents(); }
             else { openCompanyDetail(id); renderCompanies(); }
         }
