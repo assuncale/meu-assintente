@@ -149,7 +149,6 @@
             background: var(--theme-color);
         }
 
-        /* Estilo interativo dos quadros da semana */
         .week-day-box {
             border: 1px solid var(--border);
             border-radius: 6px;
@@ -204,6 +203,7 @@
 
         <!-- ABA HOME -->
         <div id="tab-home" class="tab-content active">
+            <!-- 1. CARD PRINCIPAL (RITMO E COMEÇAR O DIA) -->
             <div class="card" style="text-align: center; padding: 28px 24px;">
                 <div id="current-date" style="font-size: 13px; color: var(--text-muted); margin-bottom: 8px; text-transform: capitalize;"></div>
                 <h2 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 400;">Como está seu ritmo hoje?</h2>
@@ -221,9 +221,25 @@
                 <div id="day-time-status" style="font-size: 12px; color: var(--text-muted); margin-top: 8px;"></div>
             </div>
 
+            <!-- 2. NOVO CARD: LEMBRETE DE AUTOCUIDADO & PAUSAS (POSICIONADO LOGO ABAIXO DO RITMO) -->
+            <div class="card" style="border-left: 4px solid #f59e0b;">
+                <div class="section-title" style="color: #d97706;">🪴 Lembrete de Autocuidado & Pausas</div>
+                <p style="font-size: 13px; color: var(--text-muted); margin: 0 0 12px 0; font-style: italic;">
+                    "Descansar e se alimentar também é produzir com saúde."
+                </p>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px;">
+                    <button class="btn-sub" style="border-color: #f59e0b; color: #d97706; flex: 1; min-width: 140px;" onclick="toggleBreakTimer('lunch', true)">🍱 Iniciar Almoço</button>
+                    <button class="btn-sub" style="border-color: #ef4444; color: #dc2626;" onclick="toggleBreakTimer('lunch', false)">⏹ Finalizar Almoço</button>
+                    <button class="btn-sub" style="border-color: #10b981; color: #059669; flex: 1; min-width: 140px;" onclick="toggleBreakTimer('rest', true)">☕ Pausa Rápida</button>
+                    <button class="btn-sub" style="border-color: #64748b; color: #475569;" onclick="toggleBreakTimer('rest', false)">⏹ Voltar</button>
+                </div>
+                <div id="break-timer-status" style="font-size: 12px; color: var(--text-muted);">Nenhuma pausa ativa no momento.</div>
+                <div id="breaks-today-summary" style="font-size: 12px; font-weight: 600; color: var(--theme-color); margin-top: 4px;"></div>
+            </div>
+
             <div class="landscape-grid">
                 <div>
-                    <!-- 1. BRAINDUMP & FOCO -->
+                    <!-- BRAINDUMP & FOCO -->
                     <div class="card">
                         <div class="section-title">Braindump & Foco</div>
                         <input type="text" id="task-input" placeholder="O que precisa ser feito?">
@@ -239,7 +255,7 @@
                         <button class="btn-main" onclick="clearFocusTask()" style="background: #10b981;">Concluído</button>
                     </div>
 
-                    <!-- 2. SERVIÇOS DOMÉSTICOS -->
+                    <!-- SERVIÇOS DOMÉSTICOS -->
                     <div class="card">
                         <div class="section-title">🧹 Serviços Domésticos (Home Office)</div>
                         <div style="display: flex; gap: 8px; margin-bottom: 8px;">
@@ -250,7 +266,7 @@
                         <div id="chores-today-summary" style="font-size: 12px; font-weight: 600; color: var(--theme-color);"></div>
                     </div>
 
-                    <!-- 3. VISÃO DA SEMANA CLICÁVEL -->
+                    <!-- VISÃO DA SEMANA -->
                     <div class="card">
                         <div class="section-title">Visão da Semana (Clique no dia para ver o resumo)</div>
                         <div id="week-view" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; text-align: center;"></div>
@@ -632,7 +648,6 @@
             </div>
         </div>
 
-        <!-- MODAL DE SERVIÇOS DOMÉSTICOS -->
         <div id="modal-home-chores" class="modal-overlay">
             <div class="modal-card">
                 <span class="close-btn" onclick="toggleModal('modal-home-chores', false)">×</span>
@@ -644,7 +659,6 @@
             </div>
         </div>
 
-        <!-- NOVO MODAL: RESUMO DO DIA CLICADO NA VISÃO DA SEMANA -->
         <div id="modal-day-summary" class="modal-overlay">
             <div class="modal-card">
                 <span class="close-btn" onclick="toggleModal('modal-day-summary', false)">×</span>
@@ -704,6 +718,7 @@
             renderTeachingDashboard();
             renderJournalGallery();
             renderWeekView();
+            renderBreaksTodaySummary();
         }
 
         function switchTab(tabName) {
@@ -754,6 +769,89 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ target: target, payload: payload })
             }).catch(e => console.log('Erro ao sincronizar:', e));
+        }
+
+        // --- PAUSAS DE DESCANSO & ALMOÇO (LÓGICA DEDICADA) ---
+        function toggleBreakTimer(type, start) {
+            const statusEl = document.getElementById('break-timer-status');
+            const keyStart = type === 'lunch' ? 'app_lunch_timer_start' : 'app_rest_timer_start';
+            const labelName = type === 'lunch' ? 'Almoço' : 'Pausa Rápida';
+
+            if(start) {
+                const startTime = new Date().toISOString();
+                localStorage.setItem(keyStart, startTime);
+                const t = new Date(startTime);
+                if(statusEl) statusEl.innerText = `🍱 Em momento de ${labelName} desde às ${t.getHours().toString().padStart(2,'0')}:${t.getMinutes().toString().padStart(2,'0')}`;
+                alert(`Sessão de ${labelName} iniciada! Bom descanso.`);
+            } else {
+                const startTimeStr = localStorage.getItem(keyStart);
+                if(!startTimeStr) {
+                    alert(`Nenhuma sessão de ${labelName} em andamento.`);
+                    return;
+                }
+                const diffMs = new Date() - new Date(startTimeStr);
+                const diffMins = Math.round(diffMs / 60000);
+
+                const meta = getTimestampData();
+                const payload = {
+                    id: Date.now(),
+                    ...meta,
+                    type: type,
+                    label: labelName,
+                    minutes: diffMins
+                };
+
+                const breaksHistory = JSON.parse(localStorage.getItem('app_breaks_history')) || [];
+                breaksHistory.unshift(payload);
+                localStorage.setItem('app_breaks_history', JSON.stringify(breaksHistory));
+
+                sendToGoogleSheet('HOME', {
+                    date: `${payload.date} ${payload.timeStr}`,
+                    good: `${labelName} realizado: ${diffMins} min`,
+                    hoursWorked: `${diffMins}m de descanso`
+                });
+
+                localStorage.removeItem(keyStart);
+                renderBreaksTodaySummary();
+                alert(`${labelName} finalizado! +${diffMins} minutos de cuidado contabilizados.`);
+            }
+        }
+
+        function renderBreaksTodaySummary() {
+            const statusEl = document.getElementById('break-timer-status');
+            const summaryEl = document.getElementById('breaks-today-summary');
+
+            const lunchStart = localStorage.getItem('app_lunch_timer_start');
+            const restStart = localStorage.getItem('app_rest_timer_start');
+
+            if(lunchStart && statusEl) {
+                const t = new Date(lunchStart);
+                statusEl.innerText = `🍱 Em momento de Almoço desde às ${t.getHours().toString().padStart(2,'0')}:${t.getMinutes().toString().padStart(2,'0')}`;
+            } else if(restStart && statusEl) {
+                const t = new Date(restStart);
+                statusEl.innerText = `☕ Em Pausa Rápida desde às ${t.getHours().toString().padStart(2,'0')}:${t.getMinutes().toString().padStart(2,'0')}`;
+            } else if(statusEl) {
+                statusEl.innerText = "Nenhuma pausa ativa no momento.";
+            }
+
+            const breaksHistory = JSON.parse(localStorage.getItem('app_breaks_history')) || [];
+            const todayStr = new Date().toLocaleDateString('pt-BR');
+            let todayLunchMins = 0;
+            let todayRestMins = 0;
+
+            breaksHistory.forEach(b => {
+                if(b.date === todayStr) {
+                    if(b.type === 'lunch') todayLunchMins += (b.minutes || 0);
+                    else todayRestMins += (b.minutes || 0);
+                }
+            });
+
+            if(summaryEl) {
+                let summaryTexts = [];
+                if(todayLunchMins > 0) summaryTexts.push(`Almoço: ${todayLunchMins} min`);
+                if(todayRestMins > 0) summaryTexts.push(`Descanso: ${todayRestMins} min`);
+                summaryEl.innerText = summaryTexts.length > 0 ? `Cuidados de hoje: ${summaryTexts.join(' | ')}` : '';
+            }
         }
 
         // --- ABA HOME: SERVIÇOS DOMÉSTICOS & VISÃO DA SEMANA ---
@@ -851,11 +949,11 @@
             const sunday = new Date(now);
             sunday.setDate(now.getDate() - currentDayOfWeek);
 
-            // Carregar históricos para checar atividade
             const choresLogs = JSON.parse(localStorage.getItem('app_chores_history')) || [];
             const students = JSON.parse(localStorage.getItem('app_students')) || [];
             const companies = JSON.parse(localStorage.getItem('app_companies')) || [];
             const writingSessions = JSON.parse(localStorage.getItem('app_writing_sessions')) || [];
+            const breaksHistory = JSON.parse(localStorage.getItem('app_breaks_history')) || [];
 
             for(let i = 0; i < 7; i++) {
                 const dayDate = new Date(sunday);
@@ -863,9 +961,9 @@
                 const dayStr = dayDate.toLocaleDateString('pt-BR');
                 const isToday = dayStr === now.toLocaleDateString('pt-BR');
 
-                // Verificar se houve atividade nesse dia
                 let hasActivity = choresLogs.some(c => c.date === dayStr) ||
-                                  writingSessions.some(w => w.date === dayStr);
+                                  writingSessions.some(w => w.date === dayStr) ||
+                                  breaksHistory.some(b => b.date === dayStr);
 
                 students.forEach(s => { if((s.workLogs||[]).some(w => w.date === dayStr)) hasActivity = true; });
                 companies.forEach(c => { if((c.workLogs||[]).some(w => w.date === dayStr)) hasActivity = true; });
@@ -888,10 +986,11 @@
             const dailyHistory = JSON.parse(localStorage.getItem('app_daily_history')) || {};
             const students = JSON.parse(localStorage.getItem('app_students')) || [];
             const companies = JSON.parse(localStorage.getItem('app_companies')) || [];
+            const breaksHistory = JSON.parse(localStorage.getItem('app_breaks_history')) || [];
 
-            // Filtrar o que aconteceu na data clicada
             const dayChores = choresLogs.filter(c => c.date === dateStr);
             const dayWriting = writingSessions.filter(w => w.date === dateStr);
+            const dayBreaks = breaksHistory.filter(b => b.date === dateStr);
             const dayEndLog = dailyHistory[dateStr.replace(/\//g, '-')];
 
             let dayTeachingMins = 0;
@@ -917,6 +1016,7 @@
 
             let choresHTML = dayChores.map(c => `<div style="font-size:12px; margin-top:2px;">• ${c.minutes} min: ${c.text}</div>`).join('');
             let writingHTML = dayWriting.map(w => `<div style="font-size:12px; margin-top:2px;">• ${w.duration} (Antes: ${w.before})</div>`).join('');
+            let breaksHTML = dayBreaks.map(b => `<div style="font-size:12px; margin-top:2px;">• ${b.label}: ${b.minutes} min (${b.timeStr})</div>`).join('');
 
             content.innerHTML = `
                 <div class="section-title">Resumo do Dia</div>
@@ -925,6 +1025,13 @@
                 <div style="margin-bottom:12px;">
                     <strong>🎓 Aulas & Docência:</strong> ${(dayTeachingMins/60).toFixed(1)}h acumuladas
                     ${teachingDetails.length > 0 ? `<div style="font-size:12px; margin-top:4px;">${teachingDetails.join('<br>')}</div>` : '<div style="font-size:12px; color:var(--text-muted);">Sem registros de aulas.</div>'}
+                </div>
+
+                <hr style="border:0; border-top:1px solid var(--border); margin:12px 0;">
+
+                <div style="margin-bottom:12px;">
+                    <strong>🪴 Pausas & Autocuidado:</strong>
+                    ${breaksHTML || '<div style="font-size:12px; color:var(--text-muted);">Nenhuma pausa registrada.</div>'}
                 </div>
 
                 <hr style="border:0; border-top:1px solid var(--border); margin:12px 0;">
@@ -2104,6 +2211,7 @@
             renderJournalGallery(); 
             renderWritingSessions(); 
             renderChoresTodaySummary();
+            renderBreaksTodaySummary();
             renderWeekView();
             updateDayTimeDisplay();
         };
