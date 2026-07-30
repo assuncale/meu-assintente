@@ -588,7 +588,10 @@
                 <div class="section-title">Sincronização em Tempo Real (Google Sheets)</div>
                 <label style="font-size: 13px; color: var(--text-muted); display: block;">Cole aqui o seu Link de Conexão do Apps Script (URL do Web App):</label>
                 <input type="text" id="sheet-sync-url" placeholder="https://script.google.com/macros/s/.../exec" oninput="saveSyncUrl()">
-                <button class="btn-sub" style="border-color: #10b981; color: #059669; width: 100%; margin-top: 4px;" onclick="testSheetConnection()">🧪 Testar Conexão com a Planilha</button>
+                <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 4px;">
+                    <button class="btn-sub" style="border-color: #10b981; color: #059669; width: 100%;" onclick="testSheetConnection()">🧪 Testar Conexão com a Planilha</button>
+                    <button class="btn-main" style="background: #3b82f6; width: 100%; font-weight: 500;" onclick="syncAllSavedDataToSheets()">🔄 Sincronizar Todos os Dados Salvos com a Planilha</button>
+                </div>
             </div>
 
             <div class="card">
@@ -804,10 +807,15 @@
         function toggleModal(id, show) { document.getElementById(id).style.display = show ? 'flex' : 'none'; }
         function toggleBookModal(show) { toggleModal('book-modal', show); }
 
-        // --- CONEXÃO GOOGLE SHEETS COM TRANSPARÊNCIA E TESTE ---
+        // --- CONEXÃO GOOGLE SHEETS COM PREVENÇÃO DE DUPLICAÇÃO ---
         function saveSyncUrl() {
-            const url = document.getElementById('sheet-sync-url')?.value.trim();
+            let url = document.getElementById('sheet-sync-url')?.value.trim();
             if(url) {
+                if(!url.startsWith('http')) {
+                    url = `https://script.google.com/macros/s/${url}/exec`;
+                    const inputEl = document.getElementById('sheet-sync-url');
+                    if(inputEl) inputEl.value = url;
+                }
                 localStorage.setItem('app_sheet_sync_url', url);
             }
         }
@@ -843,6 +851,100 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ target: target, payload: payload })
             }).catch(e => console.log('Erro ao sincronizar:', e));
+        }
+
+        // FUNÇÃO DE SINCRONIZAÇÃO RETROATIVA ANTIDUPLICAÇÃO (MARCA COM SUNK/SYNCED)
+        function syncAllSavedDataToSheets() {
+            saveSyncUrl();
+            const url = localStorage.getItem('app_sheet_sync_url');
+            if(!url) {
+                alert("Insira a URL do Google Apps Script em Configurações antes de sincronizar.");
+                return;
+            }
+
+            let newCount = 0;
+
+            // Helper para processar listas no localStorage sem duplicar
+            function syncArrayKey(storageKey, targetName, transformFn) {
+                const items = JSON.parse(localStorage.getItem(storageKey)) || [];
+                let modified = false;
+
+                items.forEach(item => {
+                    if (!item.synced) {
+                        const payload = transformFn ? transformFn(item) : item;
+                        sendToGoogleSheet(targetName, payload);
+                        item.synced = true;
+                        modified = true;
+                        newCount++;
+                    }
+                });
+
+                if (modified) {
+                    localStorage.setItem(storageKey, JSON.stringify(items));
+                }
+            }
+
+            // 1. Histórico Diário (Home / Encerramentos)
+            const dailyLogs = JSON.parse(localStorage.getItem('app_daily_history')) || {};
+            let dailyModified = false;
+            Object.keys(dailyLogs).forEach(key => {
+                const log = dailyLogs[key];
+                if (!log.synced) {
+                    sendToGoogleSheet('HOME', log);
+                    log.synced = true;
+                    dailyModified = true;
+                    newCount++;
+                }
+            });
+            if (dailyModified) {
+                localStorage.setItem('app_daily_history', JSON.stringify(dailyLogs));
+            }
+
+            // 2. Livros Cadastrados
+            syncArrayKey('app_books', 'LEITURA');
+
+            // 3. Notas do Diário
+            syncArrayKey('app_journal_entries', 'JOURNALING');
+
+            // 4. Sessões de Escrita
+            syncArrayKey('app_writing_sessions', 'JOURNALING', w => ({
+                date: `${w.date} ${w.timeStr || ''}`,
+                title: `Sessão de Escrita (${w.duration})`,
+                body: `Anterior: ${w.before} | Ansiedade: ${w.anxiety}`
+            }));
+
+            // 5. Alunos Particulares
+            syncArrayKey('app_students', 'ALUNO');
+
+            // 6. Empresas / Contratos
+            syncArrayKey('app_companies', 'EMPRESA');
+
+            // 7. Lançamentos Financeiros
+            syncArrayKey('app_fin_txs', 'FINANCAS');
+
+            // 8. Serviços Domésticos
+            syncArrayKey('app_chores_history', 'CASA', c => ({
+                date: `${c.date} ${c.timeStr || ''}`,
+                desc: `Serviços Domésticos (${c.minutes} min): ${c.text}`,
+                amount: 0
+            }));
+
+            // 9. Pausas e Autocuidado
+            syncArrayKey('app_breaks_history', 'HOME', b => ({
+                date: `${b.date} ${b.timeStr || ''}`,
+                good: `${b.label} realizado: ${b.minutes} min`,
+                hoursWorked: `${b.minutes}m de descanso`
+            }));
+
+            // 10. Saúde, Pet e Wishlist
+            syncArrayKey('app_health_items', 'WISHLIST_SAUDE', h => ({ desc: h.desc, price: h.val, type: 'Saúde/Pet' }));
+            syncArrayKey('app_wishlist', 'WISHLIST_SAUDE', w => ({ desc: w.item, price: w.price, type: 'Wishlist' }));
+
+            if (newCount === 0) {
+                alert("✨ Todos os seus dados já estão sincronizados na planilha! Nenhum item pendente.");
+            } else {
+                alert(`🚀 Sincronização concluída! ${newCount} novos registros enviados para a planilha sem duplicações.`);
+            }
         }
 
         // --- BRAINDUMP & MATRIZ DE EISENHOWER ---
@@ -981,7 +1083,7 @@
             renderBraindumpList();
         }
 
-        // --- ALARMES, NOTIFICAÇÕES NATIVAS (A PROVA DE SEGUNDO PLANO) & GOOGLE AGENDA ---
+        // --- ALARMES, NOTIFICAÇÕES NATIVAS & GOOGLE AGENDA ---
         function requestNotificationPermission() {
             if (!("Notification" in window)) {
                 alert("Seu navegador não suporta notificações de área de trabalho.");
@@ -1030,7 +1132,6 @@
             alert(`Lembrete "${title}" agendado para às ${time}!`);
         }
 
-        // RELÓGIO DE VERIFICAÇÃO CONTÍNUA EM SEGUNDO PLANO (A CADA 30 SEG)
         function startBackgroundAlarmChecker() {
             setInterval(() => {
                 if (!("Notification" in window) || Notification.permission !== "granted") return;
@@ -1204,7 +1305,7 @@
             }
         }
 
-        // --- ABA HOME: SERVIÇOS DOMÉSTICOS & VISÃO DA SEMANA ---
+        // --- SERVIÇOS DOMÉSTICOS & VISÃO DA SEMANA ---
         let choresTempMinutes = 0;
 
         function toggleHouseChoresTimer(start) {
@@ -2554,7 +2655,6 @@
             renderWeekView();
             updateDayTimeDisplay();
             
-            // Inicia o verificador contínuo de alarmes em segundo plano
             startBackgroundAlarmChecker();
         };
     </script>
