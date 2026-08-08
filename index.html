@@ -405,7 +405,7 @@
             </div>
         </div>
 
-        <!-- ABA AULAS & DOCÊNCIA (ATUALIZADA COM MODELO IA CORRIGIDO E HISTÓRICO) -->
+        <!-- ABA AULAS & DOCÊNCIA -->
         <div id="tab-aulas" class="tab-content">
             <div class="card">
                 <div class="section-title">Quadro de Horas & Energia Docente</div>
@@ -1818,7 +1818,7 @@
             container.innerHTML = calendarHTML;
         }
 
-        // --- ABA AULAS & DOCÊNCIA (ATUALIZADA COM GEMINI-1.5-FLASH E HISTÓRICO) ---
+        // --- ABA AULAS & DOCÊNCIA (ATUALIZADA COM GEMINI-2.5-FLASH E HISTÓRICO) ---
         function renderTeachingDashboard() {
             const students = JSON.parse(localStorage.getItem('app_students')) || [];
             const companies = JSON.parse(localStorage.getItem('app_companies')) || [];
@@ -1884,7 +1884,10 @@
             if(!output) return;
             output.style.display = 'block';
             
-            if(!key) { output.innerText = "Cadastre sua Chave de API nas Configurações."; return; }
+            if(!key) { 
+                output.innerText = "Cadastre sua Chave de API nas Configurações."; 
+                return; 
+            }
             output.innerText = "Analisando sua distribuição de horas de aula com o Gemini...";
 
             const totalStr = document.getElementById('teaching-total-hours')?.innerText || '0h';
@@ -1894,14 +1897,20 @@
             const prompt = `Atue como uma mentora acadêmica acolhedora. Analise minha carga horária de docência no mês (${currentMonthKey}): Trabalhei ${totalStr} no total. Distribuição: ${stPct} em alunos particulares e ${cpPct} em contratos/empresas. Forneça um conselho equilibrado e empático sobre minha gestão de energia e tempo.`;
 
             try {
-                // Atualizado para o modelo ativo gemini-1.5-flash
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
+                // Modelo atualizado para gemini-2.5-flash
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`, {
                     method: 'POST', 
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
                 });
                 
                 const data = await response.json(); 
+
+                if (data.error) {
+                    output.innerText = `⚠️ Erro da API do Google: ${data.error.message || 'Chave de API inválida'}`;
+                    return;
+                }
+
                 if (data.candidates && data.candidates[0] && data.candidates[0].content) {
                     const reportText = data.candidates[0].content.parts[0].text;
                     output.innerText = reportText;
@@ -1915,18 +1924,16 @@
                         report: reportText
                     };
 
-                    // Salva localmente por mês
                     const savedReports = JSON.parse(localStorage.getItem('app_teaching_ai_reports')) || {};
                     savedReports[currentMonthKey] = reportObj;
                     localStorage.setItem('app_teaching_ai_reports', JSON.stringify(savedReports));
 
-                    // Envia para a aba 9_RELATORIOS_IA do Google Sheets com ID único para evitar duplicatas
                     sendToGoogleSheet('RELATORIO_IA', reportObj);
                 } else {
-                    output.innerText = "Não foi possível estruturar a resposta da IA. Verifique sua chave de API.";
+                    output.innerText = "Resposta da IA sem candidatos válidos. Tente novamente em instantes.";
                 }
             } catch(e) { 
-                output.innerText = "Erro ao conectar com a IA. Verifique sua conexão e a Chave de API."; 
+                output.innerText = "Erro de conexão ao tentar falar com a IA. Verifique sua internet ou a Chave da API."; 
             }
         }
 
@@ -2440,7 +2447,8 @@
             const prompt = `Atue como um consultor financeiro pessoal acolhedor. Analise meus dados financeiros do mês (${currentMonthKey}): Transações: ${JSON.stringify(monthTxs)}. Forneça um balanço analítico e tranquilizador.`;
 
             try {
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
+                // Modelo atualizado para gemini-2.5-flash
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`, {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
                 });
@@ -2448,7 +2456,7 @@
                 if (data.candidates && data.candidates[0] && data.candidates[0].content) {
                     output.innerText = data.candidates[0].content.parts[0].text;
                 } else {
-                    output.innerText = "Erro ao gerar análise. Verifique sua chave de API.";
+                    output.innerText = "Erro ao gerar relatório. Verifique sua chave API.";
                 }
             } catch(e) { output.innerText = "Erro ao conectar com a IA."; }
         }
@@ -2659,7 +2667,8 @@
             const prompt = `Analise meu hábito acadêmico neste mês (${currentMonthKey}): Tenho ${books.length} livros na estante, ${entries.length} notas no diário e realizei ${monthSessions.length} sessões de escrita. Faça uma síntese motivadora do meu progresso.`;
 
             try {
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
+                // Modelo atualizado para gemini-2.5-flash
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`, {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
                 });
