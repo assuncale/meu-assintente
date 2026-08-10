@@ -477,7 +477,7 @@
             </div>
         </div>
 
-        <!-- ABA CONTROLE FINANCEIRO (REFORMULADA CONFORME DIRETRIZES) -->
+        <!-- ABA CONTROLE FINANCEIRO -->
         <div id="tab-financas" class="tab-content">
             <div class="card">
                 <div class="section-title">Painel Financeiro & Balanço</div>
@@ -489,7 +489,7 @@
                 </div>
             </div>
 
-            <!-- SUB-ABA 1: VISÃO GERAL & BALANÇO (RESET MENSAL + 50/30/20 CALCULADO) -->
+            <!-- SUB-ABA 1: VISÃO GERAL & BALANÇO -->
             <div id="fin-visão" class="fin-subtab">
                 <div class="landscape-grid">
                     <div>
@@ -507,7 +507,7 @@
                             </div>
                         </div>
 
-                        <!-- REFORMULAÇÃO DO FRAMEWORK 50 / 30 / 20 (DIAGNÓSTICO CALCULADO) -->
+                        <!-- REFORMULAÇÃO DO FRAMEWORK 50 / 30 / 20 -->
                         <div class="card">
                             <div class="section-title">Diagnóstico Orçamentário Real (Framework 50 / 30 / 20)</div>
                             
@@ -562,7 +562,7 @@
                 </div>
             </div>
 
-            <!-- SUB-ABA 2: DÍVIDAS & CONTAS FIXAS (RESET MENSAL + BOTÃO HISTÓRICO DE MESES ANTERIORES) -->
+            <!-- SUB-ABA 2: DÍVIDAS & CONTAS FIXAS -->
             <div id="fin-dividas" class="fin-subtab" style="display: none;">
                 <div class="card">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
@@ -573,7 +573,7 @@
                 </div>
             </div>
 
-            <!-- SUB-ABA 3: PROJETOS, WISHLIST & SAÚDE (ESCOPO CONTÍNUO / GALERIAS DINÂMICAS) -->
+            <!-- SUB-ABA 3: PROJETOS, WISHLIST & SAÚDE (AUSTERA E LIMPA) -->
             <div id="fin-projetos" class="fin-subtab" style="display: none;">
                 <!-- 1. GALERIA DE PROJETOS GRANDES -->
                 <div class="card">
@@ -593,10 +593,10 @@
                     <div id="wishlist-grid" class="card-grid" style="margin-top: 16px;"></div>
                 </div>
 
-                <!-- 3. PAINEL SAÚDE & PET -->
+                <!-- 3. PAINEL SAÚDE & PET (TÍTULO LIMPO CONFORME SOLICITADO) -->
                 <div class="card">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <div class="section-title" style="margin-bottom: 0;">🩺 Saúde & Pet (Papagaia) - Previsão x Quitação</div>
+                        <div class="section-title" style="margin-bottom: 0;">🩺 Saúde & Pet</div>
                         <button class="btn-sub" style="border-color: var(--theme-color);" onclick="openNewHealthModal()">+ Novo Procedimento/Custo</button>
                     </div>
                     <div id="health-grid" style="display: flex; flex-direction: column; gap: 8px; margin-top: 16px;"></div>
@@ -758,7 +758,7 @@
             </div>
         </div>
 
-        <!-- MODAIS NOVOS DE FINANÇAS -->
+        <!-- MODAIS DE FINANÇAS -->
         <div id="modal-fin-history" class="modal-overlay">
             <div class="modal-card">
                 <span class="close-btn" onclick="toggleModal('modal-fin-history', false)">×</span>
@@ -795,7 +795,7 @@
         <div id="modal-new-health" class="modal-overlay">
             <div class="modal-card">
                 <span class="close-btn" onclick="toggleModal('modal-new-health', false)">×</span>
-                <div class="section-title">Cadastrar Procedimento/Custo de Saúde/Pet</div>
+                <div class="section-title">Cadastrar Procedimento/Custo de Saúde</div>
                 <input type="text" id="health-desc-input" placeholder="Procedimento / Custo (ex: Exame de Fezes, Consulta...)">
                 <input type="number" id="health-price-input" placeholder="Custo Estimado (R$)">
                 <input type="date" id="health-date-input" placeholder="Data Prevista">
@@ -1970,7 +1970,8 @@
             const prompt = `Atue como uma mentora acadêmica acolhedora. Analise minha carga horária de docência no mês (${currentMonthKey}): Trabalhei ${totalStr} no total. Distribuição: ${stPct} em alunos particulares e ${cpPct} em contratos/empresas. Forneça um conselho equilibrado e empático sobre minha gestão de energia e tempo.`;
 
             try {
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`, {
+                // Modelo ativo gemini-1.5-flash
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
                     method: 'POST', 
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
@@ -2378,7 +2379,7 @@
             }
         }
 
-        // --- FINANÇAS (FUNÇÕES ATUALIZADAS & NOVAS GALERIAS) ---
+        // --- FINANÇAS ---
         function addTransaction() {
             const desc = document.getElementById('fin-desc').value;
             const amount = parseFloat(document.getElementById('fin-amount').value);
@@ -2495,7 +2496,6 @@
 
             const txs = JSON.parse(localStorage.getItem('app_fin_txs')) || [];
             
-            // Agrupa transações por mês
             const monthGroups = {};
             txs.forEach(t => {
                 const mk = t.monthKey || 'Antigo';
@@ -2576,10 +2576,8 @@
                 proj.saved = (proj.saved || 0) + aporteVal;
                 localStorage.setItem('app_projects_list', JSON.stringify(projects));
 
-                // Atualiza o projeto no banco permanente
                 sendToGoogleSheet('CASA', proj);
 
-                // Injeta a movimentação no Fluxo de Caixa Mensal Ativo
                 const meta = getTimestampData();
                 const payloadTx = {
                     id: Date.now(),
@@ -2645,7 +2643,7 @@
                 where: document.getElementById('wish-item-where').value.trim(),
                 occasion: document.getElementById('wish-item-occasion').value.trim(),
                 limitDate: document.getElementById('wish-item-date').value,
-                status: 'desejado' // 'desejado', 'comprado', 'desisti'
+                status: 'desejado'
             };
 
             const wishList = JSON.parse(localStorage.getItem('app_wishlist_items')) || [];
@@ -2733,7 +2731,7 @@
             }).join('');
         }
 
-        // PAINEL SAÚDE & PET (ACOMPANHAMENTO x QUITAÇÃO MENSAL)
+        // PAINEL SAÚDE & PET (ACOMPANHAMENTO X QUITAÇÃO - TOTALMENTE ATUALIZADO & PROTEGIDO)
         function openNewHealthModal() { toggleModal('modal-new-health', true); }
 
         function saveNewHealthItem() {
@@ -2748,7 +2746,7 @@
                 desc: desc,
                 price: price,
                 date: dateVal || new Date().toLocaleDateString('pt-BR'),
-                status: 'pendente' // 'pendente', 'pago'
+                status: 'pendente'
             };
 
             const items = JSON.parse(localStorage.getItem('app_health_items')) || [];
@@ -2767,20 +2765,27 @@
 
         function markHealthAsPaid(healthId) {
             const items = JSON.parse(localStorage.getItem('app_health_items')) || [];
-            const item = items.find(h => h.id === healthId);
+            
+            // Tratamento de compatibilidade para itens antigos sem ID estrito
+            let item = items.find(h => String(h.id) === String(healthId));
+            if(!item && typeof healthId === 'number') {
+                item = items[healthId];
+            }
+
             if(item) {
                 item.status = 'pago';
+                if(!item.id) item.id = `health_${Date.now()}`;
                 localStorage.setItem('app_health_items', JSON.stringify(items));
 
                 sendToGoogleSheet('WISHLIST_SAUDE', item);
 
-                // Lança no Fluxo de Caixa do mês atual
+                // Lança no Fluxo de Caixa do mês ativo
                 const meta = getTimestampData();
                 const payloadTx = {
                     id: Date.now(),
                     ...meta,
-                    desc: `Saúde/Pet: ${item.desc}`,
-                    amount: item.price,
+                    desc: `Saúde/Pet: ${item.desc || item.item}`,
+                    amount: item.price || item.val || 0,
                     category: 'out_nec',
                     type: 'out'
                 };
@@ -2791,7 +2796,7 @@
 
                 renderHealthPanel();
                 renderFinance();
-                alert(`Custo de Saúde/Pet "${item.desc}" quitado e registrado nas despesas do mês!`);
+                alert(`Custo de Saúde/Pet "${item.desc || item.item}" quitado e registrado nas despesas do mês!`);
             }
         }
 
@@ -2805,11 +2810,20 @@
                 return;
             }
 
+            // Normaliza itens antigos que não tinham estrutura completa
+            let modified = false;
+            items.forEach((h, idx) => {
+                if(!h.id) { h.id = `health_${Date.now()}_${idx}`; modified = true; }
+                if(!h.desc && h.item) { h.desc = h.item; modified = true; }
+                if(!h.price && h.val) { h.price = h.val; modified = true; }
+            });
+            if(modified) localStorage.setItem('app_health_items', JSON.stringify(items));
+
             container.innerHTML = items.map(h => `
                 <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 12px; border:1px solid var(--border); border-radius:6px; background:var(--bg); font-size:12px;">
                     <div>
-                        <strong>• ${h.desc}</strong> (${h.price > 0 ? 'R$ ' + h.price.toFixed(2) : 'A definir'})
-                        <div style="font-size:10px; color:var(--text-muted);">Data/Prev: ${h.date}</div>
+                        <strong>• ${h.desc || 'Procedimento'}</strong> (${(h.price || 0) > 0 ? 'R$ ' + parseFloat(h.price).toFixed(2) : 'A definir'})
+                        <div style="font-size:10px; color:var(--text-muted);">Data/Prev: ${h.date || 'Não informada'}</div>
                     </div>
                     <div>
                         ${h.status === 'pago' 
@@ -2834,7 +2848,8 @@
             const prompt = `Atue como um consultor financeiro pessoal acolhedor. Analise meus dados financeiros do mês (${currentMonthKey}): Transações: ${JSON.stringify(monthTxs)}. Forneça um balanço analítico e tranquilizador.`;
 
             try {
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`, {
+                // Modelo ativo gemini-1.5-flash
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
                 });
@@ -3053,7 +3068,8 @@
             const prompt = `Analise meu hábito acadêmico neste mês (${currentMonthKey}): Tenho ${books.length} livros na estante, ${entries.length} notas no diário e realizei ${monthSessions.length} sessões de escrita. Faça uma síntese motivadora do meu progresso.`;
 
             try {
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`, {
+                // Modelo ativo gemini-1.5-flash
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
                 });
