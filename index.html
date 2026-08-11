@@ -647,7 +647,8 @@
             <div class="card">
                 <div class="section-title">Conexão com IA (Gemini)</div>
                 <label style="font-size: 13px; color: var(--text-muted); display: block;">Sua Chave de Autorização (AQ...):</label>
-                <input type="text" id="gemini-api-key" placeholder="Cole sua chave AQ. aqui" onchange="saveApiKey()">
+                <input type="text" id="gemini-api-key" placeholder="Cole sua chave AQ. aqui">
+                <button class="btn-main" style="margin-top: 8px; background: #8b5cf6;" onclick="saveApiKey()">Salvar Chave API</button>
             </div>
 
             <div class="card">
@@ -768,7 +769,7 @@
             </div>
         </div>
 
-        <!-- MODAIS NOVOS / ATUALIZADOS DE FINANÇAS -->
+        <!-- MODAIS NOVOS DE FINANÇAS -->
         <div id="modal-fin-history" class="modal-overlay">
             <div class="modal-card">
                 <span class="close-btn" onclick="toggleModal('modal-fin-history', false)">×</span>
@@ -777,7 +778,6 @@
             </div>
         </div>
 
-        <!-- MODAL DE EDIÇÃO DE LANÇAMENTO DO MÊS -->
         <div id="modal-edit-tx" class="modal-overlay">
             <div class="modal-card">
                 <span class="close-btn" onclick="toggleModal('modal-edit-tx', false)">×</span>
@@ -1116,7 +1116,7 @@
                     }
 
                     refreshAllViews();
-                    alert("✨ Sincronização concluída! Seus Projetos, Wishlist e Saúde voltaram para a tela no novo formato!");
+                    alert("✨ Sincronização concluída! Seus dados voltaram para a tela no novo formato!");
 
                 } else {
                     alert("⚠️ Erro retornado pela planilha: " + json.message);
