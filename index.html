@@ -64,7 +64,7 @@
 
         .landscape-grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 24px; }
 
-        input[type="text"], input[type="number"], input[type="time"], textarea, select {
+        input[type="text"], input[type="number"], input[type="time"], input[type="password"], textarea, select {
             width: 100%; padding: 12px; border: 1px solid var(--border);
             border-radius: 8px; box-sizing: border-box; font-size: 14px;
             margin-bottom: 12px; font-family: inherit; background: rgba(255, 255, 255, 0.8);
@@ -627,9 +627,13 @@
         <div id="tab-config" class="tab-content">
             <div class="card">
                 <div class="section-title">Sincronização em Tempo Real (Google Sheets)</div>
-                <label style="font-size: 13px; color: var(--text-muted); display: block;">Cole aqui o seu Link de Conexão do Apps Script (URL do Web App):</label>
-                <input type="text" id="sheet-sync-url" placeholder="https://script.google.com/macros/s/.../exec" oninput="saveSyncUrl()">
+                <label style="font-size: 13px; color: var(--text-muted); display: flex; justify-content: space-between;">
+                    <span>URL do Web App:</span>
+                    <span id="sync-status" style="color: #ef4444; font-weight: 600;">(Desconectado)</span>
+                </label>
+                <input type="text" id="sheet-sync-url" placeholder="https://script.google.com/macros/s/.../exec">
                 <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 4px;">
+                    <button class="btn-sub" style="border-color: #10b981; color: #059669; width: 100%;" onclick="saveSyncUrl()">💾 Salvar Link de Conexão</button>
                     <button class="btn-sub" style="border-color: #10b981; color: #059669; width: 100%;" onclick="testSheetConnection()">🧪 Testar Conexão com a Planilha</button>
                     <button class="btn-main" style="background: #3b82f6; width: 100%; font-weight: 500;" onclick="syncAllSavedDataToSheets()">🔄 1. Sincronizar (Enviar para a Planilha)</button>
                     <button class="btn-main" style="background: #f59e0b; width: 100%; font-weight: 500; color: white;" onclick="restoreFromGoogleSheets()">📥 2. Restaurar Dados</button>
@@ -646,8 +650,11 @@
 
             <div class="card">
                 <div class="section-title">Conexão com IA (Gemini)</div>
-                <label style="font-size: 13px; color: var(--text-muted); display: block;">Sua Chave de Autorização (AQ...):</label>
-                <input type="text" id="gemini-api-key" placeholder="Cole sua chave AQ. aqui">
+                <label style="font-size: 13px; color: var(--text-muted); display: flex; justify-content: space-between;">
+                    <span>Sua Chave de Autorização (AQ...):</span>
+                    <span id="api-status" style="color: #ef4444; font-weight: 600;">(Não configurada)</span>
+                </label>
+                <input type="password" id="gemini-api-key" placeholder="Cole sua chave AQ. aqui">
                 <button class="btn-main" style="margin-top: 8px; background: #8b5cf6;" onclick="saveApiKey()">Salvar Chave API</button>
             </div>
 
@@ -769,7 +776,7 @@
             </div>
         </div>
 
-        <!-- MODAIS NOVOS DE FINANÇAS -->
+        <!-- MODAIS NOVOS / ATUALIZADOS DE FINANÇAS -->
         <div id="modal-fin-history" class="modal-overlay">
             <div class="modal-card">
                 <span class="close-btn" onclick="toggleModal('modal-fin-history', false)">×</span>
@@ -778,6 +785,7 @@
             </div>
         </div>
 
+        <!-- MODAL DE EDIÇÃO DE LANÇAMENTO DO MÊS -->
         <div id="modal-edit-tx" class="modal-overlay">
             <div class="modal-card">
                 <span class="close-btn" onclick="toggleModal('modal-edit-tx', false)">×</span>
@@ -933,18 +941,22 @@
             if(url) {
                 if(!url.startsWith('http')) {
                     url = `https://script.google.com/macros/s/${url}/exec`;
-                    const inputEl = document.getElementById('sheet-sync-url');
-                    if(inputEl) inputEl.value = url;
                 }
                 localStorage.setItem('app_sheet_sync_url', url);
+                document.getElementById('sheet-sync-url').value = url;
+                const statusEl = document.getElementById('sync-status');
+                if(statusEl) {
+                    statusEl.innerText = "(Ativo e Salvo ✅)";
+                    statusEl.style.color = "#10b981";
+                }
+                alert('Link da planilha salvo com sucesso!');
             }
         }
 
         function testSheetConnection() {
-            saveSyncUrl();
             const url = localStorage.getItem('app_sheet_sync_url');
             if(!url) {
-                alert("Por favor, cole a URL do seu Web App do Apps Script primeiro.");
+                alert("Por favor, salve a URL do seu Web App do Apps Script primeiro.");
                 return;
             }
 
@@ -974,7 +986,6 @@
         }
 
         function syncAllSavedDataToSheets() {
-            saveSyncUrl();
             const url = localStorage.getItem('app_sheet_sync_url');
             if(!url) {
                 alert("Insira a URL do Google Apps Script em Configurações antes de sincronizar.");
@@ -3171,6 +3182,12 @@
         window.onload = function() {
             initGlobalMonthPicker();
 
+            // Preencher Listas Personalizadas a partir da memória
+            const savedRitual = JSON.parse(localStorage.getItem('app_custom_ritual')) || defaultRitual;
+            const savedCare = JSON.parse(localStorage.getItem('app_custom_care')) || defaultCare;
+            if(document.getElementById('config-ritual')) document.getElementById('config-ritual').value = savedRitual.join('\n');
+            if(document.getElementById('config-care')) document.getElementById('config-care').value = savedCare.join('\n');
+
             const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
             const dateEl = document.getElementById('current-date');
             if(dateEl) dateEl.innerText = new Date().toLocaleDateString('pt-BR', options);
@@ -3185,16 +3202,28 @@
             const savedEnergy = localStorage.getItem('app_energy'); 
             if (savedEnergy) { currentEnergy = savedEnergy; applyTheme(savedEnergy); }
 
+            // Verificação Visual da IA
             const savedApiKey = localStorage.getItem('app_gemini_key'); 
             if(savedApiKey) {
                 const keyEl = document.getElementById('gemini-api-key');
                 if(keyEl) keyEl.value = savedApiKey;
+                const apiStatus = document.getElementById('api-status');
+                if(apiStatus) {
+                    apiStatus.innerText = "(Ativa e Salva ✅)";
+                    apiStatus.style.color = "#10b981";
+                }
             }
 
+            // Verificação Visual Sync URL
             const savedSyncUrl = localStorage.getItem('app_sheet_sync_url'); 
             if(savedSyncUrl) {
                 const syncEl = document.getElementById('sheet-sync-url');
                 if(syncEl) syncEl.value = savedSyncUrl;
+                const syncStatus = document.getElementById('sync-status');
+                if(syncStatus) {
+                    syncStatus.innerText = "(Ativo e Salvo ✅)";
+                    syncStatus.style.color = "#10b981";
+                }
             }
 
             renderCustomLists(); 
