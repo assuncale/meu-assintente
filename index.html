@@ -357,45 +357,74 @@
             </div>
         </div>
 
-        <!-- ABA PESQUISA LITERÁRIA -->
+<!-- ABA PESQUISA LITERÁRIA (JOIA DA COROA REESTRUTURADA) -->
         <div id="tab-pesquisa" class="tab-content">
+            <!-- PORTAL DE ENTRADA & TIMER CENTRAL -->
             <div class="card">
-                <div class="section-title">Portal de Entrada</div>
+                <div class="section-title">Portal de Entrada & Sessão de Foco</div>
+                
                 <div class="landscape-grid">
                     <div>
                         <label style="font-size: 13px; color: var(--text-muted);">O que eu estava fazendo antes?</label>
-                        <input type="text" id="trans-before" placeholder="Ex: Respondendo mensagens...">
+                        <input type="text" id="trans-before" placeholder="Ex: Respondendo mensagens, redes sociais...">
                     </div>
                     <div>
                         <label style="font-size: 13px; color: var(--text-muted);">Como está minha ansiedade para produzir agora?</label>
-                        <select id="trans-anxiety">
+                        <select id="trans-anxiety" onchange="checkAnxietyPrompt(this.value)">
                             <option value="Tranquila e presente">Tranquila e presente</option>
                             <option value="Moderada (dispersão)">Moderada (um pouco de dispersão)</option>
                             <option value="Alta (resistência)">Alta (resistência para começar)</option>
                         </select>
                     </div>
                 </div>
-                <label style="font-size: 13px; color: var(--text-muted); display: block; margin-top: 4px;">Quanto tempo tenho para escrever agora?</label>
+
+                <!-- CARD ANTI-BLOQUEIO (INJEÇÃO DE CORAGEM) -->
+                <div id="anxiety-courage-card" style="display: none; background: #fef3c7; border: 1px solid #fde68a; color: #b45309; padding: 12px 16px; border-radius: 8px; margin-bottom: 12px; font-size: 13px; font-style: italic;">
+                    💡 <strong>Nota de Acolhimento:</strong> "O primeiro rascunho não precisa ser brilhante, ele só precisa existir. Escreva mal, mas escreva."
+                </div>
+
+                <label style="font-size: 13px; color: var(--text-muted); display: block; margin-top: 4px;">Quanto tempo pretendo dedicar agora?</label>
                 <input type="text" id="trans-time" placeholder="Ex: 45 minutos...">
 
-                <button class="btn-main" style="margin-top: 8px; margin-bottom: 12px;" onclick="startWritingSession()">▶ Iniciar</button>
+                <!-- SELEÇÃO DE TIPO DE SESSÃO -->
+                <div style="display: flex; gap: 8px; margin-top: 8px; margin-bottom: 12px;">
+                    <button id="btn-session-reading" class="btn-main" style="flex: 1; background: #3b82f6;" onclick="startSession('reading')">📖 Iniciar Sessão de Leitura</button>
+                    <button id="btn-session-writing" class="btn-main" style="flex: 1; background: #7c3aed;" onclick="startSession('writing')">✍️ Iniciar Sessão de Escrita</button>
+                </div>
 
+                <!-- STATUS DO TIMER EM EXECUÇÃO -->
+                <div id="session-timer-banner" style="display: none; background: var(--highlight); border: 1px solid var(--theme-color); padding: 16px; border-radius: 8px; text-align: center; margin-bottom: 12px;">
+                    <div id="session-timer-title" style="font-weight: 600; font-size: 15px; color: var(--theme-color);">Sessão em Andamento</div>
+                    <div id="session-timer-clock" style="font-size: 28px; font-weight: 700; margin: 8px 0; color: var(--text);">00:00</div>
+                    <button class="btn-sub" style="border-color: #ef4444; color: #dc2626; background: white;" onclick="openFinishSessionModal()">⏹ Finalizar Sessão</button>
+                </div>
+
+                <!-- LINHA DO TEMPO DAS SESSÕES -->
                 <div style="margin-top: 12px; border-top: 1px solid var(--border); padding-top: 12px;">
-                    <div style="font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px;">⏳ Linha do Tempo das Sessões do Mês</div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <div style="font-size: 12px; font-weight: 600; color: var(--text-muted);">⏳ Linha do Tempo das Sessões</div>
+                        <div style="display: flex; gap: 6px; align-items: center;">
+                            <button class="btn-sub" style="padding: 2px 6px; font-size: 11px;" onclick="changeResearchMonth(-1)">⬅️</button>
+                            <span id="research-month-label" style="font-size: 11px; font-weight: 600; color: var(--theme-color);"></span>
+                            <button class="btn-sub" style="padding: 2px 6px; font-size: 11px;" onclick="changeResearchMonth(1)">➡️</button>
+                        </div>
+                    </div>
                     <div id="writing-sessions-timeline" style="max-height: 180px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;"></div>
                 </div>
 
-                <div class="sub-nav">
+                <!-- SUB-NAVEGAÇÃO INTERNA -->
+                <div class="sub-nav" style="margin-top: 16px; margin-bottom: 0;">
                     <button class="btn-sub active" onclick="switchSubTab('leitura')">Leitura & Progresso</button>
-                    <button class="btn-sub" onclick="switchSubTab('journaling')">Journaling</button>
+                    <button class="btn-sub" onclick="switchSubTab('journaling')">Journaling (Envelopes)</button>
                     <button class="btn-sub" onclick="switchSubTab('ia-report')">Relatório Mensal (IA)</button>
                 </div>
             </div>
 
+            <!-- SUB-ABA 1: LEITURA & PROGRESSO -->
             <div id="subtab-leitura" class="subtab-content">
                 <div class="card">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                        <div class="section-title" style="margin-bottom: 0;">Calendário de Leituras & Constância</div>
+                        <div class="section-title" style="margin-bottom: 0;">Calendário de Leituras, Escrita & Constância</div>
                         <button class="btn-sub" onclick="toggleBookModal(true)">+ Cadastrar Livro</button>
                     </div>
                     <div id="reading-calendar-container"></div>
@@ -406,20 +435,41 @@
                 </div>
             </div>
 
+            <!-- SUB-ABA 2: JOURNALING (O BAÚ DE ENVELOPES) -->
             <div id="subtab-journaling" class="subtab-content" style="display: none;">
                 <div class="card">
-                    <div class="section-title">Journaling</div>
-                    <input type="text" id="journal-title" placeholder="Título da Nota">
-                    <textarea id="journal-body" rows="6" placeholder="Pensar no papel..."></textarea>
-                    <button class="btn-main" onclick="saveJournalEntry()">Salvar Nota</button>
+                    <div class="section-title">Nova Entrada no Journaling</div>
+                    <input type="text" id="journal-title" placeholder="Título da Nota ou Reflexão...">
+                    
+                    <label style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px; display: block;">Categoria do Registro:</label>
+                    <select id="journal-category" style="margin-bottom: 12px;">
+                        <option value="Notas de Leitura">📖 Notas de Leitura</option>
+                        <option value="Reflexões" selected>💭 Reflexões</option>
+                        <option value="Insights para Escrita Acadêmica">💡 Insights para Escrita Acadêmica</option>
+                    </select>
+
+                    <textarea id="journal-body" rows="6" placeholder="Pensar no papel... Escreva livremente sobre seus achados ou impressões."></textarea>
+                    <button class="btn-main" onclick="saveJournalEntry()">Guardar no Baú de Envelopes</button>
                 </div>
+
                 <div class="card">
-                    <div class="section-title">Galeria de Entradas</div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+                        <div class="section-title" style="margin: 0;">Galeria de Envelopes Guardados</div>
+                        <!-- FILTROS RÁPIDOS DA GALERIA -->
+                        <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                            <button class="btn-sub active" id="btn-jfilter-all" onclick="filterJournalCategory('all')">Ver Todas</button>
+                            <button class="btn-sub" id="btn-jfilter-leitura" onclick="filterJournalCategory('Notas de Leitura')">📖 Leitura</button>
+                            <button class="btn-sub" id="btn-jfilter-reflexoes" onclick="filterJournalCategory('Reflexões')">💭 Reflexões</button>
+                            <button class="btn-sub" id="btn-jfilter-insights" onclick="filterJournalCategory('Insights para Escrita Acadêmica')">💡 Insights</button>
+                        </div>
+                    </div>
+                    
                     <input type="text" id="journal-search" placeholder="Buscar por título..." oninput="renderJournalGallery()">
-                    <div id="journal-gallery" style="display: flex; flex-direction: column; gap: 12px; margin-top: 12px;"></div>
+                    <div id="journal-gallery" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; margin-top: 16px;"></div>
                 </div>
             </div>
 
+            <!-- SUB-ABA 3: RELATÓRIO IA -->
             <div id="subtab-ia-report" class="subtab-content" style="display: none;">
                 <div class="card">
                     <div class="section-title">Relatório & Insights (IA)</div>
@@ -428,12 +478,42 @@
                     <div id="ai-report-output" style="margin-top: 20px; padding: 16px; background: var(--bg); border-radius: 8px; font-size: 14px; line-height: 1.6; display: none;"></div>
                 </div>
             </div>
+        </div>
+        <!-- FIM DA ABA PESQUISA LITERÁRIA -->
 
-            <div class="card" style="text-align: center; margin-top: 20px;">
-                <button class="btn-main" style="font-size: 16px; padding: 16px;" onclick="openJumpModal()">Pronta para começar?</button>
+        <!-- ================= NOVOS MODAIS DA PESQUISA LITERÁRIA ================= -->
+
+        <!-- Modal: Ponte de Transição / Encerramento da Sessão -->
+        <div id="modal-finish-session" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); justify-content: center; align-items: center; z-index: 100;">
+            <div class="modal-card" style="background: white; padding: 28px; border-radius: 12px; width: 100%; max-width: 500px; position: relative;">
+                <span class="close-btn" style="position: absolute; top: 16px; right: 20px; font-size: 20px; cursor: pointer; color: var(--text-muted);" onclick="toggleModal('modal-finish-session', false)">×</span>
+                <div class="section-title">Encerramento da Sessão</div>
+                
+                <div id="session-summary-comparison" style="background: var(--highlight); padding: 12px 16px; border-radius: 8px; font-size: 14px; margin-bottom: 16px; text-align: center; border: 1px solid var(--border);"></div>
+
+                <label style="font-size: 13px; color: var(--text-muted); display: block; margin-bottom: 6px;">Como você sai dessa sessão?</label>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 20px;">
+                    <button class="btn-sub" onclick="confirmFinishSession('Fluida e Satisfeita')">✨ Fluida & Satisfeita</button>
+                    <button class="btn-sub" onclick="confirmFinishSession('Com Cansaço')">☕ Com Cansaço</button>
+                    <button class="btn-sub" onclick="confirmFinishSession('Com Bloqueios')">🧱 Com Bloqueios</button>
+                    <button class="btn-sub" onclick="confirmFinishSession('Produtiva')">🎯 Produtiva</button>
+                </div>
+
+                <button class="btn-main" onclick="confirmFinishSession('Normal')">Salvar Registro</button>
             </div>
         </div>
 
+        <!-- Modal: Leitura do Envelope / Carta do Journaling -->
+        <div id="modal-read-journal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); justify-content: center; align-items: center; z-index: 100;">
+            <div class="modal-card" style="background: #fefcf8; border: 1px solid #fef3c7; padding: 32px; border-radius: 12px; width: 100%; max-width: 600px; position: relative; box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
+                <span class="close-btn" style="position: absolute; top: 16px; right: 20px; font-size: 20px; cursor: pointer; color: var(--text-muted);" onclick="toggleModal('modal-read-journal', false)">×</span>
+                
+                <div id="read-journal-badge" style="display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; margin-bottom: 8px;"></div>
+                <div id="read-journal-date" style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;"></div>
+                <h2 id="read-journal-title" style="margin: 0 0 16px 0; font-size: 18px; color: var(--theme-color); font-weight: 600; border-bottom: 1px solid #fde68a; padding-bottom: 8px;"></h2>
+                <div id="read-journal-body" style="font-size: 14px; line-height: 1.6; color: var(--text); white-space: pre-wrap; max-height: 50vh; overflow-y: auto;"></div>
+            </div>
+        </div>
         <!-- ABA AULAS & DOCÊNCIA -->
         <div id="tab-aulas" class="tab-content">
             <div class="card">
@@ -1856,251 +1936,168 @@
             alert(`Ritmo do dia definido como: ${currentEnergy.toUpperCase()}`);
         }
 
-        // --- PESQUISA LITERÁRIA: SESSÕES DE ESCRITA ---
-        function startWritingSession() {
-            const before = document.getElementById('trans-before').value;
-            const anxiety = document.getElementById('trans-anxiety').value;
-            const time = document.getElementById('trans-time').value;
+// --- PESQUISA LITERÁRIA (MOTOR REESTRUTURADO) ---
 
-            if(!before && !time) {
-                alert('Preencha ao menos o que estava fazendo antes ou o tempo disponível.');
+        let activeResearchSession = null;
+        let researchTimerInterval = null;
+        let activeJournalFilter = 'all';
+        let researchMonthOffset = 0; // Para navegação na linha do tempo
+
+        function checkAnxietyPrompt(val) {
+            const card = document.getElementById('anxiety-courage-card');
+            if(card) {
+                card.style.display = (val === 'Alta (resistência)') ? 'block' : 'none';
+            }
+        }
+
+        // --- TIMER DE LEITURA & ESCRITA ---
+        function startSession(type) {
+            if(activeResearchSession) {
+                alert('Já existe uma sessão em andamento. Finalize-a antes de iniciar outra.');
                 return;
             }
 
+            const before = document.getElementById('trans-before').value.trim();
+            const anxiety = document.getElementById('trans-anxiety').value;
+            const timeTarget = document.getElementById('trans-time').value.trim();
+
+            activeResearchSession = {
+                type: type, // 'reading' ou 'writing'
+                label: type === 'reading' ? 'Leitura' : 'Escrita',
+                startTime: new Date(),
+                before: before || 'Não informado',
+                anxiety: anxiety,
+                timeTarget: timeTarget || 'Sem meta de tempo'
+            };
+
+            document.getElementById('session-timer-banner').style.display = 'block';
+            document.getElementById('session-timer-title').innerText = `📖 Sessão de ${activeResearchSession.label} em Andamento`;
+
+            // Inicia o relógio visual
+            researchTimerInterval = setInterval(updateResearchTimerUI, 1000);
+            alert(`Sessão de ${activeResearchSession.label} iniciada! Concentre-se no seu processo.`);
+        }
+
+        function updateResearchTimerUI() {
+            if(!activeResearchSession) return;
+            const diffMs = new Date() - activeResearchSession.startTime;
+            const totalSecs = Math.floor(diffMs / 1000);
+            const mins = String(Math.floor(totalSecs / 60)).padStart(2, '0');
+            const secs = String(totalSecs % 60).padStart(2, '0');
+            
+            const clockEl = document.getElementById('session-timer-clock');
+            if(clockEl) clockEl.innerText = `${mins}:${secs}`;
+        }
+
+        function openFinishSessionModal() {
+            if(!activeResearchSession) return;
+            
+            const diffMs = new Date() - activeResearchSession.startTime;
+            const diffMins = Math.max(1, Math.round(diffMs / 60000));
+            activeResearchSession.durationMins = diffMins;
+
+            const comparisonEl = document.getElementById('session-summary-comparison');
+            if(comparisonEl) {
+                comparisonEl.innerHTML = `
+                    <strong>Tipo:</strong> Sessão de ${activeResearchSession.label}<br>
+                    <strong>Expectativa:</strong> ${activeResearchSession.timeTarget}<br>
+                    <strong>Tempo Realizado:</strong> <span style="color: var(--theme-color); font-weight:700;">${diffMins} minutos</span>
+                `;
+            }
+
+            toggleModal('modal-finish-session', true);
+        }
+
+        function confirmFinishSession(stateFeeling) {
+            if(!activeResearchSession) return;
+
+            clearInterval(researchTimerInterval);
             const meta = getTimestampData();
+
             const payload = {
                 id: Date.now(),
                 ...meta,
-                before: before || 'Não informado',
-                anxiety: anxiety || 'Tranquila e presente',
-                duration: time || 'Não informado'
+                type: activeResearchSession.type,
+                label: activeResearchSession.label,
+                before: activeResearchSession.before,
+                anxiety: activeResearchSession.anxiety,
+                target: activeResearchSession.timeTarget,
+                duration: `${activeResearchSession.durationMins} min`,
+                durationMins: activeResearchSession.durationMins,
+                feeling: stateFeeling || 'Normal'
             };
 
             const sessions = JSON.parse(localStorage.getItem('app_writing_sessions')) || [];
             sessions.unshift(payload);
             localStorage.setItem('app_writing_sessions', JSON.stringify(sessions));
 
-            sendToGoogleSheet('JOURNALING', {
-                date: `${payload.date} ${payload.timeStr}`,
-                title: `Sessão de Escrita (${payload.duration})`,
-                body: `Anterior: ${payload.before} | Ansiedade: ${payload.anxiety}`
-            });
+            if (typeof sendToGoogleSheet === "function") {
+                sendToGoogleSheet('JOURNALING', {
+                    date: `${payload.date} ${payload.timeStr}`,
+                    title: `Sessão de ${payload.label} (${payload.duration})`,
+                    body: `Antes: ${payload.before} | Ansiedade: ${payload.anxiety} | Saída: ${payload.feeling}`
+                });
+            }
 
+            // Reseta o formulário
             document.getElementById('trans-before').value = '';
             document.getElementById('trans-time').value = '';
+            document.getElementById('session-timer-banner').style.display = 'none';
+            activeResearchSession = null;
 
+            toggleModal('modal-finish-session', false);
+            
             renderWritingSessions();
+            renderReadingCalendar();
             renderWeekView();
-            alert('Sessão iniciada e registrada!');
+            alert('Sessão registrada com sucesso no seu histórico!');
+        }
+
+        function changeResearchMonth(dir) {
+            researchMonthOffset += dir;
+            renderWritingSessions();
         }
 
         function renderWritingSessions() {
             const sessions = JSON.parse(localStorage.getItem('app_writing_sessions')) || [];
             const container = document.getElementById('writing-sessions-timeline');
+            const labelEl = document.getElementById('research-month-label');
             if(!container) return;
 
             container.innerHTML = '';
-            const monthSessions = sessions.filter(s => s.monthKey === currentMonthKey);
 
-            if(monthSessions.length === 0) {
-                container.innerHTML = '<p style="font-size:12px; color:var(--text-muted);">Nenhuma sessão registrada neste ciclo.</p>';
+            // Lógica de cálculo do mês ativo na navegação
+            const [y, m] = currentMonthKey.split('-').map(Number);
+            const targetDate = new Date(y, m - 1 + researchMonthOffset, 1);
+            const targetMonthKey = `${targetDate.getFullYear()}-${String(targetDate.getMonth() + 1).padStart(2, '0')}`;
+            
+            if(labelEl) labelEl.innerText = targetMonthKey;
+
+            const filtered = sessions.filter(s => s.monthKey === targetMonthKey);
+
+            if(filtered.length === 0) {
+                container.innerHTML = '<p style="font-size:12px; color:var(--text-muted); font-style:italic;">Nenhuma sessão de estudo/escrita neste ciclo.</p>';
                 return;
             }
 
-            monthSessions.forEach(s => {
-                container.innerHTML += `
-                    <div style="padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); font-size: 12px;">
+            container.innerHTML = filtered.map(s => {
+                const icon = s.type === 'reading' ? '📖' : '✍️';
+                return `
+                    <div style="padding: 10px 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); font-size: 12px;">
                         <div style="display: flex; justify-content: space-between; font-weight: 600; color: var(--theme-color);">
-                            <span>📍 ${s.date} às ${s.timeStr || ''}</span>
-                            <span>⏱ ${s.duration}</span>
+                            <span>${icon} ${s.label || 'Sessão'} - ${s.date} (${s.timeStr || ''})</span>
+                            <span style="background: var(--highlight); padding: 2px 6px; border-radius: 4px;">⏱ ${s.duration}</span>
                         </div>
                         <div style="color: var(--text); margin-top: 4px;"><strong>Antes:</strong> ${s.before}</div>
-                        <div style="color: var(--text-muted); font-size: 11px; margin-top: 2px;"><strong>Estado:</strong> ${s.anxiety}</div>
-                    </div>`;
-            });
-        }
-
-        // --- ESTANTE DE LIVROS & LEITURAS ---
-        function saveBook() {
-            const title = document.getElementById('book-title').value;
-            if(!title) { alert('Digite o título da obra.'); return; }
-
-            const pages = parseInt(document.getElementById('book-pages').value) || 0;
-            const meta = getTimestampData();
-            const payload = {
-                id: Date.now(),
-                ...meta,
-                title: title,
-                author: document.getElementById('book-author').value,
-                publisher: document.getElementById('book-publisher').value,
-                year: document.getElementById('book-year').value,
-                pages: pages,
-                readPages: 0,
-                progress: '0%',
-                type: document.getElementById('book-type').value,
-                cover: document.getElementById('book-cover').value,
-                sessions: [],
-                sectionNotes: []
-            };
-
-            const books = JSON.parse(localStorage.getItem('app_books')) || [];
-            books.push(payload);
-            localStorage.setItem('app_books', JSON.stringify(books));
-
-            sendToGoogleSheet('LEITURA', payload);
-
-            document.getElementById('book-title').value = '';
-            document.getElementById('book-author').value = '';
-            document.getElementById('book-publisher').value = '';
-            document.getElementById('book-year').value = '';
-            document.getElementById('book-pages').value = '';
-            document.getElementById('book-cover').value = '';
-
-            toggleBookModal(false);
-            renderShelf();
-            renderReadingCalendar();
-            alert('Livro cadastrado na sua estante!');
-        }
-
-        function renderShelf() {
-            const books = JSON.parse(localStorage.getItem('app_books')) || [];
-            const container = document.getElementById('shelf-list');
-            if(!container) return;
-            container.innerHTML = '';
-
-            if(books.length === 0) {
-                container.innerHTML = '<p style="font-size:13px; color:var(--text-muted);">Sua estante está vazia. Clique em "+ Cadastrar Livro" para começar.</p>';
-                return;
-            }
-
-            books.forEach(b => {
-                const pct = b.pages > 0 ? Math.min(100, Math.round(((b.readPages || 0) / b.pages) * 100)) : 0;
-                container.innerHTML += `
-                    <div class="item-card" onclick="openBookDetail(${b.id})">
-                        <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px;">${b.title}</div>
-                        <div style="font-size: 12px; color: var(--text-muted);">${b.author || 'Autor não informado'}</div>
-                        <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">${b.type || 'Livre'}</div>
-                        <div style="height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; margin-top: 10px;">
-                            <div style="height: 100%; background: var(--theme-color); width: ${pct}%;"></div>
+                        <div style="color: var(--text-muted); font-size: 11px; margin-top: 2px; display:flex; justify-content:space-between;">
+                            <span><strong>Estado:</strong> ${s.anxiety}</span>
+                            <span><strong>Saída:</strong> ${s.feeling || 'OK'}</span>
                         </div>
-                        <div style="font-size: 11px; text-align: right; color: var(--text-muted); margin-top: 4px;">${pct}% (${b.readPages || 0}/${b.pages} pág)</div>
                     </div>`;
-            });
+            }).join('');
         }
 
-        function openBookDetail(id) {
-            const books = JSON.parse(localStorage.getItem('app_books')) || [];
-            const b = books.find(x => x.id === id); if(!b) return;
-
-            const pct = b.pages > 0 ? Math.min(100, Math.round(((b.readPages || 0) / b.pages) * 100)) : 0;
-            
-            const filteredNotes = (b.sectionNotes || []).filter(n => n.monthKey === currentMonthKey);
-            const notesList = filteredNotes.map(n => `
-                <div style="padding:10px; border:1px solid var(--border); border-radius:6px; background:var(--bg); margin-bottom:8px;">
-                    <div style="font-weight:600; font-size:13px; color:var(--theme-color);">${n.section || 'Geral'}</div>
-                    <div style="font-size:12px; margin-top:4px; line-height:1.4;">${n.text}</div>
-                    <div style="font-size:10px; color:var(--text-muted); margin-top:6px;">📍 ${n.date}</div>
-                </div>`).join('');
-
-            const filteredSessions = (b.sessions || []).filter(s => s.monthKey === currentMonthKey);
-            const sessionsList = filteredSessions.map(s => `
-                <div style="padding:6px 0; border-bottom:1px solid var(--border); font-size:12px; display:flex; justify-content:space-between;">
-                    <span>📖 Lançamento em ${s.date}</span>
-                    <strong>Até a pág. ${s.readTo}</strong>
-                </div>`).join('');
-
-            const content = document.getElementById('book-detail-content');
-            content.innerHTML = `
-                <div class="section-title">Ficha do Livro</div>
-                <h3 style="margin:0 0 4px 0;">${b.title}</h3>
-                <p style="font-size:13px; color:var(--text-muted); margin-bottom:8px;">${b.author || 'Autor não informado'} • ${b.publisher || ''} (${b.year || '-'})</p>
-                <div style="height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; margin-top: 8px;">
-                    <div style="height: 100%; background: var(--theme-color); width: ${pct}%;"></div>
-                </div>
-                <div style="font-size:12px; color:var(--text-muted); margin-top:4px; margin-bottom:16px;">Progresso: ${pct}% (${b.readPages || 0} de ${b.pages} páginas)</div>
-
-                <hr style="border:0; border-top:1px solid var(--border); margin:16px 0;">
-
-                <div class="section-title">Registrar Sessão de Leitura do Dia</div>
-                <input type="number" id="bk-read-to" placeholder="Até qual página você leu hoje? (Ex: ${ (b.readPages || 0) + 10 })">
-                <button class="btn-sub" style="margin-bottom:12px; border-color:var(--theme-color);" onclick="recordReadingSession(${b.id})">Salvar Progresso de Leitura</button>
-
-                <div style="max-height:80px; overflow-y:auto; margin-bottom:16px;">
-                    ${sessionsList || '<p style="font-size:12px; color:var(--text-muted);">Nenhuma sessão de leitura neste ciclo.</p>'}
-                </div>
-
-                <hr style="border:0; border-top:1px solid var(--border); margin:16px 0;">
-
-                <div class="section-title">Galeria de Anotações por Seção / Capítulo</div>
-                <input type="text" id="bk-note-section" placeholder="Capítulo / Seção (Ex: Cap. 2 - A Mímesis)">
-                <textarea id="bk-note-text" rows="3" placeholder="Insira aqui seus fichamentos, citações e reflexões..."></textarea>
-                <button class="btn-sub" style="margin-bottom:12px;" onclick="addBookSectionNote(${b.id})">Salvar Anotação da Seção</button>
-
-                <div style="max-height:160px; overflow-y:auto;">
-                    ${notesList || '<p style="font-size:12px; color:var(--text-muted);">Nenhuma anotação registrada neste ciclo.</p>'}
-                </div>
-            `;
-            toggleModal('book-detail-modal', true);
-        }
-
-        function recordReadingSession(bookId) {
-            const readTo = parseInt(document.getElementById('bk-read-to').value);
-            if(isNaN(readTo) || readTo < 0) { alert('Digite uma página válida.'); return; }
-
-            const books = JSON.parse(localStorage.getItem('app_books')) || [];
-            const b = books.find(x => x.id === bookId);
-            if(b) {
-                b.readPages = readTo;
-                b.progress = b.pages > 0 ? `${Math.min(100, Math.round((readTo / b.pages) * 100))}%` : '0%';
-                
-                if(!b.sessions) b.sessions = [];
-                const meta = getTimestampData();
-                b.sessions.unshift({ ...meta, readTo: readTo });
-
-                localStorage.setItem('app_books', JSON.stringify(books));
-                
-                sendToGoogleSheet('LEITURA', {
-                    title: b.title,
-                    readPages: readTo,
-                    progress: b.progress,
-                    date: meta.date
-                });
-
-                renderShelf();
-                renderReadingCalendar();
-                openBookDetail(bookId);
-            }
-        }
-
-        function addBookSectionNote(bookId) {
-            const section = document.getElementById('bk-note-section').value;
-            const text = document.getElementById('bk-note-text').value;
-            if(!text) { alert('Digite o texto da sua anotação.'); return; }
-
-            const books = JSON.parse(localStorage.getItem('app_books')) || [];
-            const b = books.find(x => x.id === bookId);
-            if(b) {
-                if(!b.sectionNotes) b.sectionNotes = [];
-                const meta = getTimestampData();
-                const item = {
-                    ...meta,
-                    section: section || 'Anotação Geral',
-                    text: text
-                };
-                b.sectionNotes.unshift(item);
-                localStorage.setItem('app_books', JSON.stringify(books));
-
-                sendToGoogleSheet('JOURNALING', {
-                    date: `${item.date} ${item.timeStr}`,
-                    title: `Nota: ${b.title} (${item.section})`,
-                    body: text
-                });
-
-                openBookDetail(bookId);
-            }
-        }
-
-        // --- CALENDÁRIO MENSAL DE LEITURAS ---
+        // --- CALENDÁRIO INTERATIVO MULTI-ATIVIDADE (LEITURA + JOURNALING) ---
         function renderReadingCalendar() {
             const container = document.getElementById('reading-calendar-container');
             if(!container) return;
@@ -2112,13 +2109,21 @@
             const daysInMonth = new Date(year, month + 1, 0).getDate();
 
             const books = JSON.parse(localStorage.getItem('app_books')) || [];
-            const readDates = new Set();
+            const sessions = JSON.parse(localStorage.getItem('app_writing_sessions')) || [];
+            const journals = JSON.parse(localStorage.getItem('app_journal_entries')) || [];
 
-            books.forEach(b => {
-                (b.sessions || []).forEach(s => {
-                    if(s.monthKey === currentMonthKey && s.date) readDates.add(s.date);
-                });
+            const readDates = new Set();
+            const writeDates = new Set();
+
+            // Mapeia sessões de livros e do timer
+            books.forEach(b => { (b.sessions || []).forEach(s => { if(s.monthKey === currentMonthKey && s.date) readDates.add(s.date); }); });
+            sessions.forEach(s => { 
+                if(s.monthKey === currentMonthKey && s.date) {
+                    if(s.type === 'reading') readDates.add(s.date);
+                    else writeDates.add(s.date);
+                } 
             });
+            journals.forEach(j => { if(j.monthKey === currentMonthKey && j.date) writeDates.add(j.date); });
 
             let calendarHTML = `
                 <div style="font-size:13px; font-weight:600; text-align:center; margin-bottom:8px; color:var(--theme-color);">
@@ -2140,18 +2145,143 @@
             for(let day = 1; day <= daysInMonth; day++) {
                 const dateStr = `${String(day).padStart(2,'0')}/${String(month+1).padStart(2,'0')}/${year}`;
                 const hasRead = readDates.has(dateStr);
+                const hasWrite = writeDates.has(dateStr);
+
+                let dotsHTML = '';
+                if(hasRead) dotsHTML += `<div style="width:5px; height:5px; border-radius:50%; background:#3b82f6;"></div>`;
+                if(hasWrite) dotsHTML += `<div style="width:5px; height:5px; border-radius:50%; background:#7c3aed;"></div>`;
+
+                const isSpecial = hasRead && hasWrite;
 
                 calendarHTML += `
-                    <div class="calendar-day ${hasRead ? 'active-read' : ''}" title="${hasRead ? 'Leitura realizada!' : ''}">
+                    <div class="calendar-day ${isSpecial ? 'active-read' : ''}" style="${isSpecial ? 'border-color:#7c3aed; background:#f3e8ff;' : ''}" title="${dateStr}">
                         <span>${day}</span>
-                        ${hasRead ? '<div class="calendar-day-dot"></div>' : ''}
+                        <div style="display:flex; gap:2px; margin-top:2px;">${dotsHTML}</div>
                     </div>`;
             }
 
-            calendarHTML += `</div>`;
+            calendarHTML += `</div>
+            <div style="display:flex; gap:12px; justify-content:center; margin-top:8px; font-size:11px; color:var(--text-muted);">
+                <span><strong style="color:#3b82f6;">●</strong> Leitura</span>
+                <span><strong style="color:#7c3aed;">●</strong> Escrita/Journaling</span>
+            </div>`;
             container.innerHTML = calendarHTML;
         }
 
+        // --- JOURNALING (BAÚ DE ENVELOPES) ---
+        function saveJournalEntry() {
+            const title = document.getElementById('journal-title').value.trim();
+            const category = document.getElementById('journal-category').value;
+            const body = document.getElementById('journal-body').value.trim();
+
+            if(!title || !body) {
+                alert('Preencha o título e o texto do seu registro.');
+                return;
+            }
+
+            const meta = getTimestampData();
+            const payload = {
+                id: Date.now(),
+                ...meta,
+                title: title,
+                category: category,
+                body: body
+            };
+
+            const entries = JSON.parse(localStorage.getItem('app_journal_entries')) || [];
+            entries.unshift(payload);
+            localStorage.setItem('app_journal_entries', JSON.stringify(entries));
+
+            if (typeof sendToGoogleSheet === "function") {
+                sendToGoogleSheet('JOURNALING', {
+                    date: `${payload.date} ${payload.timeStr}`,
+                    title: `[${payload.category}] ${payload.title}`,
+                    body: payload.body
+                });
+            }
+
+            document.getElementById('journal-title').value = '';
+            document.getElementById('journal-body').value = '';
+
+            renderJournalGallery();
+            renderReadingCalendar();
+            alert('Nota guardada com sucesso no Baú de Envelopes!');
+        }
+
+        function filterJournalCategory(cat) {
+            activeJournalFilter = cat;
+            document.querySelectorAll('[id^="btn-jfilter-"]').forEach(b => b.classList.remove('active'));
+            
+            if(cat === 'all') document.getElementById('btn-jfilter-all').classList.add('active');
+            else if(cat === 'Notas de Leitura') document.getElementById('btn-jfilter-leitura').classList.add('active');
+            else if(cat === 'Reflexões') document.getElementById('btn-jfilter-reflexoes').classList.add('active');
+            else if(cat === 'Insights para Escrita Acadêmica') document.getElementById('btn-jfilter-insights').classList.add('active');
+
+            renderJournalGallery();
+        }
+
+        function renderJournalGallery() {
+            const container = document.getElementById('journal-gallery');
+            const searchVal = (document.getElementById('journal-search')?.value || '').toLowerCase();
+            if(!container) return;
+
+            const entries = JSON.parse(localStorage.getItem('app_journal_entries')) || [];
+            
+            let filtered = entries.filter(e => {
+                const matchSearch = e.title.toLowerCase().includes(searchVal) || (e.body || '').toLowerCase().includes(searchVal);
+                const matchCat = activeJournalFilter === 'all' || e.category === activeJournalFilter;
+                return matchSearch && matchCat;
+            });
+
+            if(filtered.length === 0) {
+                container.innerHTML = '<p style="font-size:12px; color:var(--text-muted); grid-column: 1/-1; font-style:italic;">Nenhum envelope encontrado no baú.</p>';
+                return;
+            }
+
+            const catBadges = {
+                'Notas de Leitura': { bg: '#eff6ff', color: '#1d4ed8', border: '#bfdbfe', icon: '📖' },
+                'Reflexões': { bg: '#fef3c7', color: '#b45309', border: '#fde68a', icon: '💭' },
+                'Insights para Escrita Acadêmica': { bg: '#f3e8ff', color: '#6b21a8', border: '#ddd6fe', icon: '💡' }
+            };
+
+            container.innerHTML = filtered.map(e => {
+                const badge = catBadges[e.category] || catBadges['Reflexões'];
+                return `
+                    <div style="background: #fefcf8; border: 1px solid ${badge.border}; padding: 16px; border-radius: 8px; cursor: pointer; transition: transform 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.02);" onclick="openReadJournalModal(${e.id})" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <span style="background: ${badge.bg}; color: ${badge.color}; font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 4px;">${badge.icon} ${e.category || 'Reflexão'}</span>
+                            <span style="font-size: 10px; color: var(--text-muted);">${e.date}</span>
+                        </div>
+                        <div style="font-weight: 600; font-size: 14px; color: var(--theme-color); margin-bottom: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${e.title}</div>
+                        <div style="font-size: 11px; color: var(--text-muted); text-align: right; margin-top: 8px;">✉️ Clique para abrir</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function openReadJournalModal(id) {
+            const entries = JSON.parse(localStorage.getItem('app_journal_entries')) || [];
+            const e = entries.find(x => x.id === id);
+            if(!e) return;
+
+            const badgeEl = document.getElementById('read-journal-badge');
+            document.getElementById('read-journal-date').innerText = `📍 Registrado em ${e.date} às ${e.timeStr || ''}`;
+            document.getElementById('read-journal-title').innerText = e.title;
+            document.getElementById('read-journal-body').innerText = e.body;
+
+            const catBadges = {
+                'Notas de Leitura': { bg: '#eff6ff', color: '#1d4ed8', text: '📖 Notas de Leitura' },
+                'Reflexões': { bg: '#fef3c7', color: '#b45309', text: '💭 Reflexões' },
+                'Insights para Escrita Acadêmica': { bg: '#f3e8ff', color: '#6b21a8', text: '💡 Insights para Escrita Acadêmica' }
+            };
+
+            const b = catBadges[e.category] || catBadges['Reflexões'];
+            badgeEl.style.background = b.bg;
+            badgeEl.style.color = b.color;
+            badgeEl.innerText = b.text;
+
+            toggleModal('modal-read-journal', true);
+        }
         // --- ABA AULAS & DOCÊNCIA ---
         function renderTeachingDashboard() {
             const students = JSON.parse(localStorage.getItem('app_students')) || [];
