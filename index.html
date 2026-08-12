@@ -4406,8 +4406,7 @@
                     </div>`;
             });
         }
-
-        // --- SISTEMA DE DÍVIDAS ---
+// --- SISTEMA DE DÍVIDAS ---
         function saveDebt() {
             const name = document.getElementById('debt-name').value.trim();
             const total = parseFloat(document.getElementById('debt-total').value);
@@ -4424,7 +4423,11 @@
             document.getElementById('debt-total').value = '';
             document.getElementById('debt-paid').value = '';
             toggleModal('modal-new-debt', false);
-            function renderDebts() {
+            
+            renderDebts(); 
+        } // <--- A CHAVE SALVADORA AQUI!
+
+        function renderDebts() {
             const container = document.getElementById('debts-grid');
             if(!container) return;
 
@@ -4582,7 +4585,6 @@
                 </div>
             `).join('');
         }
-
         // --- INTEGRAÇÃO REST API GEMINI (O CHAT FINANCEIRO E OUTRAS ABAS) ---
         
         function renderFinanceChat() {
