@@ -777,7 +777,47 @@
                     <button class="btn-main" onclick="saveCreditCard()">Salvar Cartão</button>
                 </div>
             </div>
+<!-- Modal: Prontuário e Gestão do Cartão de Crédito -->
+            <div id="modal-card-detail" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); justify-content: center; align-items: center; z-index: 100;">
+                <div class="modal-card" style="background: white; padding: 32px; border-radius: 12px; width: 100%; max-width: 600px; position: relative; max-height: 85vh; overflow-y: auto;">
+                    <span class="close-btn" style="position: absolute; top: 16px; right: 20px; font-size: 20px; cursor: pointer; color: var(--text-muted);" onclick="toggleModal('modal-card-detail', false)">×</span>
+                    <div class="section-title">Prontuário do Cartão de Crédito</div>
+                    
+                    <input type="hidden" id="detail-card-id">
+                    
+                    <!-- Resumo e Ajuste de Limite -->
+                    <div style="background: #fdf4ff; padding: 16px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e0e7ff;">
+                        <label style="font-size: 12px; color: var(--text-muted);">Nome do Cartão:</label>
+                        <input type="text" id="detail-card-name" style="margin-bottom: 12px; background: white;">
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                            <div>
+                                <label style="font-size: 12px; color: var(--text-muted);">Limite Total (R$):</label>
+                                <input type="number" id="detail-card-limit" style="margin-bottom: 0; background: white;">
+                            </div>
+                            <div>
+                                <label style="font-size: 12px; color: var(--text-muted);">Gasto Pré-existente / Ajuste (R$):</label>
+                                <input type="number" id="detail-card-initial" placeholder="0.00" style="margin-bottom: 0; background: white;">
+                            </div>
+                        </div>
+                        <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px; font-style: italic;">
+                            Use o "Gasto Pré-existente" caso o cartão já tivesse limite consumido antes de usar o app.
+                        </div>
+                        <button class="btn-sub" style="width: 100%; margin-top: 12px; border-color: #4338ca; color: #4338ca; font-weight: 600;" onclick="saveCardEdits()">💾 Salvar Alterações do Cartão</button>
+                    </div>
 
+                    <!-- Diário & Anotações do Cartão -->
+                    <div class="section-title" style="margin-bottom: 8px;">Anotações do Cartão (Datas, Regras, Lembretes)</div>
+                    <textarea id="detail-card-note-input" rows="3" placeholder="Ex: Fecha todo dia 03, vence dia 10. Melhor data de compra: dia 04. Isenção de anuidade confirmada..." style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px; font-size: 13px; font-family: inherit;"></textarea>
+                    <button class="btn-sub" style="width: 100%; border-color: #8b5cf6; color: #7c3aed; margin-bottom: 20px;" onclick="addCardNote()">+ Adicionar Anotação ao Histórico</button>
+
+                    <!-- Lista de Histórico de Anotações -->
+                    <div id="card-notes-list" style="display: flex; flex-direction: column; gap: 8px;"></div>
+                    
+                    <hr style="border: 0; border-top: 1px solid var(--border); margin: 20px 0;">
+                    <button class="btn-sub" style="color: #ef4444; border-color: #ef4444; width: 100%;" onclick="removeCreditCardFromModal()">🗑️ Excluir Cartão</button>
+                </div>
+            </div>
            <!-- Modal: Nova Dívida -->
             <div id="modal-new-debt" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); justify-content: center; align-items: center; z-index: 100;">
                 <div class="modal-card" style="background: white; padding: 32px; border-radius: 12px; width: 100%; max-width: 650px; position: relative;">
@@ -1047,8 +1087,8 @@
 
     </div>
 
-    <!-- LÓGICA JAVASCRIPT -->
-<!-- LÓGICA JAVASCRIPT REESTRUTURADA E SINCRONIZADA COM AS 13 ABAS DO SHEETS -->
+<!-- LÓGICA JAVASCRIPT -->
+    <!-- LÓGICA JAVASCRIPT REESTRUTURADA E SINCRONIZADA COM AS 13 ABAS DO SHEETS -->
     <script>
         const defaultRitual = ["Água/Chá na mesa", "Ambiente de tela limpo", "Bloco de tempo definido"];
         const defaultCare = ["Hidratação vocal", "Pausa para os olhos", "Alongamento de maxilar / pescoço"];
@@ -1107,9 +1147,11 @@
             renderWishlistGallery();
             renderHealthPanel();
             renderCustomLists();
+            renderCreditCards();
+            populateCardDropdowns();
         }
 
-function switchTab(tabName) {
+        function switchTab(tabName) {
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             
@@ -1128,8 +1170,10 @@ function switchTab(tabName) {
                 renderDebts();
                 renderProjectsGallery();
                 renderWishlistGallery();
+                populateCardDropdowns();
             }
         }
+
         function switchSubTab(subName) {
             document.querySelectorAll('.subtab-content').forEach(sub => sub.style.display = 'none');
             document.querySelectorAll('.sub-nav .btn-sub').forEach(btn => btn.classList.remove('active'));
@@ -1151,7 +1195,10 @@ function switchTab(tabName) {
             if (event && event.target) event.target.classList.add('active');
         }
 
-        function toggleModal(id, show) { document.getElementById(id).style.display = show ? 'flex' : 'none'; }
+        function toggleModal(id, show) { 
+            document.getElementById(id).style.display = show ? 'flex' : 'none'; 
+            if(show && id === 'modal-new-tx') populateCardDropdowns();
+        }
         function toggleBookModal(show) { toggleModal('book-modal', show); }
 
         // --- CONEXÃO GOOGLE SHEETS REDIRECIONADA PARA AS 13 ABAS NUMERADAS ---
@@ -1252,7 +1299,14 @@ function switchTab(tabName) {
             syncArrayKey('app_journal_entries', '6_PESQUISA_JOURNALING');
             syncArrayKey('app_fin_txs', '7_FINANCAS_EXTRATO');
             syncArrayKey('app_fin_debts', '8_FINANCAS_DIVIDAS');
-            syncArrayKey('app_fin_cards', '9_FINANCAS_CARTÕES');
+            syncArrayKey('app_fin_cards', '9_FINANCAS_CARTÕES', c => ({
+                id: c.id,
+                name: c.name,
+                limit: c.limit,
+                initialBalance: c.initialBalance || 0,
+                notes: (c.notes || []).map(n => `[${n.date}] ${n.text}`).join(' | '),
+                notesCount: (c.notes || []).length
+            }));
             syncArrayKey('app_projects_list', '10_FINANCAS_PROJETOS_WISHLIST', p => ({ id: p.id, date: p.date, type: 'Projeto', name: p.name, target: p.target, saved: p.saved, status: 'Em andamento', details: '' }));
             syncArrayKey('app_wishlist_items', '10_FINANCAS_PROJETOS_WISHLIST', w => ({ id: w.id, date: w.limitDate || '', type: 'Wishlist', name: w.name, target: w.price, saved: 0, status: w.status, details: `${w.where || ''} ${w.occasion || ''}` }));
             syncArrayKey('app_health_items', '10_FINANCAS_PROJETOS_WISHLIST', h => ({ id: h.id, date: h.date || '', type: 'Saúde/Pet', name: h.desc, target: h.price, saved: h.price, status: h.status, details: 'Custo Saúde' }));
@@ -1300,6 +1354,19 @@ function switchTab(tabName) {
                             synced: true
                         }));
                         localStorage.setItem('app_journal_entries', JSON.stringify(restoredJournal));
+                    }
+
+                    // Restaurar Cartões com preservação do array de notas
+                    if(sheetData['9_FINANCAS_CARTÕES'] && sheetData['9_FINANCAS_CARTÕES'].length > 0) {
+                        const restoredCards = sheetData['9_FINANCAS_CARTÕES'].map(r => ({
+                            id: r['ID_Cartao'] || `cc_${Date.now()}`,
+                            name: r['Nome_Cartao'],
+                            limit: parseFloat(r['Limite_Total']) || 0,
+                            initialBalance: parseFloat(r['Saldo_Inicial_Ajuste']) || 0,
+                            notes: r['Notas_Historico'] ? r['Notas_Historico'].split(' | ').map((text, idx) => ({ id: Date.now() + idx, date: 'Restaurado', text: text })) : [],
+                            synced: true
+                        }));
+                        localStorage.setItem('app_fin_cards', JSON.stringify(restoredCards));
                     }
 
                     // Restaurar Alunos
@@ -1598,7 +1665,7 @@ function switchTab(tabName) {
             renderBraindumpList();
         }
 
-        // --- PAUSAS DE DESCANSO & ALMOÇO COM FEEDBACK VISUAL ---
+        // --- PAUSAS DE DESCANSO & ALMOÇO ---
         function toggleBreakTimer(type, start) {
             const statusEl = document.getElementById('break-timer-status');
             const cardEl = document.getElementById('pausas-card');
@@ -1969,7 +2036,7 @@ function switchTab(tabName) {
             alert(`Ritmo do dia definido como: ${currentEnergy.toUpperCase()}`);
         }
 
-        // --- PESQUISA LITERÁRIA (MOTOR REESTRUTURADO) ---
+        // --- PESQUISA LITERÁRIA ---
         let activeResearchSession = null;
         let researchTimerInterval = null;
         let activeJournalFilter = 'all';
@@ -3004,8 +3071,19 @@ function switchTab(tabName) {
             }
         }
 
-        // --- FINANÇAS (MOTOR ATUALIZADO) ---
+        // --- FINANÇAS & CARTÕES ---
         let activeTxMode = 'avista';
+
+        function populateCardDropdowns() {
+            const cardSelect = document.getElementById('new-tx-card');
+            if(!cardSelect) return;
+            const cards = JSON.parse(localStorage.getItem('app_fin_cards')) || [];
+            if(cards.length === 0) {
+                cardSelect.innerHTML = '<option value="">Nenhum cartão cadastrado</option>';
+            } else {
+                cardSelect.innerHTML = cards.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+            }
+        }
 
         function toggleTxPaymentMode(mode) {
             activeTxMode = mode;
@@ -3023,6 +3101,7 @@ function switchTab(tabName) {
                 btnAvista.classList.remove('active');
                 btnAvista.style.color = '#059669';
                 panel.style.display = 'block';
+                populateCardDropdowns();
                 
                 const now = new Date();
                 let nextMonth = now.getMonth() + 2; 
@@ -3037,7 +3116,7 @@ function switchTab(tabName) {
             const limit = parseFloat(document.getElementById('cc-limit').value) || 0;
             if(!name) { alert('Digite o nome do cartão.'); return; }
 
-            const payload = { id: `cc_${Date.now()}`, name: name, limit: limit };
+            const payload = { id: `cc_${Date.now()}`, name: name, limit: limit, initialBalance: 0, notes: [] };
             const cards = JSON.parse(localStorage.getItem('app_fin_cards')) || [];
             cards.push(payload);
             localStorage.setItem('app_fin_cards', JSON.stringify(cards));
@@ -3048,6 +3127,7 @@ function switchTab(tabName) {
             document.getElementById('cc-limit').value = '';
             toggleModal('modal-new-card', false);
             renderCreditCards();
+            populateCardDropdowns();
             alert('Cartão adicionado!');
         }
 
@@ -3064,19 +3144,131 @@ function switchTab(tabName) {
 
             container.innerHTML = cards.map(c => {
                 const currentMonthCardTxs = txs.filter(t => t.monthKey === currentMonthKey && t.cardId === c.id);
-                const totalInvoice = currentMonthCardTxs.reduce((sum, t) => sum + t.amount, 0);
+                const monthInvoice = currentMonthCardTxs.reduce((sum, t) => sum + t.amount, 0);
+                const initialAdjust = parseFloat(c.initialBalance) || 0;
+                const totalUsed = monthInvoice + initialAdjust;
+                const limitAvailable = Math.max(0, c.limit - totalUsed);
+                const usedPct = c.limit > 0 ? Math.min(100, Math.round((totalUsed / c.limit) * 100)) : 0;
                 
                 return `
-                    <div style="background: #fdf4ff; border: 1px solid #e0e7ff; padding: 16px; border-radius: 8px;">
+                    <div style="background: #fdf4ff; border: 1px solid #e0e7ff; padding: 16px; border-radius: 8px; cursor: pointer; transition: transform 0.2s;" onclick="openCardDetailModal('${c.id}')" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
                             <strong style="color: #4338ca; font-size: 14px;">💳 ${c.name}</strong>
                             <span style="font-size: 11px; color: var(--text-muted);">Limite: R$ ${c.limit.toFixed(2)}</span>
                         </div>
-                        <div style="font-size: 12px; color: var(--text-muted);">Fatura Acumulada (${currentMonthKey}):</div>
-                        <div style="font-size: 18px; font-weight: 600; color: #1d4ed8; margin-top: 4px;">R$ ${totalInvoice.toFixed(2)}</div>
+                        <div style="display: flex; justify-content: space-between; font-size: 12px; margin-top: 6px;">
+                            <span style="color: var(--text-muted);">Fatura Mês: <strong>R$ ${monthInvoice.toFixed(2)}</strong></span>
+                            <span style="color: #10b981; font-weight: 600;">Livre: R$ ${limitAvailable.toFixed(2)}</span>
+                        </div>
+                        <div class="budget-bar" style="height: 6px; margin-top: 8px; background: #e0e7ff;">
+                            <div style="width: ${usedPct}%; background: ${usedPct > 80 ? '#ef4444' : '#8b5cf6'}; height: 100%; border-radius: 6px;"></div>
+                        </div>
+                        <div style="font-size: 10px; color: var(--text-muted); margin-top: 6px; text-align: right;">📝 Clique para ver prontuário e anotações</div>
                     </div>
                 `;
             }).join('');
+        }
+
+        // --- PRONTUÁRIO & GESTÃO DO CARTÃO ---
+        function openCardDetailModal(cardId) {
+            const cards = JSON.parse(localStorage.getItem('app_fin_cards')) || [];
+            const card = cards.find(c => String(c.id) === String(cardId));
+            if (!card) return;
+
+            document.getElementById('detail-card-id').value = card.id;
+            document.getElementById('detail-card-name').value = card.name || '';
+            document.getElementById('detail-card-limit').value = card.limit || 0;
+            document.getElementById('detail-card-initial').value = card.initialBalance || '';
+
+            renderCardNotesList(card);
+            toggleModal('modal-card-detail', true);
+        }
+
+        function saveCardEdits() {
+            const id = document.getElementById('detail-card-id').value;
+            const name = document.getElementById('detail-card-name').value.trim();
+            const limit = parseFloat(document.getElementById('detail-card-limit').value) || 0;
+            const initial = parseFloat(document.getElementById('detail-card-initial').value) || 0;
+
+            if (!name) { alert("Digite o nome do cartão."); return; }
+
+            const cards = JSON.parse(localStorage.getItem('app_fin_cards')) || [];
+            const card = cards.find(c => String(c.id) === String(id));
+
+            if (card) {
+                card.name = name;
+                card.limit = limit;
+                card.initialBalance = initial;
+
+                localStorage.setItem('app_fin_cards', JSON.stringify(cards));
+
+                sendToGoogleSheet('9_FINANCAS_CARTÕES', {
+                    id: card.id,
+                    name: card.name,
+                    limit: card.limit,
+                    initialBalance: card.initialBalance
+                });
+
+                renderCreditCards();
+                populateCardDropdowns();
+                alert("Alterações do cartão salvas com sucesso!");
+            }
+        }
+
+        function addCardNote() {
+            const id = document.getElementById('detail-card-id').value;
+            const noteInput = document.getElementById('detail-card-note-input');
+            const text = noteInput.value.trim();
+
+            if (!text) return;
+
+            const cards = JSON.parse(localStorage.getItem('app_fin_cards')) || [];
+            const card = cards.find(c => String(c.id) === String(id));
+
+            if (card) {
+                if (!card.notes) card.notes = [];
+                const meta = getTimestampData();
+                card.notes.unshift({
+                    id: Date.now(),
+                    date: `${meta.date} ${meta.timeStr}`,
+                    text: text
+                });
+
+                localStorage.setItem('app_fin_cards', JSON.stringify(cards));
+                noteInput.value = '';
+                renderCardNotesList(card);
+            }
+        }
+
+        function renderCardNotesList(card) {
+            const listEl = document.getElementById('card-notes-list');
+            if (!listEl) return;
+
+            const notes = card.notes || [];
+            if (notes.length === 0) {
+                listEl.innerHTML = '<p style="font-size:12px; color:var(--text-muted); font-style:italic;">Nenhuma anotação registrada para este cartão.</p>';
+            } else {
+                listEl.innerHTML = notes.map(n => `
+                    <div style="background: var(--bg); border: 1px solid var(--border); padding: 10px; border-radius: 6px; font-size: 12px;">
+                        <div style="color: var(--text-muted); font-size: 10px; margin-bottom: 4px;">📍 ${n.date}</div>
+                        <div style="color: var(--text); line-height: 1.4;">${n.text}</div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function removeCreditCardFromModal() {
+            const id = document.getElementById('detail-card-id').value;
+            if (confirm("Tem certeza que deseja excluir este cartão?")) {
+                let cards = JSON.parse(localStorage.getItem('app_fin_cards')) || [];
+                cards = cards.filter(c => String(c.id) !== String(id));
+                localStorage.setItem('app_fin_cards', JSON.stringify(cards));
+
+                toggleModal('modal-card-detail', false);
+                renderCreditCards();
+                populateCardDropdowns();
+                alert("Cartão removido.");
+            }
         }
 
         function saveNewTransaction() {
@@ -3222,6 +3414,50 @@ function switchTab(tabName) {
             document.getElementById('fw-met-real-pct').innerText = `${metPct}% / 20%`;
         }
 
+        function openEditTransactionModal(txId) {
+            const txs = JSON.parse(localStorage.getItem('app_fin_txs')) || [];
+            const t = txs.find(x => String(x.id) === String(txId));
+            if(!t) return;
+
+            document.getElementById('edit-tx-id').value = t.id;
+            document.getElementById('edit-tx-desc').value = t.desc || '';
+            document.getElementById('edit-tx-amount').value = t.amount || 0;
+            document.getElementById('edit-tx-category').value = t.category || 'out_nec';
+
+            toggleModal('modal-edit-tx', true);
+        }
+
+        function saveEditedTransaction() {
+            const id = document.getElementById('edit-tx-id').value;
+            const desc = document.getElementById('edit-tx-desc').value.trim();
+            const amount = parseFloat(document.getElementById('edit-tx-amount').value) || 0;
+            const cat = document.getElementById('edit-tx-category').value;
+
+            if(!desc || amount <= 0) { alert('Insira descrição e valor válidos.'); return; }
+
+            const txs = JSON.parse(localStorage.getItem('app_fin_txs')) || [];
+            const t = txs.find(x => String(x.id) === String(id));
+
+            if(t) {
+                t.desc = desc;
+                t.amount = amount;
+                t.category = cat;
+                t.type = cat === 'in' ? 'in' : 'out';
+
+                localStorage.setItem('app_fin_txs', JSON.stringify(txs));
+
+                sendToGoogleSheet('7_FINANCAS_EXTRATO', {
+                    id: t.id, date: t.date, timeStr: t.timeStr, monthKey: t.monthKey,
+                    desc: t.desc, amount: t.amount, category: t.category, type: t.type,
+                    isCredit: t.isCredit ? 'Sim' : 'Não', cardId: t.cardId || '-', originalAmount: t.amount
+                });
+
+                toggleModal('modal-edit-tx', false);
+                refreshAllViews();
+                alert('Lançamento atualizado!');
+            }
+        }
+
         // --- SISTEMA DE DÍVIDAS ---
         function saveDebt() {
             const name = document.getElementById('debt-name').value.trim();
@@ -3280,6 +3516,98 @@ function switchTab(tabName) {
                     </div>
                 `;
             }).join('');
+        }
+
+        function openDebtDetailModal(debtId) {
+            const debts = JSON.parse(localStorage.getItem('app_fin_debts')) || [];
+            const d = debts.find(x => String(x.id) === String(debtId));
+            if(!d) return;
+
+            document.getElementById('detail-debt-id').value = d.id;
+            document.getElementById('detail-debt-name').value = d.name || '';
+            document.getElementById('detail-debt-total').value = d.total || 0;
+            document.getElementById('detail-debt-paid').value = d.paid || 0;
+
+            renderDebtNotesList(d);
+            toggleModal('modal-debt-detail', true);
+        }
+
+        function saveDebtEdits() {
+            const id = document.getElementById('detail-debt-id').value;
+            const name = document.getElementById('detail-debt-name').value.trim();
+            const total = parseFloat(document.getElementById('detail-debt-total').value) || 0;
+            const paid = parseFloat(document.getElementById('detail-debt-paid').value) || 0;
+
+            if(!name || total <= 0) { alert('Preencha o nome e um valor total válido.'); return; }
+
+            const debts = JSON.parse(localStorage.getItem('app_fin_debts')) || [];
+            const d = debts.find(x => String(x.id) === String(id));
+
+            if(d) {
+                d.name = name;
+                d.total = total;
+                d.paid = paid;
+
+                localStorage.setItem('app_fin_debts', JSON.stringify(debts));
+
+                sendToGoogleSheet('8_FINANCAS_DIVIDAS', {
+                    id: d.id, date: new Date().toLocaleDateString('pt-BR'), name: d.name,
+                    total: d.total, paid: d.paid, balance: d.total - d.paid,
+                    quitado: d.paid >= d.total ? 'Sim' : 'Não', note: 'Edição de valores'
+                });
+
+                renderDebts();
+                refreshAllViews();
+                alert('Ajustes da dívida salvos!');
+            }
+        }
+
+        function payDebtFromModal() {
+            const id = document.getElementById('detail-debt-id').value;
+            payDebt(id, null);
+            const debts = JSON.parse(localStorage.getItem('app_fin_debts')) || [];
+            const d = debts.find(x => String(x.id) === String(id));
+            if(d) {
+                document.getElementById('detail-debt-paid').value = d.paid || 0;
+                renderDebtNotesList(d);
+            }
+        }
+
+        function addDebtNote() {
+            const id = document.getElementById('detail-debt-id').value;
+            const noteInput = document.getElementById('detail-debt-note-input');
+            const text = noteInput.value.trim();
+            if(!text) return;
+
+            const debts = JSON.parse(localStorage.getItem('app_fin_debts')) || [];
+            const d = debts.find(x => String(x.id) === String(id));
+
+            if(d) {
+                if(!d.notes) d.notes = [];
+                const meta = getTimestampData();
+                d.notes.unshift({ id: Date.now(), date: `${meta.date} ${meta.timeStr}`, text: text });
+
+                localStorage.setItem('app_fin_debts', JSON.stringify(debts));
+                noteInput.value = '';
+                renderDebtNotesList(d);
+            }
+        }
+
+        function renderDebtNotesList(debt) {
+            const listEl = document.getElementById('debt-notes-list');
+            if(!listEl) return;
+            const notes = debt.notes || [];
+
+            if(notes.length === 0) {
+                listEl.innerHTML = '<p style="font-size:12px; color:var(--text-muted); font-style:italic;">Nenhuma anotação registrada para esta dívida.</p>';
+            } else {
+                listEl.innerHTML = notes.map(n => `
+                    <div style="background: var(--bg); border: 1px solid var(--border); padding: 10px; border-radius: 6px; font-size: 12px;">
+                        <div style="color: var(--text-muted); font-size: 10px; margin-bottom: 4px;">📍 ${n.date}</div>
+                        <div style="color: var(--text); line-height: 1.4;">${n.text}</div>
+                    </div>
+                `).join('');
+            }
         }
 
         function payDebt(id, event) {
@@ -3684,13 +4012,14 @@ function switchTab(tabName) {
             }
         }
 
-window.onload = function() {
+        window.onload = function() {
             initGlobalMonthPicker();
 
             // RENDERIZAÇÃO INICIAL DE DOCÊNCIA E CARTÕES
             renderStudents();
             renderCompanies();
             renderCreditCards();
+            populateCardDropdowns();
 
             const savedRitual = JSON.parse(localStorage.getItem('app_custom_ritual')) || defaultRitual;
             const savedCare = JSON.parse(localStorage.getItem('app_custom_care')) || defaultCare;
