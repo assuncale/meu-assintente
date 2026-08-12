@@ -3137,7 +3137,7 @@
             }
         }
 
-        function addCompanyNote(id) {
+function addCompanyNote(id) {
             const title = document.getElementById('cp-note-title').value;
             const body = document.getElementById('cp-note-body').value;
             if(!title && !body) return;
@@ -3149,6 +3149,18 @@
                 const meta = getTimestampData();
                 c.notes.unshift({ ...meta, title: title || 'Anotação', body: body });
                 localStorage.setItem('app_companies', JSON.stringify(companies));
+
+                sendToGoogleSheet('13_DOCENCIA_SESSÕES_LOGS', {
+                    id: `log_${Date.now()}`,
+                    date: meta.date,
+                    timeStr: meta.timeStr,
+                    monthKey: meta.monthKey,
+                    type: 'ANOTACAO_EMPRESA',
+                    targetName: c.name,
+                    durationMins: 0,
+                    desc: title ? `[${title}] ${body}` : body
+                });
+
                 openCompanyDetail(id);
             }
         }
@@ -3314,7 +3326,7 @@
             }
         }
 
-        function addCardNote() {
+function addCardNote() {
             const id = document.getElementById('detail-card-id').value;
             const noteInput = document.getElementById('detail-card-note-input');
             const text = noteInput.value.trim();
@@ -3334,6 +3346,16 @@
                 });
 
                 localStorage.setItem('app_fin_cards', JSON.stringify(cards));
+
+                sendToGoogleSheet('9_FINANCAS_CARTÕES', {
+                    id: card.id,
+                    name: card.name,
+                    limit: card.limit,
+                    initialBalance: card.initialBalance || 0,
+                    notes: (card.notes || []).map(n => `[${n.date}] ${n.text}`).join(' | '),
+                    notesCount: (card.notes || []).length
+                });
+
                 noteInput.value = '';
                 renderCardNotesList(card);
             }
@@ -3672,7 +3694,7 @@
             }
         }
 
-        function addDebtNote() {
+function addDebtNote() {
             const id = document.getElementById('detail-debt-id').value;
             const noteInput = document.getElementById('detail-debt-note-input');
             const text = noteInput.value.trim();
@@ -3687,6 +3709,18 @@
                 d.notes.unshift({ id: Date.now(), date: `${meta.date} ${meta.timeStr}`, text: text });
 
                 localStorage.setItem('app_fin_debts', JSON.stringify(debts));
+
+                sendToGoogleSheet('8_FINANCAS_DIVIDAS', {
+                    id: d.id,
+                    date: meta.date,
+                    name: d.name,
+                    total: d.total,
+                    paid: d.paid,
+                    balance: d.total - d.paid,
+                    quitado: d.paid >= d.total ? 'Sim' : 'Não',
+                    note: text
+                });
+
                 noteInput.value = '';
                 renderDebtNotesList(d);
             }
