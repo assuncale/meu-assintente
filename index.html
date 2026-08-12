@@ -697,7 +697,7 @@
                 </div>
             </div>
 
-            <!-- Modal: Nova Dívida -->
+           <!-- Modal: Nova Dívida -->
             <div id="modal-new-debt" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); justify-content: center; align-items: center; z-index: 100;">
                 <div class="modal-card" style="background: white; padding: 32px; border-radius: 12px; width: 100%; max-width: 650px; position: relative;">
                     <span class="close-btn" style="position: absolute; top: 16px; right: 20px; font-size: 20px; cursor: pointer; color: var(--text-muted);" onclick="toggleModal('modal-new-debt', false)">×</span>
@@ -708,6 +708,49 @@
                     <button class="btn-main" style="background: #ef4444;" onclick="saveDebt()">Cadastrar Dívida</button>
                 </div>
             </div>
+
+            <!-- ================= COLE O NOVO MODAL AQUI! ================= -->
+            
+            <!-- Modal: Prontuário e Edição da Dívida -->
+            <div id="modal-debt-detail" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); justify-content: center; align-items: center; z-index: 100;">
+                <div class="modal-card" style="background: white; padding: 32px; border-radius: 12px; width: 100%; max-width: 600px; position: relative; max-height: 85vh; overflow-y: auto;">
+                    <span class="close-btn" style="position: absolute; top: 16px; right: 20px; font-size: 20px; cursor: pointer; color: var(--text-muted);" onclick="toggleModal('modal-debt-detail', false)">×</span>
+                    <div class="section-title">Prontuário da Dívida</div>
+                    
+                    <input type="hidden" id="detail-debt-id">
+                    
+                    <!-- Área de Edição -->
+                    <div style="background: var(--highlight); padding: 16px; border-radius: 8px; margin-bottom: 20px; border: 1px solid var(--border);">
+                        <label style="font-size: 12px; color: var(--text-muted);">Nome / Descrição:</label>
+                        <input type="text" id="detail-debt-name" style="margin-bottom: 12px; background: white;">
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                            <div>
+                                <label style="font-size: 12px; color: var(--text-muted);">Total Atualizado (R$):</label>
+                                <input type="number" id="detail-debt-total" style="margin-bottom: 0; background: white;">
+                            </div>
+                            <div>
+                                <label style="font-size: 12px; color: var(--text-muted);">Já Pago (R$):</label>
+                                <input type="number" id="detail-debt-paid" style="margin-bottom: 0; background: white;">
+                            </div>
+                        </div>
+                        <button class="btn-sub" style="width: 100%; margin-top: 12px; border-color: var(--theme-color); color: var(--text);" onclick="saveDebtEdits()">💾 Salvar Ajustes de Valor</button>
+                    </div>
+
+                    <!-- Botão Rápido de Pagamento -->
+                    <button class="btn-main" style="background: #10b981; margin-bottom: 24px;" onclick="payDebtFromModal()">+ Registrar Pagamento de Parcela Hoje</button>
+
+                    <!-- Diário & Anotações -->
+                    <div class="section-title" style="margin-bottom: 8px;">Diário & Atualizações</div>
+                    <textarea id="detail-debt-note-input" rows="3" placeholder="Ex: Renegociei hoje pelo 0800. Juros caiu, e o nome sai do Serasa em 5 dias. Protocolo: 12345..." style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px; font-size: 13px; font-family: inherit;"></textarea>
+                    <button class="btn-sub" style="width: 100%; border-color: #3b82f6; color: #2563eb; margin-bottom: 20px;" onclick="addDebtNote()">+ Adicionar Nota ao Histórico</button>
+
+                    <!-- Lista de Histórico -->
+                    <div id="debt-notes-list" style="display: flex; flex-direction: column; gap: 8px;"></div>
+                </div>
+            </div>
+            
+            <!-- ============================================================== -->
 
         </div>
         <!-- FIM DA ABA DE FINANÇAS -->
@@ -4381,10 +4424,46 @@
             document.getElementById('debt-total').value = '';
             document.getElementById('debt-paid').value = '';
             toggleModal('modal-new-debt', false);
-            renderDebts();
+            function renderDebts() {
+            const container = document.getElementById('debts-grid');
+            if(!container) return;
+
+            const debts = JSON.parse(localStorage.getItem('app_fin_debts')) || [];
+            const activeDebts = debts.filter(d => (d.paid || 0) < d.total);
+
+            if(activeDebts.length === 0) {
+                container.innerHTML = '<p style="font-size:12px; color:var(--text-muted);">Nenhuma dívida pendente. Parabéns pela saúde financeira!</p>';
+                return;
+            }
+
+            container.innerHTML = activeDebts.map(d => {
+                const pct = Math.min(100, Math.round(((d.paid || 0) / d.total) * 100));
+                const notesCount = (d.notes || []).length;
+                const notesBadge = notesCount > 0 ? `<span style="font-size:10px; background:#fef3c7; color:#d97706; padding:2px 6px; border-radius:10px;">${notesCount} nota(s)</span>` : '';
+                
+                return `
+                    <div class="item-card" style="border-color: #fecaca; background: #fef2f2;" onclick="openDebtDetailModal('${d.id}')">
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                            <div style="font-weight:600; font-size:14px; margin-bottom:4px; color:#dc2626;">${d.name}</div>
+                            ${notesBadge}
+                        </div>
+                        <div style="font-size:12px; color:var(--text-muted);">Total: R$ ${d.total.toFixed(2)}</div>
+                        <div style="font-size:12px; color:#10b981; font-weight:600; margin-top:2px;">Pago: R$ ${(d.paid || 0).toFixed(2)}</div>
+                        <div class="budget-bar" style="height:8px; margin-top:8px; background: #fca5a5;">
+                            <div class="bar-20" style="width:${pct}%; background:#dc2626;"></div>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
+                            <span style="font-size:11px; color:#dc2626; font-weight:600;">${pct}% Quitado</span>
+                            <button class="btn-sub" style="padding:2px 8px; font-size:11px; border-color:#dc2626; color:#dc2626;" onclick="payDebt('${d.id}', event)">+ Pagar</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
         }
 
-        function payDebt(id) {
+        // Nova mecânica: Clicar em "Pagar" sem abrir o Modal junto
+        function payDebt(id, event) {
+            if(event) event.stopPropagation(); // Impede que o clique abra o modal por trás
             const valStr = prompt("Valor da parcela paga hoje (R$):");
             const val = parseFloat(valStr);
             if(isNaN(val) || val <= 0) return;
@@ -4394,9 +4473,14 @@
             
             if(debt) {
                 debt.paid = (debt.paid || 0) + val;
+                
+                // Adiciona uma nota automática no histórico da dívida
+                const meta = getTimestampData();
+                if(!debt.notes) debt.notes = [];
+                debt.notes.unshift({ id: Date.now(), date: `${meta.date} ${meta.timeStr}`, text: `✅ Pagamento de R$ ${val.toFixed(2)} registrado.` });
+
                 localStorage.setItem('app_fin_debts', JSON.stringify(debts));
 
-                const meta = getTimestampData();
                 const payloadTx = {
                     id: Date.now(), ...meta,
                     desc: `Pagamento Dívida: ${debt.name}`, amount: val, category: 'out_nec', type: 'out', isCredit: false
@@ -4416,35 +4500,87 @@
             }
         }
 
-        function renderDebts() {
-            const container = document.getElementById('debts-grid');
-            if(!container) return;
+        // --- FUNÇÕES DO PRONTUÁRIO DA DÍVIDA ---
+
+        function openDebtDetailModal(id) {
+            const debts = JSON.parse(localStorage.getItem('app_fin_debts')) || [];
+            const debt = debts.find(d => d.id === id);
+            if(!debt) return;
+
+            document.getElementById('detail-debt-id').value = debt.id;
+            document.getElementById('detail-debt-name').value = debt.name;
+            document.getElementById('detail-debt-total').value = debt.total;
+            document.getElementById('detail-debt-paid').value = debt.paid || 0;
+            document.getElementById('detail-debt-note-input').value = '';
+
+            renderDebtNotesList(debt.notes || []);
+            toggleModal('modal-debt-detail', true);
+        }
+
+        function saveDebtEdits() {
+            const id = document.getElementById('detail-debt-id').value;
+            const newName = document.getElementById('detail-debt-name').value.trim();
+            const newTotal = parseFloat(document.getElementById('detail-debt-total').value);
+            const newPaid = parseFloat(document.getElementById('detail-debt-paid').value);
+
+            if(!newName || isNaN(newTotal) || isNaN(newPaid)) { alert("Valores inválidos."); return; }
 
             const debts = JSON.parse(localStorage.getItem('app_fin_debts')) || [];
-            const activeDebts = debts.filter(d => (d.paid || 0) < d.total);
+            const idx = debts.findIndex(d => d.id === id);
+            if(idx !== -1) {
+                debts[idx].name = newName;
+                debts[idx].total = newTotal;
+                debts[idx].paid = newPaid;
+                localStorage.setItem('app_fin_debts', JSON.stringify(debts));
+                
+                alert("Ajustes salvos com sucesso!");
+                renderDebts();
+            }
+        }
 
-            if(activeDebts.length === 0) {
-                container.innerHTML = '<p style="font-size:12px; color:var(--text-muted);">Nenhuma dívida pendente. Parabéns pela saúde financeira!</p>';
+        function payDebtFromModal() {
+            const id = document.getElementById('detail-debt-id').value;
+            payDebt(id, null);
+            openDebtDetailModal(id); // Recarrega o modal para atualizar os valores
+        }
+
+        function addDebtNote() {
+            const id = document.getElementById('detail-debt-id').value;
+            const text = document.getElementById('detail-debt-note-input').value.trim();
+            if(!text) return;
+
+            const debts = JSON.parse(localStorage.getItem('app_fin_debts')) || [];
+            const idx = debts.findIndex(d => d.id === id);
+            if(idx !== -1) {
+                if(!debts[idx].notes) debts[idx].notes = [];
+                
+                const meta = getTimestampData();
+                debts[idx].notes.unshift({
+                    id: Date.now(),
+                    date: `${meta.date} ${meta.timeStr}`,
+                    text: text
+                });
+                
+                localStorage.setItem('app_fin_debts', JSON.stringify(debts));
+                document.getElementById('detail-debt-note-input').value = '';
+                renderDebtNotesList(debts[idx].notes);
+                renderDebts(); // Atualiza a contagem de notas no card lá fora
+            }
+        }
+
+        function renderDebtNotesList(notes) {
+            const container = document.getElementById('debt-notes-list');
+            if(notes.length === 0) {
+                container.innerHTML = '<p style="font-size:12px; color:var(--text-muted); font-style:italic;">Nenhuma anotação neste prontuário ainda.</p>';
                 return;
             }
 
-            container.innerHTML = activeDebts.map(d => {
-                const pct = Math.min(100, Math.round(((d.paid || 0) / d.total) * 100));
-                return `
-                    <div class="item-card" style="border-color: #fecaca; background: #fef2f2;">
-                        <div style="font-weight:600; font-size:14px; margin-bottom:4px; color:#dc2626;">${d.name}</div>
-                        <div style="font-size:12px; color:var(--text-muted);">Total: R$ ${d.total.toFixed(2)}</div>
-                        <div style="font-size:12px; color:#10b981; font-weight:600; margin-top:2px;">Pago: R$ ${(d.paid || 0).toFixed(2)}</div>
-                        <div class="budget-bar" style="height:8px; margin-top:8px; background: #fca5a5;">
-                            <div class="bar-20" style="width:${pct}%; background:#dc2626;"></div>
-                        </div>
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
-                            <span style="font-size:11px; color:#dc2626; font-weight:600;">${pct}% Quitado</span>
-                            <button class="btn-sub" style="padding:2px 8px; font-size:11px; border-color:#dc2626; color:#dc2626;" onclick="payDebt('${d.id}')">+ Pagar</button>
-                        </div>
-                    </div>
-                `;
-            }).join('');
+            container.innerHTML = notes.map(n => `
+                <div style="background: var(--bg); border: 1px solid var(--border); padding: 12px; border-radius: 8px;">
+                    <div style="font-size: 10px; color: var(--text-muted); margin-bottom: 4px;">📅 ${n.date}</div>
+                    <div style="font-size: 13px; line-height: 1.4;">${n.text}</div>
+                </div>
+            `).join('');
         }
 
         // --- INTEGRAÇÃO REST API GEMINI (O CHAT FINANCEIRO E OUTRAS ABAS) ---
