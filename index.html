@@ -1403,6 +1403,7 @@
                 name: c.name,
                 limit: c.limit,
                 initialBalance: c.initialBalance || 0,
+                initialBalanceMonth: c.initialBalanceMonth || '',
                 notes: (c.notes || []).map(n => `[${n.date}] ${n.text}`).join(' | '),
                 notesCount: (c.notes || []).length
             }));
@@ -1462,6 +1463,7 @@
                             name: r['Nome_Cartao'],
                             limit: parseFloat(r['Limite_Total']) || 0,
                             initialBalance: parseFloat(r['Saldo_Inicial_Ajuste']) || 0,
+                            initialBalanceMonth: r['Mes_Ajuste_Inicial'] || r['initialBalanceMonth'] || '',
                             notes: r['Notas_Historico'] ? r['Notas_Historico'].split(' | ').map((text, idx) => ({ id: Date.now() + idx, date: 'Restaurado', text: text })) : [],
                             synced: true
                         }));
@@ -3222,12 +3224,19 @@ function addCompanyNote(id) {
             }
         }
 
-        function saveCreditCard() {
+function saveCreditCard() {
             const name = document.getElementById('cc-name').value.trim();
             const limit = parseFloat(document.getElementById('cc-limit').value) || 0;
             if(!name) { alert('Digite o nome do cartão.'); return; }
 
-            const payload = { id: `cc_${Date.now()}`, name: name, limit: limit, initialBalance: 0, notes: [] };
+            const payload = { 
+                id: `cc_${Date.now()}`, 
+                name: name, 
+                limit: limit, 
+                initialBalance: 0, 
+                initialBalanceMonth: '',
+                notes: [] 
+            };
             const cards = JSON.parse(localStorage.getItem('app_fin_cards')) || [];
             cards.push(payload);
             localStorage.setItem('app_fin_cards', JSON.stringify(cards));
@@ -3242,7 +3251,7 @@ function addCompanyNote(id) {
             alert('Cartão adicionado!');
         }
 
-        function renderCreditCards() {
+function renderCreditCards() {
             const container = document.getElementById('credit-cards-grid');
             if(!container) return;
             const cards = JSON.parse(localStorage.getItem('app_fin_cards')) || [];
@@ -3253,10 +3262,21 @@ function addCompanyNote(id) {
                 return;
             }
 
+            const realNow = new Date();
+            const realMonthKey = `${realNow.getFullYear()}-${String(realNow.getMonth() + 1).padStart(2, '0')}`;
+
             container.innerHTML = cards.map(c => {
                 const currentMonthCardTxs = txs.filter(t => t.monthKey === currentMonthKey && t.cardId === c.id);
                 const monthInvoice = currentMonthCardTxs.reduce((sum, t) => sum + t.amount, 0);
-                const initialAdjust = parseFloat(c.initialBalance) || 0;
+                
+                let applyAdjust = false;
+                if (c.initialBalanceMonth) {
+                    applyAdjust = (c.initialBalanceMonth === currentMonthKey);
+                } else if (parseFloat(c.initialBalance) > 0) {
+                    applyAdjust = (currentMonthKey === realMonthKey);
+                }
+
+                const initialAdjust = applyAdjust ? (parseFloat(c.initialBalance) || 0) : 0;
                 const totalUsed = monthInvoice + initialAdjust;
                 const limitAvailable = Math.max(0, c.limit - totalUsed);
                 const usedPct = c.limit > 0 ? Math.min(100, Math.round((totalUsed / c.limit) * 100)) : 0;
@@ -3295,7 +3315,7 @@ function addCompanyNote(id) {
             toggleModal('modal-card-detail', true);
         }
 
-        function saveCardEdits() {
+function saveCardEdits() {
             const id = document.getElementById('detail-card-id').value;
             const name = document.getElementById('detail-card-name').value.trim();
             const limit = parseFloat(document.getElementById('detail-card-limit').value) || 0;
@@ -3309,6 +3329,14 @@ function addCompanyNote(id) {
             if (card) {
                 card.name = name;
                 card.limit = limit;
+                
+                if (initial > 0) {
+                    if (card.initialBalance !== initial || !card.initialBalanceMonth) {
+                        card.initialBalanceMonth = currentMonthKey;
+                    }
+                } else {
+                    card.initialBalanceMonth = '';
+                }
                 card.initialBalance = initial;
 
                 localStorage.setItem('app_fin_cards', JSON.stringify(cards));
@@ -3317,7 +3345,8 @@ function addCompanyNote(id) {
                     id: card.id,
                     name: card.name,
                     limit: card.limit,
-                    initialBalance: card.initialBalance
+                    initialBalance: card.initialBalance,
+                    initialBalanceMonth: card.initialBalanceMonth || ''
                 });
 
                 renderCreditCards();
