@@ -678,7 +678,7 @@
                 </div>
             </div>
 
-            <!-- SUB-ABA 4: PROJETOS & WISHLIST -->
+<!-- SUB-ABA 4: PROJETOS & WISHLIST -->
             <div id="fin-projetos" class="fin-subtab" style="display: none;">
                 <div style="background: #fef3c7; border: 1px solid #fde68a; color: #b45309; padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; text-align: center; font-size: 14px;">
                     Seu <strong>Saldo Livre</strong> atual neste mês é: <strong id="wishlist-balance-mirror" style="font-size: 16px;">R$ 0,00</strong>. <br>
@@ -700,8 +700,16 @@
                     </div>
                     <div id="wishlist-grid" class="card-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; margin-top: 16px;"></div>
                 </div>
-            </div>
 
+                <!-- NOVO CARD: PAINEL VISUAL DE SAÚDE & PET -->
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div class="section-title" style="margin-bottom: 0;">🏥 Custos de Saúde & Pet</div>
+                        <button class="btn-sub" style="border-color: var(--theme-color);" onclick="toggleModal('modal-new-health', true)">+ Novo Custo de Saúde</button>
+                    </div>
+                    <div id="health-pending-grid" style="display: flex; flex-direction: column; gap: 8px; margin-top: 16px;"></div>
+                </div>
+            </div>
             <!-- SUB-ABA 5: CONSULTOR IA -->
             <div id="fin-ia" class="fin-subtab" style="display: none;">
                 <div class="card" style="display: flex; flex-direction: column; height: 500px; padding: 16px;">
@@ -1200,7 +1208,81 @@
             if(show && id === 'modal-new-tx') populateCardDropdowns();
         }
         function toggleBookModal(show) { toggleModal('book-modal', show); }
+// --- FUNÇÕES DE BACKUP E EXPORTAÇÃO MANUAL ---
+        function exportDataJSON() {
+            const fullBackup = {
+                version: "1.0",
+                exportedAt: new Date().toISOString(),
+                data: {}
+            };
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key.startsWith('app_')) {
+                    try {
+                        fullBackup.data[key] = JSON.parse(localStorage.getItem(key));
+                    } catch (e) {
+                        fullBackup.data[key] = localStorage.getItem(key);
+                    }
+                }
+            }
+            const blob = new Blob([JSON.stringify(fullBackup, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `backup_assistente_${new Date().toISOString().slice(0,10)}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
 
+        function exportFinanceCSV() {
+            const txs = JSON.parse(localStorage.getItem('app_fin_txs')) || [];
+            if (txs.length === 0) {
+                alert("Nenhum lançamento financeiro para exportar.");
+                return;
+            }
+            let csv = "ID;Data;Hora;Ciclo_Mes;Descricao;Valor;Categoria;Tipo;Cartao\n";
+            txs.forEach(t => {
+                csv += `"${t.id}";"${t.date}";"${t.timeStr || ''}";"${t.monthKey}";"${t.desc.replace(/"/g, '""')}";"${t.amount}";"${t.category}";"${t.type}";"${t.cardId || '-'}"\n`;
+            });
+            const blob = new Blob(["\ufeff" + csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `extrato_financeiro_${currentMonthKey}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // --- ATALHOS DE MODAIS E HISTÓRICO FINANCEIRO ---
+        function openFinanceHistoryModal() {
+            const modalContent = document.getElementById('fin-history-modal-content');
+            if (!modalContent) return;
+            const txs = JSON.parse(localStorage.getItem('app_fin_txs')) || [];
+            const previousTxs = txs.filter(t => t.monthKey !== currentMonthKey);
+
+            if (previousTxs.length === 0) {
+                modalContent.innerHTML = '<p style="font-size:12px; color:var(--text-muted);">Nenhum histórico de meses anteriores encontrado.</p>';
+            } else {
+                modalContent.innerHTML = previousTxs.map(t => `
+                    <div style="display:flex; justify-content:space-between; align-items:center; padding:8px; border-bottom:1px solid var(--border); font-size:12px;">
+                        <div>
+                            <strong>[${t.monthKey}] ${t.date}</strong> - ${t.desc}
+                            ${t.isCredit ? '<span style="font-size:9px; background:#f3e8ff; color:#7c3aed; padding:1px 4px; border-radius:3px; margin-left:4px;">CARTÃO</span>' : ''}
+                        </div>
+                        <strong style="color: ${t.type === 'in' ? '#10b981' : '#ef4444'}">${t.type === 'in' ? '+' : '-'} R$ ${t.amount.toFixed(2)}</strong>
+                    </div>
+                `).join('');
+            }
+            toggleModal('modal-fin-history', true);
+        }
+
+        function openNewProjectModal() {
+            toggleModal('modal-new-project', true);
+        }
+
+        function openNewWishlistModal() {
+            toggleModal('modal-new-wish', true);
+        }
         // --- CONEXÃO GOOGLE SHEETS REDIRECIONADA PARA AS 13 ABAS NUMERADAS ---
         function saveSyncUrl() {
             let url = document.getElementById('sheet-sync-url')?.value.trim();
