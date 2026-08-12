@@ -1283,6 +1283,95 @@
         function openNewWishlistModal() {
             toggleModal('modal-new-wish', true);
         }
+        // --- 1. HISTÓRICO FINANCEIRO DOS MESES ANTERIORES ---
+        function openFinanceHistoryModal() {
+            const modalContent = document.getElementById('fin-history-modal-content');
+            if (!modalContent) return;
+
+            const txs = JSON.parse(localStorage.getItem('app_fin_txs')) || [];
+            // Filtra lançamentos que NÃO pertencem ao ciclo do mês atual
+            const previousTxs = txs.filter(t => t.monthKey !== currentMonthKey);
+
+            if (previousTxs.length === 0) {
+                modalContent.innerHTML = '<p style="font-size:12px; color:var(--text-muted); font-style:italic;">Nenhum histórico de lançamentos de meses anteriores encontrado.</p>';
+            } else {
+                modalContent.innerHTML = previousTxs.map(t => {
+                    const isCreditUI = t.isCredit ? '<span style="font-size:9px; background:#f3e8ff; color:#7c3aed; padding:1px 4px; border-radius:3px; margin-left:4px;">CARTÃO</span>' : '';
+                    return `
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border); font-size:12px;">
+                            <div>
+                                <strong style="color:var(--theme-color);">[${t.monthKey}] ${t.date}</strong> - ${t.desc} ${isCreditUI}
+                            </div>
+                            <strong style="color: ${t.type === 'in' ? '#10b981' : '#ef4444'}">${t.type === 'in' ? '+' : '-'} R$ ${t.amount.toFixed(2)}</strong>
+                        </div>
+                    `;
+                }).join('');
+            }
+            toggleModal('modal-fin-history', true);
+        }
+
+        // --- 2. ATALHO PARA NOVO PROJETO ---
+        function openNewProjectModal() {
+            toggleModal('modal-new-project', true);
+        }
+
+        // --- 3. ATALHO PARA NOVA WISHLIST ---
+        function openNewWishlistModal() {
+            toggleModal('modal-new-wish', true);
+        }
+
+        // --- 4. BACKUP MANUAL: EXPORTAR JSON COMPLETO DO APP ---
+        function exportDataJSON() {
+            const fullBackup = {
+                version: "1.0",
+                exportedAt: new Date().toISOString(),
+                data: {}
+            };
+
+            // Captura todas as chaves do aplicativo no localStorage
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key.startsWith('app_')) {
+                    try {
+                        fullBackup.data[key] = JSON.parse(localStorage.getItem(key));
+                    } catch (e) {
+                        fullBackup.data[key] = localStorage.getItem(key);
+                    }
+                }
+            }
+
+            const blob = new Blob([JSON.stringify(fullBackup, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `backup_assistente_${new Date().toISOString().slice(0, 10)}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // --- 5. EXPORTAR EXTRATO EM CSV ---
+        function exportFinanceCSV() {
+            const txs = JSON.parse(localStorage.getItem('app_fin_txs')) || [];
+            if (txs.length === 0) {
+                alert("Nenhum lançamento financeiro para exportar.");
+                return;
+            }
+
+            let csv = "ID;Data;Hora;Ciclo_Mes;Descricao;Valor;Categoria;Tipo;Cartao\n";
+            txs.forEach(t => {
+                const cleanDesc = (t.desc || '').replace(/"/g, '""');
+                csv += `"${t.id}";"${t.date}";"${t.timeStr || ''}";"${t.monthKey}";"${cleanDesc}";"${t.amount}";"${t.category}";"${t.type}";"${t.cardId || '-'}"\n`;
+            });
+
+            // \ufeff garante a acentuação correta no Excel em PT-BR
+            const blob = new Blob(["\ufeff" + csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `extrato_financeiro_${currentMonthKey}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
         // --- CONEXÃO GOOGLE SHEETS REDIRECIONADA PARA AS 13 ABAS NUMERADAS ---
         function saveSyncUrl() {
             let url = document.getElementById('sheet-sync-url')?.value.trim();
