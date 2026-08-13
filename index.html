@@ -1671,7 +1671,7 @@
             if(!container) return;
 
             const tasksList = JSON.parse(localStorage.getItem('app_braindump_tasks')) || [];
-            const activeMonthTasks = tasksList.filter(t => t.monthKey === currentMonthKey && t.status === 'pending');
+            const activeMonthTasks = tasksList.filter(t => t.monthKey <= currentMonthKey && t.status === 'pending');
 
             if(activeMonthTasks.length === 0) {
                 container.innerHTML = '<p style="font-size:11px; color:var(--text-muted); margin:4px 0;">Nenhuma tarefa capturada no braindump.</p>';
@@ -1782,9 +1782,14 @@
             const labelName = type === 'lunch' ? 'Almoço' : 'Pausa Rápida';
 
             if(start) {
+                const existingStart = localStorage.getItem(keyStart);
+                if (existingStart) {
+                    if (!confirm(`Já existe um ${labelName} em andamento. Deseja reiniciar a contagem do zero?`)) {
+                        return;
+                    }
+                }
                 const startTime = new Date().toISOString();
                 localStorage.setItem(keyStart, startTime);
-                const t = new Date(startTime);
                 
                 if(statusEl) statusEl.innerText = `🍱 Em momento de ${labelName} desde às ${t.getHours().toString().padStart(2,'0')}:${t.getMinutes().toString().padStart(2,'0')}`;
                 if(cardEl) cardEl.classList.add('card-pulsing');
@@ -2138,8 +2143,10 @@
         }
 
         function submitEnergy() {
+            function submitEnergy() {
             if(!currentEnergy) { alert('Selecione um ritmo antes de confirmar.'); return; }
             localStorage.setItem('app_energy', currentEnergy);
+            localStorage.setItem('app_energy_date', getTimestampData().date);
             alert(`Ritmo do dia definido como: ${currentEnergy.toUpperCase()}`);
         }
 
@@ -4211,9 +4218,18 @@ function addDebtNote() {
             localStorage.setItem('app_daily_history', JSON.stringify(dailyLogs));
 
             sendToGoogleSheet('1_HOME_DIARIO', {
-                id: payload.id, date: meta.date, timeStr: meta.timeStr, monthKey: meta.monthKey,
-                energy: energy, hoursWorked: workedStr, good: good, improve: improve, status: 'Finalizado'
-            });
+                const payload = {
+                ...(existingLog || {}),
+                ...meta,
+                id: existingLog?.id || `day_${Date.now()}`,
+                energy: energy,
+                hoursWorked: workedStr,
+                good: good,
+                improve: improve,
+                synced: true
+            };
+
+            dailyLogs[todayKey] = payload;
 
             const todayStr = new Date().toLocaleDateString('pt-BR');
             checklistState.date = todayStr;
@@ -4222,6 +4238,7 @@ function addDebtNote() {
             localStorage.setItem('app_checklist_state', JSON.stringify(checklistState));
             
             localStorage.removeItem('app_energy');
+            localStorage.removeItem('app_energy_date');
             currentEnergy = '';
             document.body.className = '';
 
@@ -4320,7 +4337,14 @@ function addDebtNote() {
             }
 
             const savedEnergy = localStorage.getItem('app_energy'); 
-            if (savedEnergy) { currentEnergy = savedEnergy; applyTheme(savedEnergy); }
+            const savedEnergyDate = localStorage.getItem('app_energy_date');
+            if (savedEnergy && savedEnergyDate === new Date().toLocaleDateString('pt-BR')) { 
+                currentEnergy = savedEnergy; 
+                applyTheme(savedEnergy); 
+            } else {
+                localStorage.removeItem('app_energy');
+                localStorage.removeItem('app_energy_date');
+            }
 
             const savedApiKey = localStorage.getItem('app_gemini_key'); 
             if(savedApiKey) {
