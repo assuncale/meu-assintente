@@ -2383,7 +2383,7 @@
 
         function openBookDetail(bookId) {
             const books = JSON.parse(localStorage.getItem('app_books')) || [];
-            const b = books.find(x => x.id === bookId);
+            const b = books.find(x => String(x.id) === String(bookId));
             if(!b) return;
 
             const pct = b.pages > 0 ? Math.min(100, Math.round(((b.readPages || 0) / b.pages) * 100)) : 0;
@@ -2508,10 +2508,18 @@
                 if(hasWrite) dotsHTML += `<div style="width:5px; height:5px; border-radius:50%; background:#7c3aed;"></div>`;
 
                 const isSpecial = hasRead && hasWrite;
+                const specialStyle = isSpecial 
+                    ? 'border-color:#f59e0b; background:#fef3c7; color:#b45309; font-weight:700; cursor:pointer;' 
+                    : 'cursor:pointer;';
 
                 calendarHTML += `
-                    <div class="calendar-day ${isSpecial ? 'active-read' : ''}" style="${isSpecial ? 'border-color:#7c3aed; background:#f3e8ff;' : ''}" title="${dateStr}">
-                        <span>${day}</span>
+                    <div 
+                        class="calendar-day ${isSpecial ? 'active-read' : ''}" 
+                        style="${specialStyle}" 
+                        onclick="openDaySummary('${dateStr}')" 
+                        title="${dateStr}${isSpecial ? ' — 🌟 Dia Dourado: leitura + escrita' : ' — Clique para ver o resumo do dia'}"
+                    >
+                        <span>${isSpecial ? '🌟 ' : ''}${day}</span>
                         <div style="display:flex; gap:2px; margin-top:2px;">${dotsHTML}</div>
                     </div>`;
             }
