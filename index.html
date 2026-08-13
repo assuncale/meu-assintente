@@ -1330,9 +1330,18 @@
             }
 
             sendToGoogleSheet('1_HOME_DIARIO', {
-                id: `test_${Date.now()}`,
-                date: new Date().toLocaleDateString('pt-BR'),
-                timeStr: new Date().toLocaleTimeString('pt-BR'),
+                id: payload.id,
+                date: meta.date,
+                timeStr: meta.timeStr,
+                monthKey: payload.monthKey,
+                energy: energy,
+                hoursWorked: workedStr,
+                good: good,
+                improve: improve,
+                status: 'Finalizado'
+            });
+
+            const todayStr = new Date().toLocaleDateString('pt-BR');
                 monthKey: currentMonthKey,
                 energy: 'Teste Conexão',
                 hoursWorked: '0h',
