@@ -4146,13 +4146,21 @@ function addDebtNote() {
             const mins = totalMins % 60;
             const workedStr = `${hours}h ${mins}min`;
 
-            const payload = {
-                id: `day_${Date.now()}`,
-                ...meta, energy: energy, hoursWorked: workedStr, good: good, improve: improve
-            };
+            const todayKey = meta.date.replace(/\//g, '-');
+    const dailyLogs = JSON.parse(localStorage.getItem('app_daily_history')) || {};
+    const existingLog = dailyLogs[todayKey];
 
-            const dailyLogs = JSON.parse(localStorage.getItem('app_daily_history')) || {};
-            dailyLogs[meta.date.replace(/\//g, '-')] = payload;
+    const payload = {
+        ...(existingLog || {}),
+        ...meta,
+        id: existingLog?.id || `day_${Date.now()}`,
+        energy: energy,
+        hoursWorked: workedStr,
+        good: good,
+        improve: improve
+    };
+
+    dailyLogs[todayKey] = payload;
             localStorage.setItem('app_daily_history', JSON.stringify(dailyLogs));
 
             sendToGoogleSheet('1_HOME_DIARIO', {
@@ -4195,13 +4203,44 @@ function addDebtNote() {
             toggleModal('end-day-modal', true);
         }
 
-        function startDay() { alert("O seu dia começou! Registre seu ritmo e ative suas sessões conforme trabalhar."); }
+       function startDay() {
+            const meta = getTimestampData();
+            const todayKey = meta.date.replace(/\//g, '-');
+            const dailyLogs = JSON.parse(localStorage.getItem('app_daily_history')) || {};
+            const existingLog = dailyLogs[todayKey];
+
+            if (existingLog && existingLog.startTimeStr) {
+                alert(`Seu dia já foi iniciado às ${existingLog.startTimeStr}.`);
+                return;
+            }
+
+            const payload = {
+                ...(existingLog || {}),
+                ...meta,
+                id: existingLog?.id || `day_${Date.now()}`,
+                startTimeStr: meta.timeStr
+            };
+
+            dailyLogs[todayKey] = payload;
+            localStorage.setItem('app_daily_history', JSON.stringify(dailyLogs));
+            updateDayTimeDisplay();
+            alert(`O seu dia começou às ${meta.timeStr}! Registre seu ritmo e ative suas sessões conforme trabalhar.`);
+        }
 
         function updateDayTimeDisplay() {
             const el = document.getElementById('day-time-status');
             if(el) {
                 const now = new Date();
-                el.innerText = `Última atualização da tela: ${now.toLocaleTimeString('pt-BR')}`;
+                const meta = getTimestampData();
+                const todayKey = meta.date.replace(/\//g, '-');
+                const dailyLogs = JSON.parse(localStorage.getItem('app_daily_history')) || {};
+                const todayLog = dailyLogs[todayKey];
+
+                if (todayLog && todayLog.startTimeStr) {
+                    el.innerText = `▶ Dia iniciado às ${todayLog.startTimeStr} | Última atualização da tela: ${now.toLocaleTimeString('pt-BR')}`;
+                } else {
+                    el.innerText = `Última atualização da tela: ${now.toLocaleTimeString('pt-BR')}`;
+                }
             }
         }
 
