@@ -3262,21 +3262,15 @@ function renderCreditCards() {
                 return;
             }
 
-            const realNow = new Date();
-            const realMonthKey = `${realNow.getFullYear()}-${String(realNow.getMonth() + 1).padStart(2, '0')}`;
-
             container.innerHTML = cards.map(c => {
                 const currentMonthCardTxs = txs.filter(t => t.monthKey === currentMonthKey && t.cardId === c.id);
                 const monthInvoice = currentMonthCardTxs.reduce((sum, t) => sum + t.amount, 0);
                 
-                let applyAdjust = false;
-                if (c.initialBalanceMonth) {
-                    applyAdjust = (c.initialBalanceMonth === currentMonthKey);
-                } else if (parseFloat(c.initialBalance) > 0) {
-                    applyAdjust = (currentMonthKey === realMonthKey);
+                let initialAdjust = 0;
+                if (c.initialBalanceMonth && c.initialBalanceMonth === currentMonthKey) {
+                    initialAdjust = parseFloat(c.initialBalance) || 0;
                 }
 
-                const initialAdjust = applyAdjust ? (parseFloat(c.initialBalance) || 0) : 0;
                 const totalUsed = monthInvoice + initialAdjust;
                 const limitAvailable = Math.max(0, c.limit - totalUsed);
                 const usedPct = c.limit > 0 ? Math.min(100, Math.round((totalUsed / c.limit) * 100)) : 0;
@@ -3454,7 +3448,12 @@ function addCardNote() {
                 let [startYear, startMonth] = firstMonthStr.split('-');
                 let sy = parseInt(startYear);
                 let sm = parseInt(startMonth);
-                let splitAmount = parseFloat((amount / installments).toFixed(2));
+
+                // Alteração 6: lógica de parcelamento com centavos
+                const totalCents = Math.round(amount * 100);
+                const baseCents = Math.floor(totalCents / installments);
+                const remainderCents = totalCents % installments;
+                const purchaseGroupId = `grp_${Date.now()}`;
 
                 for(let i = 0; i < installments; i++) {
                     let calcMonth = sm + i;
@@ -3463,22 +3462,41 @@ function addCardNote() {
                     let targetMonthKey = `${calcYear}-${String(finalMonth).padStart(2, '0')}`;
 
                     let installmentDesc = installments > 1 ? `💳 ${desc} (${i+1}/${installments})` : `💳 ${desc}`;
+                    
+                    const currentInstallmentCents = (i === installments - 1) ? (baseCents + remainderCents) : baseCents;
+                    const splitAmount = currentInstallmentCents / 100;
 
                     const payloadCredit = {
                         id: `tx_${Date.now()}_${i}`,
+                        purchaseGroupId: purchaseGroupId,
                         timestamp: meta.timestamp, date: meta.date, timeStr: meta.timeStr,
                         monthKey: targetMonthKey, yearKey: String(calcYear), 
-                        desc: installmentDesc, amount: splitAmount, category: cat,
-                        type: 'out', isCredit: true, cardId: cardId, originalAmount: amount
+                        desc: installmentDesc, 
+                        amount: splitAmount, 
+                        originalAmount: amount,
+                        category: cat,
+                        type: 'out', isCredit: true, cardId: cardId,
+                        installmentNumber: i + 1,
+                        totalInstallments: installments
                     };
 
                     txs.unshift(payloadCredit);
 
                     sendToGoogleSheet('7_FINANCAS_EXTRATO', {
-                        id: payloadCredit.id, date: payloadCredit.date, timeStr: payloadCredit.timeStr,
-                        monthKey: payloadCredit.monthKey, desc: payloadCredit.desc, amount: payloadCredit.amount,
-                        category: payloadCredit.category, type: payloadCredit.type, isCredit: 'Sim',
-                        cardId: cardId, originalAmount: amount
+                        id: payloadCredit.id, 
+                        purchaseGroupId: payloadCredit.purchaseGroupId,
+                        date: payloadCredit.date, 
+                        timeStr: payloadCredit.timeStr,
+                        monthKey: payloadCredit.monthKey, 
+                        desc: payloadCredit.desc, 
+                        amount: payloadCredit.amount,
+                        originalAmount: payloadCredit.originalAmount,
+                        installmentNumber: payloadCredit.installmentNumber,
+                        totalInstallments: payloadCredit.totalInstallments,
+                        category: payloadCredit.category, 
+                        type: payloadCredit.type, 
+                        isCredit: 'Sim',
+                        cardId: cardId
                     });
                 }
             }
@@ -3596,11 +3614,30 @@ function addCardNote() {
 
                 localStorage.setItem('app_fin_txs', JSON.stringify(txs));
 
+                const sheetOriginalAmount = (t.originalAmount !== undefined && t.originalAmount !== null) ? t.originalAmount : '';
+
                 sendToGoogleSheet('7_FINANCAS_EXTRATO', {
-                    id: t.id, date: t.date, timeStr: t.timeStr, monthKey: t.monthKey,
-                    desc: t.desc, amount: t.amount, category: t.category, type: t.type,
-                    isCredit: t.isCredit ? 'Sim' : 'Não', cardId: t.cardId || '-', originalAmount: t.amount
+                    id: t.id, 
+                    purchaseGroupId: t.purchaseGroupId || '',
+                    date: t.date, 
+                    timeStr: t.timeStr, 
+                    monthKey: t.monthKey,
+                    desc: t.desc, 
+                    amount: t.amount, 
+                    originalAmount: sheetOriginalAmount,
+                    installmentNumber: t.installmentNumber || '',
+                    totalInstallments: t.totalInstallments || '',
+                    category: t.category, 
+                    type: t.type,
+                    isCredit: t.isCredit ? 'Sim' : 'Não', 
+                    cardId: t.cardId || '-'
                 });
+
+                toggleModal('modal-edit-tx', false);
+                refreshAllViews();
+                alert('Lançamento atualizado!');
+            }
+        }
 
                 toggleModal('modal-edit-tx', false);
                 refreshAllViews();
