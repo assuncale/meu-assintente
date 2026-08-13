@@ -1323,36 +1323,26 @@
         }
 
         function testSheetConnection() {
-            const url = localStorage.getItem('app_sheet_sync_url');
-            if(!url) {
-                alert("Por favor, salve a URL do seu Web App do Apps Script primeiro.");
-                return;
-            }
+    const url = localStorage.getItem('app_sheet_sync_url');
+    if(!url) {
+        alert("Por favor, salve a URL do seu Web App do Apps Script primeiro.");
+        return;
+    }
 
-            sendToGoogleSheet('1_HOME_DIARIO', {
-                id: payload.id,
-                date: meta.date,
-                timeStr: meta.timeStr,
-                monthKey: payload.monthKey,
-                energy: energy,
-                hoursWorked: workedStr,
-                good: good,
-                improve: improve,
-                status: 'Finalizado'
-            });
+    sendToGoogleSheet('1_HOME_DIARIO', {
+        id: `test_${Date.now()}`,
+        date: new Date().toLocaleDateString('pt-BR'),
+        timeStr: new Date().toLocaleTimeString('pt-BR'),
+        monthKey: currentMonthKey,
+        energy: 'Teste Conexão',
+        hoursWorked: '0h',
+        good: 'Conexão Testada com Sucesso!',
+        improve: 'Nenhum',
+        status: 'Teste'
+    });
 
-            const todayStr = new Date().toLocaleDateString('pt-BR');
-                monthKey: currentMonthKey,
-                energy: 'Teste Conexão',
-                hoursWorked: '0h',
-                good: 'Conexão Testada com Sucesso!',
-                improve: 'Nenhum',
-                status: 'Teste'
-            });
-
-            alert("Sinal de teste enviado! Verifique a aba '1_HOME_DIARIO' da sua planilha em alguns segundos.");
-        }
-
+    alert("Sinal de teste enviado! Verifique a aba '1_HOME_DIARIO' da sua planilha em alguns segundos.");
+}
         function sendToGoogleSheet(target, payload) {
             const url = localStorage.getItem('app_sheet_sync_url');
             if(!url) return;
@@ -2151,7 +2141,6 @@
             applyTheme(level);
         }
 
-        function submitEnergy() {
             function submitEnergy() {
             if(!currentEnergy) { alert('Selecione um ritmo antes de confirmar.'); return; }
             localStorage.setItem('app_energy', currentEnergy);
