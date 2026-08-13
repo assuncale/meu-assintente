@@ -2797,11 +2797,20 @@
         }
 
         function toggleTimer(type, id, start) {
-            const storageKey = type === 'student' ? 'app_students' : 'app_companies';
-            const items = JSON.parse(localStorage.getItem(storageKey)) || [];
-            const item = items.find(x => x.id === id);
+        const storageKey = type === 'student' ? 'app_students' : 'app_companies';
+        const items = JSON.parse(localStorage.getItem(storageKey)) || [];
+        const item = items.find(x => String(x.id) === String(id));
 
-            if(!item) return;
+        if(!item) {
+            console.error('[Docência Timer Error] Registro não encontrado.', {
+                type,
+                id,
+                storageKey,
+                availableIds: items.map(x => x.id)
+            });
+            alert('Não foi possível localizar o cadastro selecionado para a contagem.');
+            return;
+        }
 
             if(start) {
                 item.activeTimer = new Date().toISOString();
@@ -2944,9 +2953,14 @@
                 <hr style="border:0; border-top:1px solid var(--border); margin:16px 0;">
 
                 <div class="section-title">Sessão de Aula / Timer</div>
+                ${s.activeTimer ? `
+                    <div style="background:#ecfdf5; border:1px solid #10b981; padding:10px; border-radius:8px; margin-bottom:12px; text-align:center;">
+                        <strong style="color:#047857; font-size:13px;">⏱ Aula em andamento (Iniciada às ${new Date(s.activeTimer).toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})})</strong>
+                    </div>
+                ` : ''}
                 <div style="display:flex; gap:8px; margin-bottom:8px;">
-                    <button class="btn-main" style="background:#10b981;" onclick="toggleTimer('student', '${s.id}', true)">▶ Iniciar Aula</button>
-                    <button class="btn-main" style="background:#ef4444;" onclick="toggleTimer('student', '${s.id}', false)">⏹ Finalizar</button>
+                    <button class="btn-main" style="background:#10b981; flex:1;" onclick="toggleTimer('student', '${s.id}', true)">▶ Iniciar Aula</button>
+                    <button class="btn-main" style="background:#ef4444; flex:1;" onclick="toggleTimer('student', '${s.id}', false)">⏹ Finalizar Aula</button>
                 </div>
                 <div style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">⏱ Total acumulado no mês (${currentMonthKey}): ${hours} horas</div>
 
@@ -3111,9 +3125,14 @@
                 <hr style="border:0; border-top:1px solid var(--border); margin:16px 0;">
 
                 <div class="section-title">Sessão de Trabalho / Timer</div>
+                ${c.activeTimer ? `
+                    <div style="background:#ecfdf5; border:1px solid #10b981; padding:10px; border-radius:8px; margin-bottom:12px; text-align:center;">
+                        <strong style="color:#047857; font-size:13px;">⏱ Trabalho em andamento (Iniciado às ${new Date(c.activeTimer).toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})})</strong>
+                    </div>
+                ` : ''}
                 <div style="display:flex; gap:8px; margin-bottom:8px;">
-                    <button class="btn-main" style="background:#10b981;" onclick="toggleTimer('company', '${c.id}', true)">▶ Iniciar Trabalho</button>
-                    <button class="btn-main" style="background:#ef4444;" onclick="toggleTimer('company', '${c.id}', false)">⏹ Finalizar</button>
+                    <button class="btn-main" style="background:#10b981; flex:1;" onclick="toggleTimer('company', '${c.id}', true)">▶ Iniciar Trabalho</button>
+                    <button class="btn-main" style="background:#ef4444; flex:1;" onclick="toggleTimer('company', '${c.id}', false)">⏹ Finalizar Trabalho</button>
                 </div>
                 <div style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">⏱ Total trabalhado no mês (${currentMonthKey}): <strong>${hours} horas</strong></div>
 
