@@ -1165,10 +1165,17 @@
             
             const targetTab = document.getElementById(`tab-${tabName}`);
             if (targetTab) targetTab.classList.add('active');
-            if (event && event.target) event.target.classList.add('active');
+
+            const evt = window.event;
+            if (evt && evt.target) evt.target.classList.add('active');
 
             // Dispara o desenho automático dos dados ao entrar em cada aba
-            if (tabName === 'aulas') {
+            if (tabName === 'pesquisa') {
+                renderShelf();
+                renderReadingCalendar();
+                renderWritingSessions();
+                renderJournalGallery();
+            } else if (tabName === 'aulas') {
                 renderStudents();
                 renderCompanies();
                 renderTeachingDashboard();
@@ -1181,7 +1188,6 @@
                 populateCardDropdowns();
             }
         }
-
         function switchSubTab(subName) {
             document.querySelectorAll('.subtab-content').forEach(sub => sub.style.display = 'none');
             document.querySelectorAll('.sub-nav .btn-sub').forEach(btn => btn.classList.remove('active'));
@@ -2408,6 +2414,20 @@
             const b = books.find(x => x.id === bookId);
             if(b) {
                 b.readPages = newPages;
+
+                if (!b.sessions) b.sessions = [];
+                const meta = getTimestampData();
+                const alreadyLoggedToday = b.sessions.some(
+                    s => s.date === meta.date && s.monthKey === meta.monthKey
+                );
+                if (!alreadyLoggedToday) {
+                    b.sessions.push({
+                        date: meta.date,
+                        monthKey: meta.monthKey,
+                        readPages: newPages
+                    });
+                }
+
                 const pct = b.pages > 0 ? Math.min(100, Math.round((newPages / b.pages) * 100)) : 0;
                 localStorage.setItem('app_books', JSON.stringify(books));
 
