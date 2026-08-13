@@ -4201,24 +4201,10 @@ function addDebtNote() {
             const workedStr = `${hours}h ${mins}min`;
 
             const todayKey = meta.date.replace(/\//g, '-');
-    const dailyLogs = JSON.parse(localStorage.getItem('app_daily_history')) || {};
-    const existingLog = dailyLogs[todayKey];
+            const dailyLogs = JSON.parse(localStorage.getItem('app_daily_history')) || {};
+            const existingLog = dailyLogs[todayKey];
 
-    const payload = {
-        ...(existingLog || {}),
-        ...meta,
-        id: existingLog?.id || `day_${Date.now()}`,
-        energy: energy,
-        hoursWorked: workedStr,
-        good: good,
-        improve: improve
-    };
-
-    dailyLogs[todayKey] = payload;
-            localStorage.setItem('app_daily_history', JSON.stringify(dailyLogs));
-
-            sendToGoogleSheet('1_HOME_DIARIO', {
-                const payload = {
+            const payload = {
                 ...(existingLog || {}),
                 ...meta,
                 id: existingLog?.id || `day_${Date.now()}`,
@@ -4230,6 +4216,19 @@ function addDebtNote() {
             };
 
             dailyLogs[todayKey] = payload;
+            localStorage.setItem('app_daily_history', JSON.stringify(dailyLogs));
+
+            sendToGoogleSheet('1_HOME_DIARIO', {
+                id: payload.id,
+                date: meta.date,
+                timeStr: meta.timeStr,
+                monthKey: meta.monthKey,
+                energy: energy,
+                hoursWorked: workedStr,
+                good: good,
+                improve: improve,
+                status: 'Finalizado'
+            });
 
             const todayStr = new Date().toLocaleDateString('pt-BR');
             checklistState.date = todayStr;
