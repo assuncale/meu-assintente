@@ -217,6 +217,29 @@
             background: var(--bg);
             margin-bottom: 8px;
         }
+
+        /* CHAT FINANCEIRO - bolhas de mensagem */
+        .chat-msg {
+            padding: 10px 14px;
+            border-radius: 12px;
+            max-width: 85%;
+            font-size: 13px;
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+        .msg-user {
+            background: var(--theme-color);
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 2px;
+        }
+        .msg-ai {
+            background: white;
+            border: 1px solid var(--border);
+            color: var(--text);
+            align-self: flex-start;
+            border-bottom-left-radius: 2px;
+        }
     </style>
 </head>
 <body>
@@ -227,11 +250,11 @@
         
         <nav class="nav-tabs">
             <div class="nav-tabs-left">
-                <button class="tab-btn active" onclick="switchTab('home')">Home</button>
-                <button class="tab-btn" onclick="switchTab('pesquisa')">Pesquisa Literária</button>
-                <button class="tab-btn" onclick="switchTab('aulas')">Aulas & Docência</button>
-                <button class="tab-btn" onclick="switchTab('financas')">Finanças</button>
-                <button class="tab-btn" onclick="switchTab('config')">Configurações</button>
+                <button class="tab-btn active" onclick="switchTab('home', event)">Home</button>
+                <button class="tab-btn" onclick="switchTab('pesquisa', event)">Pesquisa Literária</button>
+                <button class="tab-btn" onclick="switchTab('aulas', event)">Aulas & Docência</button>
+                <button class="tab-btn" onclick="switchTab('financas', event)">Finanças</button>
+                <button class="tab-btn" onclick="switchTab('config', event)">Configurações</button>
             </div>
             <!-- SELETOR GLOBAL DE MÊS/ANO -->
             <div style="display: flex; align-items: center; gap: 8px;">
@@ -415,9 +438,9 @@
 
                 <!-- SUB-NAVEGAÇÃO INTERNA -->
                 <div class="sub-nav" style="margin-top: 16px; margin-bottom: 0;">
-                    <button class="btn-sub active" onclick="switchSubTab('leitura')">Leitura & Progresso</button>
-                    <button class="btn-sub" onclick="switchSubTab('journaling')">Journaling (Envelopes)</button>
-                    <button class="btn-sub" onclick="switchSubTab('ia-report')">Relatório Mensal (IA)</button>
+                    <button class="btn-sub active" onclick="switchSubTab('leitura', event)">Leitura & Progresso</button>
+                    <button class="btn-sub" onclick="switchSubTab('journaling', event)">Journaling (Envelopes)</button>
+                    <button class="btn-sub" onclick="switchSubTab('ia-report', event)">Relatório Mensal (IA)</button>
                 </div>
             </div>
 
@@ -547,8 +570,8 @@
             <div class="card">
                 <div class="section-title">Gestão de Aulas & Docência</div>
                 <div class="sub-nav">
-                    <button class="btn-sub active" onclick="switchTeachingSubTab('alunos')">Alunos Particulares</button>
-                    <button class="btn-sub" onclick="switchTeachingSubTab('empresas')">Contratos & Empresas</button>
+                    <button class="btn-sub active" onclick="switchTeachingSubTab('alunos', event)">Alunos Particulares</button>
+                    <button class="btn-sub" onclick="switchTeachingSubTab('empresas', event)">Contratos & Empresas</button>
                 </div>
             </div>
 
@@ -588,11 +611,11 @@
                     <button class="btn-main" style="width: auto; padding: 8px 16px; background: #10b981;" onclick="toggleModal('modal-new-tx', true)">+ Novo Lançamento</button>
                 </div>
                 <div class="sub-nav" style="border-bottom: none; margin-bottom: 0;">
-                    <button class="btn-sub active" onclick="switchFinSubTab('visao')">Visão Geral</button>
-                    <button class="btn-sub" onclick="switchFinSubTab('extrato')">Extrato & Faturas</button>
-                    <button class="btn-sub" onclick="switchFinSubTab('dividas')">Quadro de Dívidas</button>
-                    <button class="btn-sub" onclick="switchFinSubTab('projetos')">Projetos & Wishlist</button>
-                    <button class="btn-sub" style="border-color: #8b5cf6; color: #7c3aed;" onclick="switchFinSubTab('ia')">✨ Consultor IA</button>
+                    <button class="btn-sub active" onclick="switchFinSubTab('visao', event)">Visão Geral</button>
+                    <button class="btn-sub" onclick="switchFinSubTab('extrato', event)">Extrato & Faturas</button>
+                    <button class="btn-sub" onclick="switchFinSubTab('dividas', event)">Quadro de Dívidas</button>
+                    <button class="btn-sub" onclick="switchFinSubTab('projetos', event)">Projetos & Wishlist</button>
+                    <button class="btn-sub" style="border-color: #8b5cf6; color: #7c3aed;" onclick="switchFinSubTab('ia', event)">✨ Consultor IA</button>
                 </div>
             </div>
             
@@ -1159,14 +1182,13 @@
             populateCardDropdowns();
         }
 
-        function switchTab(tabName) {
+        function switchTab(tabName, evt) {
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             
             const targetTab = document.getElementById(`tab-${tabName}`);
             if (targetTab) targetTab.classList.add('active');
 
-            const evt = window.event;
             if (evt && evt.target) evt.target.classList.add('active');
 
             // Dispara o desenho automático dos dados ao entrar em cada aba
@@ -1188,25 +1210,25 @@
                 populateCardDropdowns();
             }
         }
-        function switchSubTab(subName) {
+        function switchSubTab(subName, evt) {
             document.querySelectorAll('.subtab-content').forEach(sub => sub.style.display = 'none');
             document.querySelectorAll('.sub-nav .btn-sub').forEach(btn => btn.classList.remove('active'));
             document.getElementById(`subtab-${subName}`).style.display = 'block';
-            if (event && event.target) event.target.classList.add('active');
+            if (evt && evt.target) evt.target.classList.add('active');
         }
 
-        function switchTeachingSubTab(subName) {
+        function switchTeachingSubTab(subName, evt) {
             document.querySelectorAll('.teaching-subtab').forEach(s => s.style.display = 'none');
             document.querySelectorAll('#tab-aulas .sub-nav .btn-sub').forEach(btn => btn.classList.remove('active'));
             document.getElementById(`teaching-${subName}`).style.display = 'block';
-            if (event && event.target) event.target.classList.add('active');
+            if (evt && evt.target) evt.target.classList.add('active');
         }
 
-        function switchFinSubTab(subName) {
+        function switchFinSubTab(subName, evt) {
             document.querySelectorAll('.fin-subtab').forEach(s => s.style.display = 'none');
             document.querySelectorAll('#tab-financas .sub-nav .btn-sub').forEach(btn => btn.classList.remove('active'));
             document.getElementById(`fin-${subName}`).style.display = 'block';
-            if (event && event.target) event.target.classList.add('active');
+            if (evt && evt.target) evt.target.classList.add('active');
         }
 
         function toggleModal(id, show) { 
@@ -1332,7 +1354,7 @@
     sendToGoogleSheet('1_HOME_DIARIO', {
         id: `test_${Date.now()}`,
         date: new Date().toLocaleDateString('pt-BR'),
-        timeStr: new Date().toLocaleTimeString('pt-BR'),
+        timeStr: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
         monthKey: currentMonthKey,
         energy: 'Teste Conexão',
         hoursWorked: '0h',
@@ -1425,6 +1447,16 @@
             }
         }
 
+        // Helper de restauração defensiva: tenta várias variações de nome de coluna
+        // (padrão em português usado nas abas do Sheets e/ou nome literal do payload em camelCase)
+        // já que o Apps Script pode nomear colunas de forma diferente por aba.
+        function pickField(row, keys, fallback) {
+            for (const k of keys) {
+                if (row[k] !== undefined && row[k] !== null && row[k] !== '') return row[k];
+            }
+            return fallback !== undefined ? fallback : '';
+        }
+
         async function restoreFromGoogleSheets() {
             const url = localStorage.getItem('app_sheet_sync_url');
             if(!url) { alert("Por favor, cole a URL do Apps Script nas configurações primeiro."); return; }
@@ -1495,6 +1527,271 @@
                             synced: true
                         }));
                         localStorage.setItem('app_companies', JSON.stringify(restoredCompanies));
+                    }
+
+                    // Restaurar Diário Home (Ritmo, Reflexões de Encerramento)
+                    if(sheetData['1_HOME_DIARIO'] && sheetData['1_HOME_DIARIO'].length > 0) {
+                        const restoredDaily = {};
+                        sheetData['1_HOME_DIARIO'].forEach(r => {
+                            const dateVal = pickField(r, ['Data', 'date']);
+                            if (!dateVal) return;
+                            const dayKey = dateVal.replace(/\//g, '-');
+                            restoredDaily[dayKey] = {
+                                id: pickField(r, ['ID_Diario', 'ID_Registro', 'id'], `day_restored_${dayKey}`),
+                                date: dateVal,
+                                timeStr: pickField(r, ['Hora', 'timeStr']),
+                                monthKey: pickField(r, ['Ciclo_Mes', 'monthKey']),
+                                energy: pickField(r, ['Energia', 'Ritmo', 'energy']),
+                                hoursWorked: pickField(r, ['Horas_Trabalhadas', 'hoursWorked']),
+                                good: pickField(r, ['Deu_Certo', 'O_Que_Deu_Certo', 'good']),
+                                improve: pickField(r, ['A_Ajustar', 'O_Que_Ajustar', 'improve']),
+                                synced: true
+                            };
+                        });
+                        if (Object.keys(restoredDaily).length > 0) {
+                            localStorage.setItem('app_daily_history', JSON.stringify(restoredDaily));
+                        }
+                    }
+
+                    // Restaurar Braindump, Pausas e Serviços Domésticos (aba compartilhada 2_HOME_REGISTROS)
+                    if(sheetData['2_HOME_REGISTROS'] && sheetData['2_HOME_REGISTROS'].length > 0) {
+                        const restoredBraindump = [];
+                        const restoredBreaks = [];
+                        const restoredChores = [];
+
+                        sheetData['2_HOME_REGISTROS'].forEach(r => {
+                            const logType = pickField(r, ['Tipo', 'type']);
+                            const dateTimeVal = pickField(r, ['Data_Hora', 'dateTime']);
+                            const [dateVal, timeVal] = dateTimeVal ? dateTimeVal.split(' ') : ['', ''];
+                            const monthKeyVal = pickField(r, ['Ciclo_Mes', 'monthKey']);
+                            const durationMins = parseInt(pickField(r, ['Duracao', 'duration'])) || 0;
+
+                            if (logType === 'Braindump') {
+                                const statusVal = pickField(r, ['Status', 'status']);
+                                restoredBraindump.push({
+                                    id: pickField(r, ['ID_Registro', 'id'], `bd_restored_${Date.now()}_${Math.random()}`),
+                                    date: dateVal, timeStr: timeVal, monthKey: monthKeyVal,
+                                    task: pickField(r, ['Descricao', 'description']),
+                                    why: pickField(r, ['Por_Que', 'why']),
+                                    priority: pickField(r, ['Prioridade', 'priority'], 'low'),
+                                    status: statusVal === 'Concluído' ? 'completed' : 'pending',
+                                    synced: true
+                                });
+                            } else if (logType && logType.indexOf('Pausa (') === 0) {
+                                const labelMatch = logType.match(/\(([^)]+)\)/);
+                                const label = labelMatch ? labelMatch[1] : 'Pausa';
+                                restoredBreaks.push({
+                                    id: pickField(r, ['ID_Registro', 'id'], `brk_restored_${Date.now()}_${Math.random()}`),
+                                    date: dateVal, timeStr: timeVal, monthKey: monthKeyVal,
+                                    type: label === 'Almoço' ? 'lunch' : 'rest',
+                                    label: label,
+                                    minutes: durationMins,
+                                    synced: true
+                                });
+                            } else if (logType === 'Serviço Doméstico') {
+                                restoredChores.push({
+                                    id: pickField(r, ['ID_Registro', 'id'], `chr_restored_${Date.now()}_${Math.random()}`),
+                                    date: dateVal, timeStr: timeVal, monthKey: monthKeyVal,
+                                    minutes: durationMins,
+                                    text: pickField(r, ['Descricao', 'description'], 'Manutenção da casa'),
+                                    synced: true
+                                });
+                            }
+                        });
+
+                        if (restoredBraindump.length > 0) localStorage.setItem('app_braindump_tasks', JSON.stringify(restoredBraindump));
+                        if (restoredBreaks.length > 0) localStorage.setItem('app_breaks_history', JSON.stringify(restoredBreaks));
+                        if (restoredChores.length > 0) localStorage.setItem('app_chores_history', JSON.stringify(restoredChores));
+                    }
+
+                    // Restaurar Sessões de Leitura/Escrita (Pesquisa Literária)
+                    if(sheetData['4_PESQUISA_SESSOES'] && sheetData['4_PESQUISA_SESSOES'].length > 0) {
+                        const restoredSessions = sheetData['4_PESQUISA_SESSOES'].map(r => {
+                            const typeLabel = pickField(r, ['Tipo', 'type']);
+                            const mins = parseInt(pickField(r, ['Duracao_Min', 'durationMins'])) || 0;
+                            return {
+                                id: pickField(r, ['ID_Sessao', 'id'], `sess_restored_${Date.now()}_${Math.random()}`),
+                                date: pickField(r, ['Data', 'date']),
+                                timeStr: pickField(r, ['Hora', 'timeStr']),
+                                monthKey: pickField(r, ['Ciclo_Mes', 'monthKey']),
+                                type: typeLabel === 'Leitura' ? 'reading' : (typeLabel === 'Escrita' ? 'writing' : typeLabel),
+                                label: typeLabel,
+                                before: pickField(r, ['Antes', 'before']),
+                                anxiety: pickField(r, ['Ansiedade', 'anxiety']),
+                                target: pickField(r, ['Meta_Tempo', 'target']),
+                                duration: `${mins} min`,
+                                durationMins: mins,
+                                feeling: pickField(r, ['Sensacao_Saida', 'feeling'], 'Normal'),
+                                synced: true
+                            };
+                        });
+                        localStorage.setItem('app_writing_sessions', JSON.stringify(restoredSessions));
+                    }
+
+                    // Restaurar Extrato Financeiro
+                    if(sheetData['7_FINANCAS_EXTRATO'] && sheetData['7_FINANCAS_EXTRATO'].length > 0) {
+                        const restoredTxs = sheetData['7_FINANCAS_EXTRATO'].map(r => {
+                            const isCreditVal = pickField(r, ['Cartao_Credito', 'isCredit']);
+                            return {
+                                id: pickField(r, ['ID_Lancamento', 'id'], `tx_restored_${Date.now()}_${Math.random()}`),
+                                purchaseGroupId: pickField(r, ['ID_Grupo_Compra', 'purchaseGroupId'], ''),
+                                date: pickField(r, ['Data', 'date']),
+                                timeStr: pickField(r, ['Hora', 'timeStr']),
+                                monthKey: pickField(r, ['Ciclo_Mes', 'monthKey']),
+                                desc: pickField(r, ['Descricao', 'desc']),
+                                amount: parseFloat(pickField(r, ['Valor', 'amount'])) || 0,
+                                originalAmount: parseFloat(pickField(r, ['Valor_Original', 'originalAmount'])) || undefined,
+                                installmentNumber: pickField(r, ['Parcela_Numero', 'installmentNumber'], undefined),
+                                totalInstallments: pickField(r, ['Parcela_Total', 'totalInstallments'], undefined),
+                                category: pickField(r, ['Categoria', 'category']),
+                                type: pickField(r, ['Tipo', 'type']),
+                                isCredit: (isCreditVal === 'Sim' || isCreditVal === true),
+                                cardId: pickField(r, ['ID_Cartao', 'cardId'], '-'),
+                                synced: true
+                            };
+                        });
+                        localStorage.setItem('app_fin_txs', JSON.stringify(restoredTxs));
+                    }
+
+                    // Restaurar Dívidas (agrupando linhas por ID, já que cada pagamento/nota gera uma linha nova na planilha)
+                    if(sheetData['8_FINANCAS_DIVIDAS'] && sheetData['8_FINANCAS_DIVIDAS'].length > 0) {
+                        const debtsMap = {};
+                        sheetData['8_FINANCAS_DIVIDAS'].forEach(r => {
+                            const debtId = pickField(r, ['ID_Divida', 'id']);
+                            if (!debtId) return;
+                            const noteText = pickField(r, ['Nota', 'note'], '');
+                            const rowDate = pickField(r, ['Data', 'date']);
+                            if (!debtsMap[debtId]) {
+                                debtsMap[debtId] = {
+                                    id: debtId,
+                                    name: pickField(r, ['Nome', 'name']),
+                                    total: parseFloat(pickField(r, ['Valor_Total', 'total'])) || 0,
+                                    paid: parseFloat(pickField(r, ['Valor_Pago', 'paid'])) || 0,
+                                    date: rowDate,
+                                    notes: [],
+                                    synced: true
+                                };
+                            } else {
+                                debtsMap[debtId].name = pickField(r, ['Nome', 'name']) || debtsMap[debtId].name;
+                                debtsMap[debtId].total = parseFloat(pickField(r, ['Valor_Total', 'total'])) || debtsMap[debtId].total;
+                                debtsMap[debtId].paid = parseFloat(pickField(r, ['Valor_Pago', 'paid'])) || debtsMap[debtId].paid;
+                            }
+                            if (noteText) {
+                                debtsMap[debtId].notes.unshift({ id: Date.now() + Math.random(), date: rowDate, text: noteText });
+                            }
+                        });
+                        const restoredDebts = Object.values(debtsMap);
+                        if (restoredDebts.length > 0) localStorage.setItem('app_fin_debts', JSON.stringify(restoredDebts));
+                    }
+
+                    // Restaurar Relatórios de IA (Docência)
+                    if(sheetData['9_RELATORIOS_IA'] && sheetData['9_RELATORIOS_IA'].length > 0) {
+                        const restoredReports = {};
+                        sheetData['9_RELATORIOS_IA'].forEach(r => {
+                            const moduleVal = pickField(r, ['Modulo', 'module']);
+                            if (moduleVal !== 'Docência' && moduleVal !== 'Docencia') return;
+                            const monthKeyVal = pickField(r, ['Ciclo_Mes', 'monthKey']);
+                            if (!monthKeyVal) return;
+                            restoredReports[monthKeyVal] = {
+                                id: pickField(r, ['ID_Relatorio', 'id'], `docencia_${monthKeyVal}`),
+                                date: pickField(r, ['Data', 'date']),
+                                monthKey: monthKeyVal,
+                                module: 'Docência',
+                                report: pickField(r, ['Relatorio', 'report'])
+                            };
+                        });
+                        if (Object.keys(restoredReports).length > 0) {
+                            localStorage.setItem('app_teaching_ai_reports', JSON.stringify(restoredReports));
+                        }
+                    }
+
+                    // Restaurar Projetos, Wishlist e Custos de Saúde/Pet (aba compartilhada 10_FINANCAS_PROJETOS_WISHLIST)
+                    if(sheetData['10_FINANCAS_PROJETOS_WISHLIST'] && sheetData['10_FINANCAS_PROJETOS_WISHLIST'].length > 0) {
+                        const restoredProjects = [];
+                        const restoredWishlist = [];
+                        const restoredHealth = [];
+
+                        sheetData['10_FINANCAS_PROJETOS_WISHLIST'].forEach(r => {
+                            const itemType = pickField(r, ['Tipo', 'type']);
+                            const itemId = pickField(r, ['ID_Item', 'id'], `item_restored_${Date.now()}_${Math.random()}`);
+                            const itemName = pickField(r, ['Nome', 'name']);
+                            const targetVal = parseFloat(pickField(r, ['Meta_Valor', 'target'])) || 0;
+                            const dateVal = pickField(r, ['Data', 'date']);
+                            const statusVal = pickField(r, ['Status', 'status']);
+
+                            if (itemType === 'Projeto') {
+                                const savedVal = parseFloat(pickField(r, ['Valor_Guardado', 'saved'])) || 0;
+                                restoredProjects.push({ id: itemId, name: itemName, target: targetVal, saved: savedVal, date: dateVal, synced: true });
+                            } else if (itemType === 'Wishlist') {
+                                restoredWishlist.push({
+                                    id: itemId, name: itemName, price: targetVal,
+                                    where: pickField(r, ['Detalhes', 'details'], ''),
+                                    occasion: '', limitDate: dateVal,
+                                    status: statusVal || 'desejado', synced: true
+                                });
+                            } else if (itemType === 'Saúde/Pet' || itemType === 'Saude/Pet') {
+                                restoredHealth.push({
+                                    id: itemId, desc: itemName, price: targetVal, date: dateVal,
+                                    status: statusVal || 'pendente', synced: true
+                                });
+                            }
+                        });
+
+                        if (restoredProjects.length > 0) localStorage.setItem('app_projects_list', JSON.stringify(restoredProjects));
+                        if (restoredWishlist.length > 0) localStorage.setItem('app_wishlist_items', JSON.stringify(restoredWishlist));
+                        if (restoredHealth.length > 0) localStorage.setItem('app_health_items', JSON.stringify(restoredHealth));
+                    }
+
+                    // Restaurar Logs de Docência (aulas, trabalho, demandas e anotações) DENTRO dos alunos/empresas já restaurados
+                    // Atenção: esta aba não guarda o ID do aluno/empresa, então o vínculo é feito por NOME (Nome_Alvo/targetName).
+                    if(sheetData['13_DOCENCIA_SESSÕES_LOGS'] && sheetData['13_DOCENCIA_SESSÕES_LOGS'].length > 0) {
+                        const studentsForLogs = JSON.parse(localStorage.getItem('app_students')) || [];
+                        const companiesForLogs = JSON.parse(localStorage.getItem('app_companies')) || [];
+
+                        sheetData['13_DOCENCIA_SESSÕES_LOGS'].forEach(r => {
+                            const logType = pickField(r, ['Tipo', 'type']);
+                            const targetName = pickField(r, ['Nome_Alvo', 'targetName']);
+                            const dateVal = pickField(r, ['Data', 'date']);
+                            const timeVal = pickField(r, ['Hora', 'timeStr']);
+                            const monthKeyVal = pickField(r, ['Ciclo_Mes', 'monthKey']);
+                            const mins = parseInt(pickField(r, ['Duracao_Min', 'durationMins'])) || 0;
+                            const descVal = pickField(r, ['Descricao', 'desc']);
+
+                            if (logType === 'AULA_ALUNO' || logType === 'REGISTRO_CONTEUDO') {
+                                const student = studentsForLogs.find(s => s.name === targetName);
+                                if (student) {
+                                    if (logType === 'AULA_ALUNO') {
+                                        if (!student.workLogs) student.workLogs = [];
+                                        student.workLogs.push({ date: dateVal, timeStr: timeVal, monthKey: monthKeyVal, minutes: mins });
+                                    } else {
+                                        if (!student.classLogs) student.classLogs = [];
+                                        student.classLogs.push({ date: dateVal, timeStr: timeVal, monthKey: monthKeyVal, text: descVal });
+                                    }
+                                }
+                            } else if (logType === 'TRABALHO_EMPRESA' || logType === 'DEMANDA_EMPRESA' || logType === 'ANOTACAO_EMPRESA') {
+                                const company = companiesForLogs.find(c => c.name === targetName);
+                                if (company) {
+                                    if (logType === 'TRABALHO_EMPRESA') {
+                                        if (!company.workLogs) company.workLogs = [];
+                                        company.workLogs.push({ date: dateVal, timeStr: timeVal, monthKey: monthKeyVal, minutes: mins });
+                                    } else if (logType === 'DEMANDA_EMPRESA') {
+                                        if (!company.tasks) company.tasks = [];
+                                        company.tasks.push({ date: dateVal, timeStr: timeVal, monthKey: monthKeyVal, text: descVal });
+                                    } else {
+                                        if (!company.notes) company.notes = [];
+                                        const titleMatch = (descVal || '').match(/^\[(.+?)\]\s*(.*)$/);
+                                        company.notes.push({
+                                            date: dateVal, timeStr: timeVal, monthKey: monthKeyVal,
+                                            title: titleMatch ? titleMatch[1] : 'Anotação',
+                                            body: titleMatch ? titleMatch[2] : descVal
+                                        });
+                                    }
+                                }
+                            }
+                        });
+
+                        localStorage.setItem('app_students', JSON.stringify(studentsForLogs));
+                        localStorage.setItem('app_companies', JSON.stringify(companiesForLogs));
                     }
 
                     refreshAllViews();
@@ -1790,6 +2087,7 @@
                 const startTime = new Date().toISOString();
                 localStorage.setItem(keyStart, startTime);
                 
+                const t = new Date(startTime);
                 if(statusEl) statusEl.innerText = `🍱 Em momento de ${labelName} desde às ${t.getHours().toString().padStart(2,'0')}:${t.getMinutes().toString().padStart(2,'0')}`;
                 if(cardEl) cardEl.classList.add('card-pulsing');
                 if(badgeEl) badgeEl.style.display = 'inline-block';
@@ -1844,17 +2142,20 @@
             const restStart = localStorage.getItem('app_rest_timer_start');
 
             let isActive = false;
+            const activeMsgs = [];
 
-            if(lunchStart && statusEl) {
+            if(lunchStart) {
                 const t = new Date(lunchStart);
-                statusEl.innerText = `🍱 Em momento de Almoço desde às ${t.getHours().toString().padStart(2,'0')}:${t.getMinutes().toString().padStart(2,'0')}`;
+                activeMsgs.push(`🍱 Em momento de Almoço desde às ${t.getHours().toString().padStart(2,'0')}:${t.getMinutes().toString().padStart(2,'0')}`);
                 isActive = true;
-            } else if(restStart && statusEl) {
+            }
+            if(restStart) {
                 const t = new Date(restStart);
-                statusEl.innerText = `☕ Em Pausa Rápida desde às ${t.getHours().toString().padStart(2,'0')}:${t.getMinutes().toString().padStart(2,'0')}`;
+                activeMsgs.push(`☕ Em Pausa Rápida desde às ${t.getHours().toString().padStart(2,'0')}:${t.getMinutes().toString().padStart(2,'0')}`);
                 isActive = true;
-            } else if(statusEl) {
-                statusEl.innerText = "Nenhuma pausa ativa no momento.";
+            }
+            if(statusEl) {
+                statusEl.innerText = isActive ? activeMsgs.join(' | ') : "Nenhuma pausa ativa no momento.";
             }
 
             if (cardEl) {
