@@ -1450,11 +1450,85 @@
         // Helper de restauração defensiva: tenta várias variações de nome de coluna
         // (padrão em português usado nas abas do Sheets e/ou nome literal do payload em camelCase)
         // já que o Apps Script pode nomear colunas de forma diferente por aba.
+        // --- REGISTRO DE EXCLUSÕES LOCAIS (RESTORE-002) ---
+        // Guarda, por coleção, os IDs excluídos localmente para que restoreFromGoogleSheets()
+        // não os reintroduza a partir de uma planilha que ainda os contém.
+        function getDeletedIdsRegistry() {
+            return JSON.parse(localStorage.getItem('app_deleted_ids')) || {};
+        }
+        function registerDeletedId(collectionKey, id) {
+            if (id === undefined || id === null) return;
+            const registry = getDeletedIdsRegistry();
+            if (!registry[collectionKey]) registry[collectionKey] = [];
+            const idStr = String(id);
+            if (!registry[collectionKey].some(x => String(x) === idStr)) {
+                registry[collectionKey].push(idStr);
+            }
+            localStorage.setItem('app_deleted_ids', JSON.stringify(registry));
+        }
+        function isIdDeleted(collectionKey, id) {
+            const registry = getDeletedIdsRegistry();
+            const list = registry[collectionKey] || [];
+            return list.some(x => String(x) === String(id));
+        }
+
         function pickField(row, keys, fallback) {
             for (const k of keys) {
                 if (row[k] !== undefined && row[k] !== null && row[k] !== '') return row[k];
             }
             return fallback !== undefined ? fallback : '';
+        }
+
+        // --- MERGE DE RESTAURAÇÃO (RESTORE-001) ---
+        // Faz merge entre o que veio do Sheets e o que já existe no localStorage, em vez de sobrescrever.
+        // Regras: (1) Sheets vence quando o registro existe lá; (2) registro local pendente (synced !== true)
+        // que não está no Sheets é preservado; (3) sem duplicatas pelo mesmo id; (6) campos locais importantes
+        // não fornecidos pelo Sheets (via preserveKeys) são preservados. Também respeita o registro de exclusões (RESTORE-002).
+        function mergeRestoredArray(localArr, restoredArr, idKey, preserveKeys, collectionKey) {
+            idKey = idKey || 'id';
+            preserveKeys = preserveKeys || [];
+            const deletedList = collectionKey ? (getDeletedIdsRegistry()[collectionKey] || []) : [];
+            const isDeleted = (id) => deletedList.some(x => String(x) === String(id));
+
+            const localMap = {};
+            (localArr || []).forEach(item => { if (item && item[idKey] !== undefined) localMap[item[idKey]] = item; });
+
+            const restoredIds = new Set();
+            const merged = (restoredArr || [])
+                .filter(rItem => !isDeleted(rItem[idKey]))
+                .map(rItem => {
+                    const rid = rItem[idKey];
+                    restoredIds.add(String(rid));
+                    const localItem = localMap[rid];
+                    if (localItem) {
+                        const mergedItem = { ...rItem };
+                        preserveKeys.forEach(k => {
+                            if ((mergedItem[k] === undefined || mergedItem[k] === null) && localItem[k] !== undefined) {
+                                mergedItem[k] = localItem[k];
+                            }
+                        });
+                        return mergedItem;
+                    }
+                    return rItem;
+                });
+
+            (localArr || []).forEach(item => {
+                if (!item || item[idKey] === undefined) return;
+                if (isDeleted(item[idKey])) return;
+                if (!restoredIds.has(String(item[idKey])) && item.synced !== true) {
+                    merged.push(item);
+                }
+            });
+
+            return merged;
+        }
+
+        function mergeRestoredObjectByKey(localObj, restoredObj) {
+            const merged = { ...(localObj || {}) };
+            Object.keys(restoredObj || {}).forEach(k => {
+                merged[k] = restoredObj[k];
+            });
+            return merged;
         }
 
         async function restoreFromGoogleSheets() {
@@ -1479,7 +1553,9 @@
                             readPages: parseInt(r['Paginas_Lidas']) || 0, type: r['Tipo_Leitura'], cover: r['Capa_URL'],
                             synced: true
                         }));
-                        localStorage.setItem('app_books', JSON.stringify(restoredBooks));
+                        const existingBooks = JSON.parse(localStorage.getItem('app_books')) || [];
+                        const mergedBooks = mergeRestoredArray(existingBooks, restoredBooks, 'id', ['sessions'], 'app_books');
+                        localStorage.setItem('app_books', JSON.stringify(mergedBooks));
                     }
 
                     // Restaurar Journaling
@@ -1490,7 +1566,9 @@
                             category: r['Categoria'], title: r['Titulo_Nota'], body: r['Conteudo_Texto'],
                             synced: true
                         }));
-                        localStorage.setItem('app_journal_entries', JSON.stringify(restoredJournal));
+                        const existingJournal = JSON.parse(localStorage.getItem('app_journal_entries')) || [];
+                        const mergedJournal = mergeRestoredArray(existingJournal, restoredJournal, 'id', [], 'app_journal_entries');
+                        localStorage.setItem('app_journal_entries', JSON.stringify(mergedJournal));
                     }
 
                     // Restaurar Cartões com preservação do array de notas
@@ -1504,7 +1582,9 @@
                             notes: r['Notas_Historico'] ? r['Notas_Historico'].split(' | ').map((text, idx) => ({ id: Date.now() + idx, date: 'Restaurado', text: text })) : [],
                             synced: true
                         }));
-                        localStorage.setItem('app_fin_cards', JSON.stringify(restoredCards));
+                        const existingCards = JSON.parse(localStorage.getItem('app_fin_cards')) || [];
+                        const mergedCards = mergeRestoredArray(existingCards, restoredCards, 'id', ['notes'], 'app_fin_cards');
+                        localStorage.setItem('app_fin_cards', JSON.stringify(mergedCards));
                     }
 
                     // Restaurar Alunos
@@ -1515,7 +1595,9 @@
                             materials: r['Materiais'], archived: String(r['Status_Arquivado']).toLowerCase() === 'true',
                             synced: true
                         }));
-                        localStorage.setItem('app_students', JSON.stringify(restoredStudents));
+                        const existingStudents = JSON.parse(localStorage.getItem('app_students')) || [];
+                        const mergedStudents = mergeRestoredArray(existingStudents, restoredStudents, 'id', ['workLogs', 'classLogs', 'notes', 'totalMinutes', 'activeTimer'], 'app_students');
+                        localStorage.setItem('app_students', JSON.stringify(mergedStudents));
                     }
 
                     // Restaurar Empresas
@@ -1526,7 +1608,9 @@
                             archived: String(r['Status_Arquivado']).toLowerCase() === 'true',
                             synced: true
                         }));
-                        localStorage.setItem('app_companies', JSON.stringify(restoredCompanies));
+                        const existingCompanies = JSON.parse(localStorage.getItem('app_companies')) || [];
+                        const mergedCompanies = mergeRestoredArray(existingCompanies, restoredCompanies, 'id', ['workLogs', 'tasks', 'notes', 'totalMinutes', 'activeTimer'], 'app_companies');
+                        localStorage.setItem('app_companies', JSON.stringify(mergedCompanies));
                     }
 
                     // Restaurar Diário Home (Ritmo, Reflexões de Encerramento)
@@ -1549,7 +1633,9 @@
                             };
                         });
                         if (Object.keys(restoredDaily).length > 0) {
-                            localStorage.setItem('app_daily_history', JSON.stringify(restoredDaily));
+                            const existingDaily = JSON.parse(localStorage.getItem('app_daily_history')) || {};
+                            const mergedDaily = mergeRestoredObjectByKey(existingDaily, restoredDaily);
+                            localStorage.setItem('app_daily_history', JSON.stringify(mergedDaily));
                         }
                     }
 
@@ -1599,9 +1685,18 @@
                             }
                         });
 
-                        if (restoredBraindump.length > 0) localStorage.setItem('app_braindump_tasks', JSON.stringify(restoredBraindump));
-                        if (restoredBreaks.length > 0) localStorage.setItem('app_breaks_history', JSON.stringify(restoredBreaks));
-                        if (restoredChores.length > 0) localStorage.setItem('app_chores_history', JSON.stringify(restoredChores));
+                        if (restoredBraindump.length > 0) {
+                            const existingBraindump = JSON.parse(localStorage.getItem('app_braindump_tasks')) || [];
+                            localStorage.setItem('app_braindump_tasks', JSON.stringify(mergeRestoredArray(existingBraindump, restoredBraindump, 'id', [], 'app_braindump_tasks')));
+                        }
+                        if (restoredBreaks.length > 0) {
+                            const existingBreaks = JSON.parse(localStorage.getItem('app_breaks_history')) || [];
+                            localStorage.setItem('app_breaks_history', JSON.stringify(mergeRestoredArray(existingBreaks, restoredBreaks, 'id', [], 'app_breaks_history')));
+                        }
+                        if (restoredChores.length > 0) {
+                            const existingChores = JSON.parse(localStorage.getItem('app_chores_history')) || [];
+                            localStorage.setItem('app_chores_history', JSON.stringify(mergeRestoredArray(existingChores, restoredChores, 'id', [], 'app_chores_history')));
+                        }
                     }
 
                     // Restaurar Sessões de Leitura/Escrita (Pesquisa Literária)
@@ -1625,7 +1720,9 @@
                                 synced: true
                             };
                         });
-                        localStorage.setItem('app_writing_sessions', JSON.stringify(restoredSessions));
+                        const existingSessions = JSON.parse(localStorage.getItem('app_writing_sessions')) || [];
+                        const mergedSessions = mergeRestoredArray(existingSessions, restoredSessions, 'id', [], 'app_writing_sessions');
+                        localStorage.setItem('app_writing_sessions', JSON.stringify(mergedSessions));
                     }
 
                     // Restaurar Extrato Financeiro
@@ -1650,7 +1747,9 @@
                                 synced: true
                             };
                         });
-                        localStorage.setItem('app_fin_txs', JSON.stringify(restoredTxs));
+                        const existingTxs = JSON.parse(localStorage.getItem('app_fin_txs')) || [];
+                        const mergedTxs = mergeRestoredArray(existingTxs, restoredTxs, 'id', [], 'app_fin_txs');
+                        localStorage.setItem('app_fin_txs', JSON.stringify(mergedTxs));
                     }
 
                     // Restaurar Dívidas (agrupando linhas por ID, já que cada pagamento/nota gera uma linha nova na planilha)
@@ -1681,7 +1780,11 @@
                             }
                         });
                         const restoredDebts = Object.values(debtsMap);
-                        if (restoredDebts.length > 0) localStorage.setItem('app_fin_debts', JSON.stringify(restoredDebts));
+                        if (restoredDebts.length > 0) {
+                            const existingDebts = JSON.parse(localStorage.getItem('app_fin_debts')) || [];
+                            const mergedDebts = mergeRestoredArray(existingDebts, restoredDebts, 'id', ['notes'], 'app_fin_debts');
+                            localStorage.setItem('app_fin_debts', JSON.stringify(mergedDebts));
+                        }
                     }
 
                     // Restaurar Relatórios de IA (Docência)
@@ -1701,7 +1804,9 @@
                             };
                         });
                         if (Object.keys(restoredReports).length > 0) {
-                            localStorage.setItem('app_teaching_ai_reports', JSON.stringify(restoredReports));
+                            const existingReports = JSON.parse(localStorage.getItem('app_teaching_ai_reports')) || {};
+                            const mergedReports = mergeRestoredObjectByKey(existingReports, restoredReports);
+                            localStorage.setItem('app_teaching_ai_reports', JSON.stringify(mergedReports));
                         }
                     }
 
@@ -1737,9 +1842,18 @@
                             }
                         });
 
-                        if (restoredProjects.length > 0) localStorage.setItem('app_projects_list', JSON.stringify(restoredProjects));
-                        if (restoredWishlist.length > 0) localStorage.setItem('app_wishlist_items', JSON.stringify(restoredWishlist));
-                        if (restoredHealth.length > 0) localStorage.setItem('app_health_items', JSON.stringify(restoredHealth));
+                        if (restoredProjects.length > 0) {
+                            const existingProjects = JSON.parse(localStorage.getItem('app_projects_list')) || [];
+                            localStorage.setItem('app_projects_list', JSON.stringify(mergeRestoredArray(existingProjects, restoredProjects, 'id', [], 'app_projects_list')));
+                        }
+                        if (restoredWishlist.length > 0) {
+                            const existingWishlist = JSON.parse(localStorage.getItem('app_wishlist_items')) || [];
+                            localStorage.setItem('app_wishlist_items', JSON.stringify(mergeRestoredArray(existingWishlist, restoredWishlist, 'id', [], 'app_wishlist_items')));
+                        }
+                        if (restoredHealth.length > 0) {
+                            const existingHealth = JSON.parse(localStorage.getItem('app_health_items')) || [];
+                            localStorage.setItem('app_health_items', JSON.stringify(mergeRestoredArray(existingHealth, restoredHealth, 'id', [], 'app_health_items')));
+                        }
                     }
 
                     // Restaurar Logs de Docência (aulas, trabalho, demandas e anotações) DENTRO dos alunos/empresas já restaurados
@@ -2191,6 +2305,12 @@
             const statusEl = document.getElementById('chores-timer-status');
             
             if(start) {
+                const existingChoresStart = localStorage.getItem('app_chores_timer_start');
+                if(existingChoresStart) {
+                    const et = new Date(existingChoresStart);
+                    alert(`Já existe uma sessão doméstica em andamento desde às ${et.getHours().toString().padStart(2,'0')}:${et.getMinutes().toString().padStart(2,'0')}. Finalize-a antes de iniciar uma nova.`);
+                    return;
+                }
                 const startTime = new Date().toISOString();
                 localStorage.setItem('app_chores_timer_start', startTime);
                 const t = new Date(startTime);
@@ -2756,6 +2876,7 @@
                 let books = JSON.parse(localStorage.getItem('app_books')) || [];
                 books = books.filter(x => x.id !== bookId);
                 localStorage.setItem('app_books', JSON.stringify(books));
+                registerDeletedId('app_books', bookId);
                 renderShelf();
                 toggleModal('book-detail-modal', false);
             }
@@ -3119,6 +3240,10 @@
         }
 
             if(start) {
+                if(item.activeTimer) {
+                    alert(`Já existe uma sessão em andamento para ${item.name} (iniciada às ${new Date(item.activeTimer).toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})}). Finalize-a antes de iniciar uma nova.`);
+                    return;
+                }
                 item.activeTimer = new Date().toISOString();
                 alert(`Sessão iniciada para ${item.name}!`);
             } else {
@@ -3760,6 +3885,7 @@ function addCardNote() {
                 let cards = JSON.parse(localStorage.getItem('app_fin_cards')) || [];
                 cards = cards.filter(c => String(c.id) !== String(id));
                 localStorage.setItem('app_fin_cards', JSON.stringify(cards));
+                registerDeletedId('app_fin_cards', id);
 
                 toggleModal('modal-card-detail', false);
                 renderCreditCards();
